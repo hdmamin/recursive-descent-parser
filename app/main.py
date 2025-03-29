@@ -52,6 +52,10 @@ class TokenTypes:
     DOT = TokenType(name="DOT", lexeme=".")
     EOF = TokenType(name="EOF", lexeme=" ")
 
+    # Assignment and equality operators
+    EQUAL = TokenType(name="EQUAL", lexeme="=")
+    EQUAL_EQUAL = TokenType(name="EQUAL_EQUAL", lexeme="==")
+
 
 class Token:
     def __init__(self, value: str):
@@ -73,15 +77,25 @@ def tokenize(source: str) -> dict:
     """
     res = []
     success = True
-    for i, char in enumerate(source, 1):
+    max_idx = len(source) - 1
+    i = 0
+    while i <= max_idx:
+        line = None
         try:
-            token = Token(char)
-            line = token.lexed()
+            token = Token(source[i:i+2])
+            i += 2
         except KeyError:
-            # TODO: codecrafters wants us to hardcode i to 1 for now
-            line = f"[line 1] Error: Unexpected character: {char}"
-            success = False
+            try:
+                token = Token(source[i])
+            except KeyError:
+                # TODO: codecrafters wants us to hardcode i to 1 for now
+                line = f"[line 1] Error: Unexpected character: {source[i]}"
+                success = False
+            finally:
+                i += 1
+        line = line or token.lexed()
         res.append(line)
+
     res.append("EOF  null")
     return {
         "lexed": res,
