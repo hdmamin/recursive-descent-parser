@@ -45,7 +45,6 @@ class TokenTypes:
     EQUAL_EQUAL = TokenType(name="EQUAL_EQUAL", lexeme="==")
     LESS_EQUAL = TokenType(name="LESS_EQUAL", lexeme="<=")
     GREATER_EQUAL = TokenType(name="GREATER_EQUAL", lexeme=">=")
-    BANG_EQUAL = TokenType(name="BANG_EQUAL", lexeme="!=")
     LESS = TokenType(name="LESS", lexeme="<")
     GREATER = TokenType(name="GREATER", lexeme=">")
     SLASH = TokenType(name="SLASH", lexeme="/")
@@ -55,6 +54,9 @@ class TokenTypes:
     # Assignment and equality operators
     EQUAL = TokenType(name="EQUAL", lexeme="=")
     EQUAL_EQUAL = TokenType(name="EQUAL_EQUAL", lexeme="==")
+
+    # Negation and Inequality operators
+    BANG = TokenType(name="BANG", lexeme="!")
 
 
 class Token:
