@@ -101,14 +101,14 @@ def lex(source: str) -> dict:
     success = True
     line_num = 0
     # TODO: might need to check if the newline is in a str once we support those?
-    # if token and token.token_type == TokenTypes.NEWLINE:
-    #     line_num += 1
     lines = deque(source.splitlines())
     while lines:
         line = lines.popleft()
         line_num += 1
-        line = 0
+        i = 0
         max_idx = len(line) - 1
+
+        # Iterate over characters in a line of source code.
         while i <= max_idx:
             lexed_item = ""
             token = None
