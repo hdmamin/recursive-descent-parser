@@ -14,6 +14,8 @@ class TokenType:
     name: str
     lexeme: str
     has_literal: bool = False
+    # False means this token should not show up in lexed output.
+    lexable: bool = True
 
 
 class TokenTypes:
@@ -60,6 +62,11 @@ class TokenTypes:
     # Negation and Inequality operators
     BANG = TokenType(name="BANG", lexeme="!")
 
+    # Spaces
+    SPACE = TokenType(name="SPACE", lexeme=" ", lexable=False)
+    TAB = TokenType(name="TAB", lexeme="\t", lexable=False)
+    NEWLINE = TokenType(name="TAB", lexeme="\n", lexable=False)
+
 
 class Token:
 
@@ -71,7 +78,12 @@ class Token:
         """Contains lexed code corresponding to one token, consisting of
         <token_type> <lexeme> <literal>
         e.g. 'STRING "dog" dog'
+
+        If token is not lexable, e.g. SPACE, we return an empty str.
         """
+        if not self.token_type.lexable:
+            return ""
+
         res = f"{self.token_type.name} {self.token_type.lexeme} "
         if self.token_type.has_literal:
             res += self.value
@@ -109,7 +121,8 @@ def lex(source: str) -> dict:
             finally:
                 i += 1
         line = line or token.lexed()
-        res.append(line)
+        if line:
+            res.append(line)
 
     res.append("EOF  null")
     return {
