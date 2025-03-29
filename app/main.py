@@ -67,16 +67,26 @@ class Token:
         return res
 
 
-def tokenize(source: str) -> list[str]:
+def tokenize(source: str) -> dict:
     """Each str contains one line of lexed source code, e.g.
     'STRING "dog" dog'
     """
     res = []
-    for char in source:
-        token = Token(char)
-        res.append(token.lexed())
+    success = True
+    for i, char in enumerate(source, 1):
+        try:
+            token = Token(char)
+            line = token.lexed()
+        except KeyError:
+            # TODO: codecrafters wants us to hardcode i to 1 for now
+            line = f"[line 1] Error: Unexpected character: {char}"
+            success = False
+        res.append(line)
     res.append("EOF  null")
-    return res
+    return {
+        "lexed": res,
+        "success": success,
+    }
 
 
 def main():
@@ -99,7 +109,10 @@ def main():
 
     # Uncomment this block to pass the first stage
     lexed = tokenize(file_contents)
-    print("\n".join(lexed))
+    for row in lexed["lexed"]:
+        print(row, file=sys.stderr if row.startswith("[line") else sys.stdout)
+    if not lexed["success"]:
+        exit(65)
 
 
 if __name__ == "__main__":
