@@ -10,9 +10,11 @@ logging.basicConfig()
 
 @dataclass
 class TokenType:
+
     name: str
     lexeme: str
     has_literal: bool = False
+
 
 class TokenTypes:
 
@@ -60,11 +62,16 @@ class TokenTypes:
 
 
 class Token:
+
     def __init__(self, value: str):
         self.token_type = TokenTypes.lexeme2name(value)
         self.value = value
 
     def lexed(self) -> str:
+        """Contains lexed code corresponding to one token, consisting of
+        <token_type> <lexeme> <literal>
+        e.g. 'STRING "dog" dog'
+        """
         res = f"{self.token_type.name} {self.token_type.lexeme} "
         if self.token_type.has_literal:
             res += self.value
@@ -73,8 +80,8 @@ class Token:
         return res
 
 
-def tokenize(source: str) -> dict:
-    """Each str contains one line of lexed source code, e.g.
+def lex(source: str) -> dict:
+    """Each str contains one line of lexed source code corresponding to a single token, e.g.
     'STRING "dog" dog'
     """
     res = []
@@ -84,8 +91,14 @@ def tokenize(source: str) -> dict:
     while i <= max_idx:
         line = None
         try:
-            token = Token(source[i:i+2])
-            i += 2
+            chunk = source[i:i+2]
+            # TODO: this logic will prob need to change as we add support for longer lexemes and
+            # multiline code, but for current goal of supporting comments it should work.
+            if chunk == "//":
+                break
+            token = Token(chunk)
+            # Usually 2, but as we near the end of the str it could be less.
+            i += len(chunk)
         except KeyError:
             try:
                 token = Token(source[i])
@@ -124,7 +137,7 @@ def main():
     print("Logs from your program will appear here!", file=sys.stderr)
 
     # Uncomment this block to pass the first stage
-    lexed = tokenize(file_contents)
+    lexed = lex(file_contents)
     for row in lexed["lexed"]:
         print(row, file=sys.stderr if row.startswith("[line") else sys.stdout)
     if not lexed["success"]:
