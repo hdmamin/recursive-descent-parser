@@ -100,12 +100,14 @@ def lex(source: str) -> dict:
     success = True
     max_idx = len(source) - 1
     i = 0
+    line_num = 1
     while i <= max_idx:
-        line = None
+        lexed_item = ""
+        token = None
         try:
             chunk = source[i:i+2]
             # TODO: this logic will prob need to change as we add support for longer lexemes and
-            # multiline code, but for current goal of supporting comments it should work.
+            # multilexed_item code, but for current goal of supporting comments it should work.
             if chunk == "//":
                 break
             token = Token(chunk)
@@ -115,14 +117,15 @@ def lex(source: str) -> dict:
             try:
                 token = Token(source[i])
             except KeyError:
-                # TODO: codecrafters wants us to hardcode i to 1 for now
-                line = f"[line 1] Error: Unexpected character: {source[i]}"
+                lexed_item = f"[line {line_num}] Error: Unexpected character: {source[i]}"
                 success = False
             finally:
                 i += 1
-        line = line or token.lexed()
-        if line:
-            res.append(line)
+        lexed_item = lexed_item or token.lexed()
+        if lexed_item:
+            res.append(lexed_item)
+        if token and token.token_type == TokenTypes.NEWLINE:
+            line_num += 1
 
     res.append("EOF  null")
     return {
