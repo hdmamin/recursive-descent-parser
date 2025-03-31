@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 import logging
 import sys
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 
 from data_structures import Trie
 
@@ -23,13 +23,62 @@ class TokenType:
     has_literal: bool = False
     # False means this token should not show up in lexed output.
     lexable: bool = True
+    # TODO update comment
+    # By default these will be set to the first and last char of the lexeme (str). But for cases
+    # where that's a function, the user must provide them explicitly.
+    start: Optional[str] = None
+    # Function that accepts a str and returns the longest valid substring
+    # starting from the first character that can produce a token of the current type.
+    # If no valid substring is found, the returned value is an empty string.
+    # If a TokenType consists purely of a predefined str lexeme, e.g.
+    # LEFT_PAREN or EQUAL_EQUAL, this does NOT need to be defined explicitly. It's only needed for
+    # lexemes like STRING where we don't know upfront what characters the lexeme will consist of.
+    longest_leading_substring: Optional[Callable] = None
+
+    def __post_init__(self):
+        if isinstance(self.lexeme, str):
+            if self.start is not None:
+                raise ValueError(
+                    f"`start` should not be specifice when `lexeme` is a str. "
+                    f"Got start={self.start}."
+                )
+            self.start = self.lexeme[0]
+        else:
+            if self.start is None:
+                raise ValueError(f"`start` cannot be None when `lexeme` is not a str.")
+
+        if not self.longest_leading_substring:
+            if not isinstance(self.lexeme, str):
+                raise ValueError(
+                    "`longest_leading_substring` must be provided when `lexeme` is not a string."
+                )
+            self.longest_leading_substring = self._default_longest_leading_substring
+
+    def _default_longest_leading_substring(self, text: str) -> str:
+        """The default way to get the longest leading substring for lexemes whose content is known
+        upfront, e.g. '>=' or '!'.
+        """
+        if text.startswith(self.lexeme):
+            return self.lexeme
+        return ""
+            
+
+def _string_longest_leading_substring(text: str) -> str:
+    """longest_leading_substring function for the STRING TokenType.
+    """
+    if not text[0] == '"':
+        return ""
+    for i, char in enumerate(text[1:], 1):
+        if char == '"':
+            return text[1:i]
+    return ""
 
 
 class TokenTypes:
 
     @classmethod
     @lru_cache()
-    def _lexemes2types(cls) -> dict:
+    def lexemes2types(cls) -> dict:
         # Returns a mapping from each lexeme (e.g. "{") to its corresponding TokenType object.
         # TODO: this breaks down for STRING type given current implementation where lexeme is a
         # lambda.
@@ -41,7 +90,7 @@ class TokenTypes:
     @classmethod
     def lexeme2type(cls, lexeme: str) -> TokenType:
         """Maps a single lexeme, e.g. "}", to its coresponding TokenType."""
-        return cls._lexemes2types()[lexeme]
+        return cls.lexemes2types()[lexeme]
 
     # Punctuators
     # (){};,+-*!===<=>=!=<>/.
@@ -77,13 +126,57 @@ class TokenTypes:
     NEWLINE = TokenType(name="TAB", lexeme="\n", lexable=False)
 
     # More complex types
-    STRING = TokenType(name="STRING", lexeme=lambda x: '"' + x + '"', has_literal=True)
+    STRING = TokenType(name="STRING", lexeme=lambda x: '"' + x + '"', has_literal=True,
+                       start='"', longest_leading_substring=_string_longest_leading_substring)
+
+
+
+# Hilariously over-engineered but 🤷‍♂️.
+# Sample usage: TYPES_TRIE.get("=")
+# returns a dict with "node" (TrieNode) key where `value` is a TokenType instance or None.
+# and "is_leaf" (bool). If is_leaf=True, `value` is not None and corresponds to a TokenType
+# that fits the string you passed in.
+TYPES_TRIE = Trie()
+for k, v in TokenTypes.lexemes2types().items():
+    if not isinstance(k, str):
+        k = v.start
+    TYPES_TRIE.add(k, v)
+    
+
+def token_type_candidates(text: str) -> Optional[type]:
+    """Given a multi-character line of source code, find the appropriate TokenType class.
+    Preference is given to classes that match more characters, e.g. "== 3" would return
+    TokenTypes.EQUAL_EQUAL rather than TokenTypes.EQUAL.
+    """
+    chars = deque(text)
+    active_nodes = [TYPES_TRIE.root]
+    # length (int) -> TokenType (type)
+    candidate_types = {}
+    n_seen = 0
+    while chars and active_nodes:
+        char = chars.popleft()
+        n_seen += 1
+        new_nodes = []
+        logger.debug(f"char={char}, n_active=({len(active_nodes)})")
+        for node in active_nodes:
+            try:
+                new_nodes.append(node[char])
+                if node[char].value:
+                    candidate_types[n_seen] = node[char].value
+            except KeyError:
+                logger.debug(f'Node {node} has no edge for char {char!r}.')
+        active_nodes = new_nodes
+    if not candidate_types:
+        return None
+        
+    _, cls = max(candidate_types.items(), key=lambda x: x[0])
+    return cls
 
 
 class Token:
 
-    def __init__(self, value: str):
-        self.token_type = TokenTypes.lexeme2type(value)
+    def __init__(self, value: str, token_type: Optional[type] = None):
+        self.token_type = token_type or TokenTypes.lexeme2type(value)
         self.value = value
 
     def lexed(self) -> str:
@@ -103,6 +196,20 @@ class Token:
             res += "null"
         return res
 
+    def __str__(self):
+        return f"{type(self).__name__}({self.value!r})"
+
+    @classmethod
+    def from_longest_leading_substring(cls, text: str):
+        token_type = token_type_candidates(text)
+        if not token_type:
+            raise ValueError(f"text {text!r} does not start with a valid token.")
+        substring = token_type.longest_leading_substring(text)
+        # Occurs if text starts with a valid start character but not a full token, e.g. '"abc'
+        # (notice it looks like it's starting a string but doesn't close it).
+        if not substring:
+            raise ValueError(f"text {text!r} does not start with a valid token.")
+        return cls(substring, token_type=token_type)
 
 """
 - currently we hardcode: try 2 chars, then try 1 if that fails, then error if that fails
