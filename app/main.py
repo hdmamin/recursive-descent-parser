@@ -5,6 +5,8 @@ import logging
 import sys
 from typing import Union, Callable
 
+from data_structures import Trie
+
 
 logger = logging.getLogger()
 logging.basicConfig()
@@ -27,17 +29,19 @@ class TokenTypes:
 
     @classmethod
     @lru_cache()
-    def _lexemes2names(cls) -> dict:
+    def _lexemes2types(cls) -> dict:
         # Returns a mapping from each lexeme (e.g. "{") to its corresponding TokenType object.
+        # TODO: this breaks down for STRING type given current implementation where lexeme is a
+        # lambda.
         return {
             v.lexeme: v for k, v in vars(cls).items()
             if k.isupper() and isinstance(v, TokenType)
         }
 
     @classmethod
-    def lexeme2name(cls, lexeme: str) -> TokenType:
+    def lexeme2type(cls, lexeme: str) -> TokenType:
         """Maps a single lexeme, e.g. "}", to its coresponding TokenType."""
-        return cls._lexemes2names()[lexeme]
+        return cls._lexemes2types()[lexeme]
 
     # Punctuators
     # (){};,+-*!===<=>=!=<>/.
@@ -79,7 +83,7 @@ class TokenTypes:
 class Token:
 
     def __init__(self, value: str):
-        self.token_type = TokenTypes.lexeme2name(value)
+        self.token_type = TokenTypes.lexeme2type(value)
         self.value = value
 
     def lexed(self) -> str:
@@ -100,6 +104,29 @@ class Token:
         return res
 
 
+"""
+- currently we hardcode: try 2 chars, then try 1 if that fails, then error if that fails
+- but we want to be able to capture arbitrarily long tokens (e.g. string values)
+- one thing we can do is let TokenType define a stopping condition. Then if we know the correct
+type upfront, we can just try adding chars until we hit that condition.
+    - one problem: currently we don't really have a good way to grab the correct token type upfront.
+    We just try a 2 char token type, then a char token type.
+    - in some cases there is ambiguity here. If we have an =, we could be in either "==" or "=".
+    - kind of smelling a Trie here. Like we traverse the trie until we hit a leaf node? But I guess
+    for some types like strings we have arbitrary/infinite valid sequences.
+        - but I guess even for strs we know they start with ". So that can still help us identify
+        the correct token type initially.
+- plan:
+    - construct a trie upfront of tokentypes
+    - when we get a new char, use the trie to select candidate token types (this should return a
+    node or raise error). We can step forward char by char and try to extend each candidate
+    token type.
+    - eventually, each candidate should either reveal itself to be not a match OR hit a leaf node.
+    We can then take the leaf node that uses the longest sequence.
+    - challenge: how to handle STRING type (the main one to benefit from this tbh)? Could place
+    types in Trie based on `lexeme or start_sequence`, where most types use the lexeme itself but
+    STRING and other dynamic lexemes can define this separately.
+"""
 def lex(source: str) -> dict:
     """Each str contains one line of lexed source code corresponding to a single token, e.g.
     'STRING "dog" dog'
@@ -141,7 +168,7 @@ def lex(source: str) -> dict:
             if lexed_item:
                 res.append(lexed_item)
         
-    res.append("EOF  null")
+    res.append(TokenTypes.EOF("").lexed())
     return {
         "lexed": res,
         "success": success,
