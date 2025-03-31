@@ -5,7 +5,7 @@ import logging
 import sys
 from typing import Union, Callable, Optional
 
-from data_structures import Trie
+from app.data_structures import Trie
 
 
 logger = logging.getLogger()
@@ -29,7 +29,7 @@ class TokenType:
     start: Optional[str] = None
     # Function that accepts a str and returns the longest valid substring
     # starting from the first character that can produce a token of the current type.
-    # If no valid substring is found, the returned value is an empty string.
+    # If no valid substring is found, the returned value must be None (NOT an empty str).
     # If a TokenType consists purely of a predefined str lexeme, e.g.
     # LEFT_PAREN or EQUAL_EQUAL, this does NOT need to be defined explicitly. It's only needed for
     # lexemes like STRING where we don't know upfront what characters the lexeme will consist of.
@@ -63,15 +63,15 @@ class TokenType:
         return ""
             
 
-def _string_longest_leading_substring(text: str) -> str:
+def _string_longest_leading_substring(text: str) -> Optional[str]:
     """longest_leading_substring function for the STRING TokenType.
     """
     if not text[0] == '"':
-        return ""
+        return None
     for i, char in enumerate(text[1:], 1):
         if char == '"':
             return text[1:i]
-    return ""
+    return None
 
 
 class TokenTypes:
@@ -111,7 +111,6 @@ class TokenTypes:
     GREATER = TokenType(name="GREATER", lexeme=">")
     SLASH = TokenType(name="SLASH", lexeme="/")
     DOT = TokenType(name="DOT", lexeme=".")
-    EOF = TokenType(name="EOF", lexeme=" ")
 
     # Assignment and equality operators
     EQUAL = TokenType(name="EQUAL", lexeme="=")
@@ -128,7 +127,6 @@ class TokenTypes:
     # More complex types
     STRING = TokenType(name="STRING", lexeme=lambda x: '"' + x + '"', has_literal=True,
                        start='"', longest_leading_substring=_string_longest_leading_substring)
-
 
 
 # Hilariously over-engineered but 🤷‍♂️.
@@ -179,6 +177,22 @@ class Token:
         self.token_type = token_type or TokenTypes.lexeme2type(value)
         self.value = value
 
+    def lexeme(self) -> str:
+        """Returns the second value for our lexed display format:
+        <token_type> <lexeme> <literal>
+        """
+        if isinstance(self.token_type.lexeme, str):
+            return self.token_type.lexeme
+        return self.token_type.lexeme(self.value)
+
+    def literal(self) -> str:
+        """Returns the third value for our lexed display format:
+        <token_type> <lexeme> <literal>
+        """
+        if self.token_type.has_literal:
+            return self.value
+        return "null"
+
     def lexed(self) -> str:
         """Contains lexed code corresponding to one token, consisting of
         <token_type> <lexeme> <literal>
@@ -189,15 +203,14 @@ class Token:
         if not self.token_type.lexable:
             return ""
 
-        res = f"{self.token_type.name} {self.token_type.lexeme} "
-        if self.token_type.has_literal:
-            res += self.value
-        else:
-            res += "null"
-        return res
+        return f"{self.token_type.name} {self.lexeme()} {self.literal()}"
 
     def __str__(self):
         return f"{type(self).__name__}({self.value!r})"
+
+    def __len__(self):
+        # Remember some, like STRING, have additional characters that are not present in self.value.
+        return len(self.lexeme())
 
     @classmethod
     def from_longest_leading_substring(cls, text: str):
@@ -206,8 +219,9 @@ class Token:
             raise ValueError(f"text {text!r} does not start with a valid token.")
         substring = token_type.longest_leading_substring(text)
         # Occurs if text starts with a valid start character but not a full token, e.g. '"abc'
-        # (notice it looks like it's starting a string but doesn't close it).
-        if not substring:
+        # (notice it looks like it's starting a string but doesn't close it). Do not use `if not`
+        # syntax here because an empty string can be a valid token.
+        if substring is None:
             raise ValueError(f"text {text!r} does not start with a valid token.")
         return cls(substring, token_type=token_type)
 
@@ -252,30 +266,40 @@ def lex(source: str) -> dict:
         # Iterate over characters in a line of source code.
         while i <= max_idx:
             lexed_item = ""
-            token = None
+            # TODO: part of old logic, hopefully can rm
+            # token = None
             try:
-                chunk = line[i:i+2]
-                # TODO: this logic will prob need to change as we add support for longer lexemes and
-                # multilexed_item code, but for current goal of supporting comments it should work.
-                if chunk == "//":
-                    # Skip to next line of source code.
-                    break
-                token = Token(chunk)
-                # Usually 2, but as we near the end of the str it could be less.
-                i += len(chunk)
-            except KeyError:
-                try:
-                    token = Token(line[i])
-                except KeyError:
-                    lexed_item = f"[line {line_num}] Error: Unexpected character: {line[i]}"
-                    success = False
-                finally:
-                    i += 1
-            lexed_item = lexed_item or token.lexed()
+                token = Token.from_longest_leading_substring(line[i:])
+                lexed_item = token.lexed()
+                i += len(token)
+            except ValueError:
+                lexed_item = f"[line {line_num}] Error: Unexpected character: {line[i]}"
+                success = False
+                i += 1
+
+            # try:
+            #     chunk = line[i:i+2]
+            #     # TODO: this logic will prob need to change as we add support for longer lexemes and
+            #     # multilexed_item code, but for current goal of supporting comments it should work.
+            #     if chunk == "//":
+            #         # Skip to next line of source code.
+            #         break
+            #     token = Token(chunk)
+            #     # Usually 2, but as we near the end of the str it could be less.
+            #     i += len(chunk)
+            # except KeyError:
+            #     try:
+            #         token = Token(line[i])
+            #     except KeyError:
+            #         lexed_item = f"[line {line_num}] Error: Unexpected character: {line[i]}"
+            #         success = False
+            #     finally:
+            #         i += 1
+            # lexed_item = lexed_item or token.lexed()
             if lexed_item:
                 res.append(lexed_item)
         
-    res.append(TokenTypes.EOF("").lexed())
+    res.append("EOF  null")
     return {
         "lexed": res,
         "success": success,
