@@ -24,12 +24,16 @@ class TokenType:
     # False means this token should not show up in lexed output.
     lexable: bool = True
     # TODO update comment
-    # By default these will be set to the first and last char of the lexeme (str). But for cases
-    # where that's a function, the user must provide them explicitly.
+    # By default this will be set to the first char of the lexeme (str). But for cases
+    # where that's a function, the user must provide it explicitly.
     start: Optional[str] = None
     # Function that accepts a str and returns the longest valid substring
     # starting from the first character that can produce a token of the current type.
+    # TODO: in practice I think returning None should not be necessary because by the time we
+    # select a tokentype cls we should know the first char at least is correct. But need to confirm.
     # If no valid substring is found, the returned value must be None (NOT an empty str).
+    # It can also raise an UnterminatedLexeme error if appropriate (e.g. source code '"abc' opens
+    # but does not close a str).
     # If a TokenType consists purely of a predefined str lexeme, e.g.
     # LEFT_PAREN or EQUAL_EQUAL, this does NOT need to be defined explicitly. It's only needed for
     # lexemes like STRING where we don't know upfront what characters the lexeme will consist of.
@@ -60,8 +64,15 @@ class TokenType:
         """
         if text.startswith(self.lexeme):
             return self.lexeme
-        return ""
+        return None
             
+
+class UnterminatedLexeme(Exception):
+    """For when we encounter a lexeme that starts with a valid character but does not end with one.
+    This lets us raise a single error for the whole sequence rather than a separate one for each
+    character.
+    """
+
 
 def _string_longest_leading_substring(text: str) -> Optional[str]:
     """longest_leading_substring function for the STRING TokenType.
@@ -71,7 +82,7 @@ def _string_longest_leading_substring(text: str) -> Optional[str]:
     for i, char in enumerate(text[1:], 1):
         if char == '"':
             return text[1:i]
-    return None
+    raise UnterminatedLexeme("Unterminated string.")
 
 
 class TokenTypes:
@@ -141,7 +152,7 @@ for k, v in TokenTypes.lexemes2types().items():
     TYPES_TRIE.add(k, v)
     
 
-def token_type_candidates(text: str) -> Optional[type]:
+def infer_token_type(text: str) -> Optional[type]:
     """Given a multi-character line of source code, find the appropriate TokenType class.
     Preference is given to classes that match more characters, e.g. "== 3" would return
     TokenTypes.EQUAL_EQUAL rather than TokenTypes.EQUAL.
@@ -214,15 +225,16 @@ class Token:
 
     @classmethod
     def from_longest_leading_substring(cls, text: str):
-        token_type = token_type_candidates(text)
+        token_type = infer_token_type(text)
         if not token_type:
-            raise ValueError(f"text {text!r} does not start with a valid token.")
+            raise ValueError(f"Unexpected character: {text[0]}")
+        # Note that the called method could still raise an error.
         substring = token_type.longest_leading_substring(text)
-        # Occurs if text starts with a valid start character but not a full token, e.g. '"abc'
-        # (notice it looks like it's starting a string but doesn't close it). Do not use `if not`
-        # syntax here because an empty string can be a valid token.
         if substring is None:
-            raise ValueError(f"text {text!r} does not start with a valid token.")
+            raise AssertionError(
+                f"Unexpected behavior: inferred token_type={token_type} but could not find a valid "
+                f"leading substring from {text!r}."
+            )
         return cls(substring, token_type=token_type)
 
 """
@@ -268,6 +280,12 @@ def lex(source: str) -> dict:
             lexed_item = ""
             # TODO: part of old logic, hopefully can rm
             # token = None
+
+            # Possibly could handle this as a "token" but for now just hardcode it.
+            if i < max_idx and line[i:i+2] == "//":
+                # Skip to next line of source code.
+                break
+
             try:
                 token = Token.from_longest_leading_substring(line[i:])
                 lexed_item = token.lexed()
@@ -276,6 +294,13 @@ def lex(source: str) -> dict:
                 lexed_item = f"[line {line_num}] Error: Unexpected character: {line[i]}"
                 success = False
                 i += 1
+            except UnterminatedLexeme as e:
+                lexed_item = f"[line {line_num}] Error: {e.args[0]}"
+                success = False
+                # TODO: might need to revisit this logic but at least for strings I think it's ok.
+                # We don't want to break like we did for comments because we still need to add
+                # our lexed_item to res down below.
+                i = max_idx + 1
 
             # try:
             #     chunk = line[i:i+2]
