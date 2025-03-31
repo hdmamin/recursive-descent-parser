@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 import logging
 import sys
+from typing import Union, Callable
 
 
 logger = logging.getLogger()
@@ -13,7 +14,10 @@ logging.basicConfig()
 class TokenType:
 
     name: str
-    lexeme: str
+    # If a callable, this should be a function that takes one arg (the source token string) and
+    # returns a string (the corresponding lexeme to display).
+    lexeme: Union[str, Callable]
+    # Most token types have literal=None, but for some (e.g. strings) it's the source token itself.
     has_literal: bool = False
     # False means this token should not show up in lexed output.
     lexable: bool = True
@@ -68,6 +72,9 @@ class TokenTypes:
     TAB = TokenType(name="TAB", lexeme="\t", lexable=False)
     NEWLINE = TokenType(name="TAB", lexeme="\n", lexable=False)
 
+    # More complex types
+    STRING = TokenType(name="STRING", lexeme=lambda x: '"' + x + '"', has_literal=True)
+
 
 class Token:
 
@@ -117,7 +124,7 @@ def lex(source: str) -> dict:
                 # TODO: this logic will prob need to change as we add support for longer lexemes and
                 # multilexed_item code, but for current goal of supporting comments it should work.
                 if chunk == "//":
-                    # Skip to next line.
+                    # Skip to next line of source code.
                     break
                 token = Token(chunk)
                 # Usually 2, but as we near the end of the str it could be less.
