@@ -23,7 +23,6 @@ class TokenType:
     has_literal: bool = False
     # False means this token should not show up in lexed output.
     lexable: bool = True
-    # TODO update comment
     # By default this will be set to the first char of the lexeme (str). But for cases
     # where that's a function, the user must provide it explicitly.
     start: Optional[str] = None
@@ -267,7 +266,8 @@ def lex(source: str) -> dict:
     res = []
     success = True
     line_num = 0
-    # TODO: might need to check if the newline is in a str once we support those?
+    # TODO: might need to check if the newline is in a str once we support those? Maybe can
+    # splitlines at the f.read() level and pass in list[str] to this func.
     lines = deque(source.splitlines())
     while lines:
         line = lines.popleft()
@@ -278,8 +278,6 @@ def lex(source: str) -> dict:
         # Iterate over characters in a line of source code.
         while i <= max_idx:
             lexed_item = ""
-            # TODO: part of old logic, hopefully can rm
-            # token = None
 
             # Possibly could handle this as a "token" but for now just hardcode it.
             if i < max_idx and line[i:i+2] == "//":
@@ -302,25 +300,6 @@ def lex(source: str) -> dict:
                 # our lexed_item to res down below.
                 i = max_idx + 1
 
-            # try:
-            #     chunk = line[i:i+2]
-            #     # TODO: this logic will prob need to change as we add support for longer lexemes and
-            #     # multilexed_item code, but for current goal of supporting comments it should work.
-            #     if chunk == "//":
-            #         # Skip to next line of source code.
-            #         break
-            #     token = Token(chunk)
-            #     # Usually 2, but as we near the end of the str it could be less.
-            #     i += len(chunk)
-            # except KeyError:
-            #     try:
-            #         token = Token(line[i])
-            #     except KeyError:
-            #         lexed_item = f"[line {line_num}] Error: Unexpected character: {line[i]}"
-            #         success = False
-            #     finally:
-            #         i += 1
-            # lexed_item = lexed_item or token.lexed()
             if lexed_item:
                 res.append(lexed_item)
         
