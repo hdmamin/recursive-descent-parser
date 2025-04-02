@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from collections import deque
 from dataclasses import dataclass
 from functools import lru_cache
@@ -19,13 +20,18 @@ class TokenType:
     # If a callable, this should be a function that takes one arg (the source token string) and
     # returns a string (the corresponding lexeme to display).
     lexeme: Union[str, Callable]
-    # Most token types have literal=None, but for some (e.g. strings) it's the source token itself.
-    has_literal: bool = False
+    # Most token types have literal="null" (the default), but we can also pass in a function that
+    # accepts a single arg (a str consisting of the raw characters the token is comprised of).
+    # e.g. for strings this is the identity
+    # function, for numbers we do some additional processing to make sure ints have a trailing ".0"
+    literal: Union[str, Callable] = "null"
     # False means this token should not show up in lexed output.
     lexable: bool = True
     # By default this will be set to the first char of the lexeme (str). But for cases
-    # where that's a function, the user must provide it explicitly.
-    start: Optional[str] = None
+    # where that's a function, the user must provide it explicitly, either as a string if that's
+    # known upfront (e.g. STRING starts with ") or tuple[str] if there are multiple valid
+    # characters (e.g. NUMBER).
+    start: Optional[Union[tuple, str]] = None
     # Function that accepts a str and returns the longest valid substring
     # starting from the first character that can produce a token of the current type.
     # TODO: in practice I think returning None should not be necessary because by the time we
@@ -42,7 +48,7 @@ class TokenType:
         if isinstance(self.lexeme, str):
             if self.start is not None:
                 raise ValueError(
-                    f"`start` should not be specifice when `lexeme` is a str. "
+                    f"`start` should not be specified when `lexeme` is a str. "
                     f"Got start={self.start}."
                 )
             self.start = self.lexeme[0]
@@ -84,14 +90,56 @@ def _string_longest_leading_substring(text: str) -> Optional[str]:
     raise UnterminatedLexeme("Unterminated string.")
 
 
+def _number_longest_leading_substring(text: str) -> Optional[str]:
+    """longest_leading_substring function for the NUMBER TokenType.
+
+    123 -> 123
+    123.4 -> 1234
+    123.a -> 123
+    123. -> 123
+    a -> None
+    . -> None
+    """
+    if not text[0].isdigit():
+        return None
+
+    # TODO: confirm if needs to end with space/newline or if valid to end with any non-digit
+    # This could effect the if clause and/or the final return value (could possibly need to raise
+    # an UnterminatedLexeme error there?)
+    seen_dot = False
+    max_idx = len(text) - 1
+    for i, char in enumerate(text):
+        is_dot = char == "."
+        if (
+            (is_dot and i == max_idx)  # lox numbers can't end with dot
+            or (is_dot and not text[i+1].isdigit())  # non-digit after dot is invalid
+            or not (char.isdigit() or is_dot)  # don't include non-digit non-dot characters
+        ):
+            return text[:i]
+        seen_dot = seen_dot or is_dot
+    return text
+
+
+def _number_format_literal(text: str) -> str:
+    if "." in text:
+        # Based on tests, it appears Lox won't let us end with multiple 0s after the decimal.
+        text = text.rstrip("0")
+        if text.endswith("."):
+            text += "0"
+        return text
+    else:
+        # Lox expects ints to be displayed with a trailing 0 decimal.
+        return text + ".0"
+
+
 class TokenTypes:
 
     @classmethod
     @lru_cache()
     def lexemes2types(cls) -> dict:
         # Returns a mapping from each lexeme (e.g. "{") to its corresponding TokenType object.
-        # TODO: this breaks down for STRING type given current implementation where lexeme is a
-        # lambda.
+        # TODO: this breaks down a bit for STRING type given current implementation where lexeme
+        # is a lambda. Same with NUMBER type.
         return {
             v.lexeme: v for k, v in vars(cls).items()
             if k.isupper() and isinstance(v, TokenType)
@@ -135,20 +183,45 @@ class TokenTypes:
     NEWLINE = TokenType(name="TAB", lexeme="\n", lexable=False)
 
     # More complex types
-    STRING = TokenType(name="STRING", lexeme=lambda x: '"' + x + '"', has_literal=True,
-                       start='"', longest_leading_substring=_string_longest_leading_substring)
+    STRING = TokenType(
+        name="STRING",
+        lexeme=lambda x: '"' + x + '"',
+        literal=lambda x: x,
+        start='"',
+        longest_leading_substring=_string_longest_leading_substring
+    )
+    NUMBER = TokenType(
+        name="NUMBER",
+        lexeme=lambda x: x,
+        literal=_number_format_literal,
+        # Confirmed it cannot start with a "."
+        start=tuple(str(i) for i in range(10)),
+        longest_leading_substring=_number_longest_leading_substring
+    )
 
 
-# Hilariously over-engineered but 🤷‍♂️.
+# Hilariously over-engineered but 🤷‍♂️, just having fun.
+# Each edge corresponds to a single character.
+# If a TokenType has multiple valid start characters (like NUMBER), each of those gets its own
+# outgoing edge. (TODO: guessing this logic will break down at some point though, we're already
+# pushing it.)
 # Sample usage: TYPES_TRIE.get("=")
 # returns a dict with "node" (TrieNode) key where `value` is a TokenType instance or None.
 # and "is_leaf" (bool). If is_leaf=True, `value` is not None and corresponds to a TokenType
 # that fits the string you passed in.
 TYPES_TRIE = Trie()
 for k, v in TokenTypes.lexemes2types().items():
+    kwargs = {k: v}
     if not isinstance(k, str):
-        k = v.start
-    TYPES_TRIE.add(k, v)
+        if isinstance(v.start, str):
+            kwargs = {v.start: v}
+        elif isinstance(v.start, Iterable):
+            kwargs = {val: v for val in v.start}
+        else:
+            raise TypeError(
+                f"Encountered unexpected start type {type(v.start)} for TokenType {v.name}."
+            )
+    TYPES_TRIE.update(kwargs)
     
 
 def infer_token_type(text: str) -> Optional[type]:
@@ -184,9 +257,21 @@ def infer_token_type(text: str) -> Optional[type]:
 class Token:
 
     def __init__(self, value: str, token_type: Optional[type] = None):
+        """
+        Strongly recommend specifying token_type explicitly.
+        # TODO: consider removing implicit option?
+        """
         self.token_type = token_type or TokenTypes.lexeme2type(value)
         self.value = value
 
+    @property
+    def name(self) -> str:
+        """Returns the first value for our lexed display format:
+        <token_type> <lexeme> <literal>
+        """
+        return self.token_type.name
+
+    @property
     def lexeme(self) -> str:
         """Returns the second value for our lexed display format:
         <token_type> <lexeme> <literal>
@@ -195,13 +280,14 @@ class Token:
             return self.token_type.lexeme
         return self.token_type.lexeme(self.value)
 
+    @property
     def literal(self) -> str:
         """Returns the third value for our lexed display format:
         <token_type> <lexeme> <literal>
         """
-        if self.token_type.has_literal:
-            return self.value
-        return "null"
+        if isinstance(self.token_type.literal, str):
+            return self.token_type.literal
+        return self.token_type.literal(self.value)
 
     def lexed(self) -> str:
         """Contains lexed code corresponding to one token, consisting of
@@ -213,14 +299,15 @@ class Token:
         if not self.token_type.lexable:
             return ""
 
-        return f"{self.token_type.name} {self.lexeme()} {self.literal()}"
+        return f"{self.name} {self.lexeme} {self.literal}"
 
-    def __str__(self):
-        return f"{type(self).__name__}({self.value!r})"
+    def __repr__(self):
+        return f"{type(self).__name__}(value={self.value!r})"
 
     def __len__(self):
-        # Remember some, like STRING, have additional characters that are not present in self.value.
-        return len(self.lexeme())
+        # Remember some, like STRING, have additional characters that are not present in self.value
+        # (in the case of STRING these are leading/trailing " marks).
+        return len(self.lexeme)
 
     @classmethod
     def from_longest_leading_substring(cls, text: str):
