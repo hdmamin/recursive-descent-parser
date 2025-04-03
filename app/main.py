@@ -1,3 +1,4 @@
+from string import ascii_letters
 from collections.abc import Iterable
 from collections import deque
 from dataclasses import dataclass
@@ -132,6 +133,13 @@ def _number_format_literal(text: str) -> str:
         return text + ".0"
 
 
+def _identifier_longest_leading_substring(text: str) -> str:
+    for i, char in enumerate(text):
+        if not (char.isalnum() or char == "_"):
+            return text[:i]
+    return text
+
+
 class TokenTypes:
 
     @classmethod
@@ -197,6 +205,13 @@ class TokenTypes:
         # Confirmed it cannot start with a "."
         start=tuple(str(i) for i in range(10)),
         longest_leading_substring=_number_longest_leading_substring
+    )
+    # Varnames, function names, etc.
+    IDENTIFIER = TokenType(
+        name="IDENTIFIER",
+        lexeme=lambda x: x,
+        start=tuple(ascii_letters + "_"),
+        longest_leading_substring=_identifier_longest_leading_substring
     )
 
 
