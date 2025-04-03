@@ -243,6 +243,13 @@ def infer_token_type(text: str) -> Optional[type]:
     """Given a multi-character line of source code, find the appropriate TokenType class.
     Preference is given to classes that match more characters, e.g. "== 3" would return
     TokenTypes.EQUAL_EQUAL rather than TokenTypes.EQUAL.
+
+    Dev notes:
+    - when we look at a new char, we use the trie to select candidate token types (this should find
+    a node or None). We do this iteratively, stepping forward char by char and trying to extend
+    each candidate token type.
+    - eventually, each candidate should either reveal itself to be not a match OR hit a leaf node.
+    We can then take the leaf node that uses the longest sequence.
     """
     chars = deque(text)
     active_nodes = [TYPES_TRIE.root]
@@ -338,29 +345,7 @@ class Token:
             )
         return cls(substring, token_type=token_type)
 
-"""
-- currently we hardcode: try 2 chars, then try 1 if that fails, then error if that fails
-- but we want to be able to capture arbitrarily long tokens (e.g. string values)
-- one thing we can do is let TokenType define a stopping condition. Then if we know the correct
-type upfront, we can just try adding chars until we hit that condition.
-    - one problem: currently we don't really have a good way to grab the correct token type upfront.
-    We just try a 2 char token type, then a char token type.
-    - in some cases there is ambiguity here. If we have an =, we could be in either "==" or "=".
-    - kind of smelling a Trie here. Like we traverse the trie until we hit a leaf node? But I guess
-    for some types like strings we have arbitrary/infinite valid sequences.
-        - but I guess even for strs we know they start with ". So that can still help us identify
-        the correct token type initially.
-- plan:
-    - construct a trie upfront of tokentypes
-    - when we get a new char, use the trie to select candidate token types (this should return a
-    node or raise error). We can step forward char by char and try to extend each candidate
-    token type.
-    - eventually, each candidate should either reveal itself to be not a match OR hit a leaf node.
-    We can then take the leaf node that uses the longest sequence.
-    - challenge: how to handle STRING type (the main one to benefit from this tbh)? Could place
-    types in Trie based on `lexeme or start_sequence`, where most types use the lexeme itself but
-    STRING and other dynamic lexemes can define this separately.
-"""
+
 def lex(source: str) -> dict:
     """Each str contains one line of lexed source code corresponding to a single token, e.g.
     'STRING "dog" dog'
