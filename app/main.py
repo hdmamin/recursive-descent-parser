@@ -229,21 +229,22 @@ class ReservedTokenTypes:
     # selection logic, forget if it counts number of edges/nodes or str length.
     # TODO: think default leading_substring func *should* work but check. If not maybe can write
     # one leading_substring func or partial and use for all of them?
-    CLASS = TokenType(name="AND", lexeme="and", start="and")
-    ELSE = TokenType(name="ELSE", lexeme="else", start="else")
-    FALSE = TokenType(name="FALSE", lexeme="false", start="false") 
-    FOR = TokenType(name="FOR", lexeme="for", start="for")
-    FUN = TokenType(name="FUN", lexeme="fun", start="fun")
-    IF = TokenType(name="IF", lexeme="if", start="if")
-    NIL = TokenType(name="NIL", lexeme="nil", start="nil")
-    OR = TokenType(name="OR", lexeme="or", start="or")
-    PRINT = TokenType(name="PRINT", lexeme="print", start="print")
-    RETURN = TokenType(name="RETURN", lexeme="return", start="return")
-    SUPER = TokenType(name="SUPER", lexeme="super", start="super")
-    THIS = TokenType(name="THIS", lexeme="this", start="this")
-    TRUE = TokenType(name="TRUE", lexeme="true", start="true")
-    VAR = TokenType(name="VAR", lexeme="var", start="var")
-    WHILE = TokenType(name="WHILE", lexeme="while", start="while")
+    AND = TokenType(name="AND", lexeme="and")
+    CLASS = TokenType(name="CLASS", lexeme="class")
+    ELSE = TokenType(name="ELSE", lexeme="else")
+    FALSE = TokenType(name="FALSE", lexeme="false") 
+    FOR = TokenType(name="FOR", lexeme="for")
+    FUN = TokenType(name="FUN", lexeme="fun")
+    IF = TokenType(name="IF", lexeme="if")
+    NIL = TokenType(name="NIL", lexeme="nil")
+    OR = TokenType(name="OR", lexeme="or")
+    PRINT = TokenType(name="PRINT", lexeme="print")
+    RETURN = TokenType(name="RETURN", lexeme="return")
+    SUPER = TokenType(name="SUPER", lexeme="super")
+    THIS = TokenType(name="THIS", lexeme="this")
+    TRUE = TokenType(name="TRUE", lexeme="true")
+    VAR = TokenType(name="VAR", lexeme="var")
+    WHILE = TokenType(name="WHILE", lexeme="while")
 
     @classmethod
     @lru_cache
@@ -266,27 +267,30 @@ class ReservedTokenTypes:
 # returns a dict with "node" (TrieNode) key where `value` is a TokenType instance or None.
 # and "is_leaf" (bool). If is_leaf=True, `value` is not None and corresponds to a TokenType
 # that fits the string you passed in.
-TYPES_TRIE = Trie()
-for k, token_type in TokenTypes.lexemes2types().items():
-    kwargs = {k: token_type}
-    if not isinstance(k, str):
-        if isinstance(token_type.start, str):
-            kwargs = {token_type.start: token_type}
-        elif isinstance(token_type.start, Iterable):
-            kwargs = {val: token_type for val in token_type.start}
-        else:
-            raise TypeError(
-                f"Encountered unexpected start type {type(token_type.start)} for "
-                f"TokenType {token_type.name}."
-            )
-    # TODO: this is a problem for reserved words, where I intended start to be a single edge rather
-    # than one per char. May require a significant logic change or discarding ridiculous trie
-    # approach entirely.
-    TYPES_TRIE.update(kwargs)
+def create_trie(token_types_cls: type) -> Trie:
+    trie = Trie()
+    for k, token_type in token_types_cls.lexemes2types().items():
+        kwargs = {k: token_type}
+        if not isinstance(k, str):
+            if isinstance(token_type.start, str):
+                kwargs = {token_type.start: token_type}
+            elif isinstance(token_type.start, Iterable):
+                kwargs = {val: token_type for val in token_type.start}
+            else:
+                raise TypeError(
+                    f"Encountered unexpected start type {type(token_type.start)} for "
+                    f"TokenType {token_type.name}."
+                )
+        trie.update(kwargs)
+    return trie
+
+
+TYPES_TRIE = create_trie(TokenTypes)
+RESERVED_TYPES_TRIE = create_trie(ReservedTokenTypes)
     
 
-def infer_token_type(text: str) -> Optional[type]:
-    """Given a multi-character line of source code, find the appropriate TokenType class.
+def infer_token_type(text: str, trie: Optional[Trie] = None) -> Optional[type]:
+    """Given a multi-character line of source code, find the appropriate next TokenType class.
     Preference is given to classes that match more characters, e.g. "== 3" would return
     TokenTypes.EQUAL_EQUAL rather than TokenTypes.EQUAL.
 
@@ -297,8 +301,9 @@ def infer_token_type(text: str) -> Optional[type]:
     - eventually, each candidate should either reveal itself to be not a match OR hit a leaf node.
     We can then take the leaf node that uses the longest sequence.
     """
+    trie = trie or TYPES_TRIE
     chars = deque(text)
-    active_nodes = [TYPES_TRIE.root]
+    active_nodes = [trie.root]
     # length (int) -> TokenType (type)
     candidate_types = {}
     n_seen = 0
@@ -379,7 +384,7 @@ class Token:
 
     @classmethod
     def from_longest_leading_substring(cls, text: str):
-        token_type = infer_token_type(text)
+        token_type = infer_token_type(text, RESERVED_TYPES_TRIE) or infer_token_type(text)
         if not token_type:
             raise ValueError(f"Unexpected character: {text[0]}")
         # Note that the called method could still raise an error.
