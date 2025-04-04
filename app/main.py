@@ -47,12 +47,15 @@ class TokenType:
 
     def __post_init__(self):
         if isinstance(self.lexeme, str):
-            if self.start is not None:
-                raise ValueError(
-                    f"`start` should not be specified when `lexeme` is a str. "
+            if self.start is None:
+                self.start = self.lexeme[0]
+            else:
+                # TODO: prob remove this after initial dev is done. Allowing it because reserved
+                # words do set a non-none value.
+                logger.warning(
+                    f"`start` should often not be specified when `lexeme` is a str. "
                     f"Got start={self.start}."
                 )
-            self.start = self.lexeme[0]
         else:
             if self.start is None:
                 raise ValueError(f"`start` cannot be None when `lexeme` is not a str.")
@@ -215,6 +218,45 @@ class TokenTypes:
     )
 
 
+class ReservedTokenTypes:
+
+    # Reserved words
+    # These are a bit different from other TokenTypes in that we don't place them in the trie
+    # in order to avoid clashes with IDENTIFIER. We handle these separately in infer_token_type.
+    # Note that we depart slightly from old `start` conventions and use the whole word as the
+    # start char.
+    # TODO: will have to see if this works with my trie scheme. Might need to adjust length
+    # selection logic, forget if it counts number of edges/nodes or str length.
+    # TODO: think default leading_substring func *should* work but check. If not maybe can write
+    # one leading_substring func or partial and use for all of them?
+    CLASS = TokenType(name="AND", lexeme="and", start="and")
+    ELSE = TokenType(name="ELSE", lexeme="else", start="else")
+    FALSE = TokenType(name="FALSE", lexeme="false", start="false") 
+    FOR = TokenType(name="FOR", lexeme="for", start="for")
+    FUN = TokenType(name="FUN", lexeme="fun", start="fun")
+    IF = TokenType(name="IF", lexeme="if", start="if")
+    NIL = TokenType(name="NIL", lexeme="nil", start="nil")
+    OR = TokenType(name="OR", lexeme="or", start="or")
+    PRINT = TokenType(name="PRINT", lexeme="print", start="print")
+    RETURN = TokenType(name="RETURN", lexeme="return", start="return")
+    SUPER = TokenType(name="SUPER", lexeme="super", start="super")
+    THIS = TokenType(name="THIS", lexeme="this", start="this")
+    TRUE = TokenType(name="TRUE", lexeme="true", start="true")
+    VAR = TokenType(name="VAR", lexeme="var", start="var")
+    WHILE = TokenType(name="WHILE", lexeme="while", start="while")
+
+    @classmethod
+    @lru_cache
+    def lexemes2types(cls):
+        # Duplicates logic from TokenTypes but I don't want to inherit from that because I don't
+        # want to include non-keywords here. Maybe can change this to a single standalone function
+        # later or find a more elegant solution.
+        return {
+            type_.lexeme: type_ for name, type_ in vars(cls).items()
+            if name.isupper() and isinstance(type_, TokenType)
+        }
+
+
 # Hilariously over-engineered but 🤷‍♂️, just having fun.
 # Each edge corresponds to a single character.
 # If a TokenType has multiple valid start characters (like NUMBER), each of those gets its own
@@ -225,17 +267,21 @@ class TokenTypes:
 # and "is_leaf" (bool). If is_leaf=True, `value` is not None and corresponds to a TokenType
 # that fits the string you passed in.
 TYPES_TRIE = Trie()
-for k, v in TokenTypes.lexemes2types().items():
-    kwargs = {k: v}
+for k, token_type in TokenTypes.lexemes2types().items():
+    kwargs = {k: token_type}
     if not isinstance(k, str):
-        if isinstance(v.start, str):
-            kwargs = {v.start: v}
-        elif isinstance(v.start, Iterable):
-            kwargs = {val: v for val in v.start}
+        if isinstance(token_type.start, str):
+            kwargs = {token_type.start: token_type}
+        elif isinstance(token_type.start, Iterable):
+            kwargs = {val: token_type for val in token_type.start}
         else:
             raise TypeError(
-                f"Encountered unexpected start type {type(v.start)} for TokenType {v.name}."
+                f"Encountered unexpected start type {type(token_type.start)} for "
+                f"TokenType {token_type.name}."
             )
+    # TODO: this is a problem for reserved words, where I intended start to be a single edge rather
+    # than one per char. May require a significant logic change or discarding ridiculous trie
+    # approach entirely.
     TYPES_TRIE.update(kwargs)
     
 
