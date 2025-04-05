@@ -118,3 +118,28 @@ class Trie:
  
     def __repr__(self):
         return f'{type(self).__name__}(root={self.root})'
+
+
+class ASTNode:
+    """One node in an abstract syntax tree."""
+
+    def __init__(
+        self,
+        val: str,
+        left: Optional["ASTNode"] = None,
+        right: Optional["ASTNode"] = None
+    ):
+        self.val = val
+        self.left = left
+        self.right = right
+    
+    def __repr__(self):
+        return f"{type(self).__name__}(val={self.val!r})"
+
+
+# TODO: presumably we'll need to create something like this but don't really know what ux should
+# look like yet.
+# class AST:
+
+#     def __init__(self):
+#         self.root = ASTNode()

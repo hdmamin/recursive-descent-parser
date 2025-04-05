@@ -448,6 +448,36 @@ def lex(source: str) -> dict:
     }
 
 
+# TODO: start of parsing section, move to a different module after finishing codecrafters or
+# once I figure out how to more easily test locally.
+# TODO left off: start of 5.3
+class Expression:
+    pass
+
+
+@dataclass
+class Literal(Expression):
+    val: Token
+
+
+@dataclass
+class Unary(Expression):
+    op: Token
+    expr: Expression
+
+
+@dataclass
+class Binary(Expression):
+    expr_left: Expression
+    op: Token
+    expr_right: Expression
+
+
+@dataclass
+class Grouping(Expression):
+    expr: Expression
+
+
 def main():
     if len(sys.argv) < 3:
         print("Usage: ./your_program.sh tokenize <filename>", file=sys.stderr)
@@ -456,7 +486,7 @@ def main():
     command = sys.argv[1]
     filename = sys.argv[2]
 
-    if command != "tokenize":
+    if command not in {"tokenize", "parse"}:
         print(f"Unknown command: {command}", file=sys.stderr)
         exit(1)
 
@@ -466,12 +496,15 @@ def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
 
-    # Uncomment this block to pass the first stage
-    lexed = lex(file_contents)
-    for row in lexed["lexed"]:
-        print(row, file=sys.stderr if row.startswith("[line") else sys.stdout)
-    if not lexed["success"]:
-        exit(65)
+    if command == "tokenize":
+        lexed = lex(file_contents)
+        for row in lexed["lexed"]:
+            print(row, file=sys.stderr if row.startswith("[line") else sys.stdout)
+        if not lexed["success"]:
+            exit(65)
+    elif command == "parse":
+        pass
+        # TODO: skim section 6.2 (non-code parts) to understand what parse is supposed to do.
 
 
 if __name__ == "__main__":
