@@ -137,9 +137,7 @@ class ASTNode:
         return f"{type(self).__name__}(val={self.val!r})"
 
 
-# TODO: presumably we'll need to create something like this but don't really know what ux should
-# look like yet.
-# class AST:
+class AST:
 
-#     def __init__(self):
-#         self.root = ASTNode()
+    def __init__(self):
+        self.root = ASTNode(None)

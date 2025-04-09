@@ -7,7 +7,7 @@ import logging
 import sys
 from typing import Union, Callable, Optional
 
-from app.data_structures import Trie
+from app.data_structures import Trie, ASTNode, AST
 
 
 logger = logging.getLogger()
@@ -455,27 +455,177 @@ class Expression:
     pass
 
 
-@dataclass
+# TODO not sure any of these str formats are correct
+# TODO: don't love that some of these take a Token and some take an Expression. Not sure if that's
+# how it's intended to work.
 class Literal(Expression):
     val: Token
 
+    def __str__(self) -> str:
+        return self.val.lexeme
 
-@dataclass
+
 class Unary(Expression):
     op: Token
     expr: Expression
 
+    def __str__(self) -> str:
+        return "(" + self.op.lexeme + str(self.expr) + ")"
 
-@dataclass
+
 class Binary(Expression):
     expr_left: Expression
     op: Token
     expr_right: Expression
 
+    def __str__(self) -> str:
+        return "(" + str(self.expr_left) + self.op.lexeme + str(self.expr_right) + ")"
 
-@dataclass
+
 class Grouping(Expression):
     expr: Expression
+
+    def __str__(self) -> str:
+        return "(" + str(self.expr) + ")"
+
+
+class ASTPrinter:
+
+    @classmethod
+    def _postorder(cls, root: Optional[ASTNode]) -> list[str]:
+        if not root:
+            return []
+        return cls._postorder(root.left) + cls._postorder(root.right) + [root.val]
+
+    @classmethod
+    def pprint(cls, ast):
+        nodes = cls._postorder(ast.root)
+        # TODO eventually will need to construct AST of expressions and use their str methods
+        # in output, but need to implement parser first.
+        print(nodes)
+
+
+class Parser:
+    """
+    expression     → equality ;
+    equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+    comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+    term           → factor ( ( "-" | "+" ) factor )* ;
+    factor         → unary ( ( "/" | "*" ) unary )* ;
+    unary          → ( "!" | "-" ) unary
+                | primary ;
+    primary        → NUMBER | STRING | "true" | "false" | "nil"
+                | "(" expression ")" ;
+    """
+
+    def __init__(self, tokens: list[Token]):
+        self.tokens = tokens
+        self.current_idx = 0
+
+    def match(self, *token_types: TokenType) -> bool:
+        """Check if the current token has one fo the expected token_types. If so, increment the
+        index and return True. Otherwise return False without incrementing.
+        """
+        if self.tokens[self.current_idx].token_type in token_types:
+            self.current_idx += 1
+            return True
+        return False
+
+    def expression(self) -> Expression:
+        """
+        Rule:
+        expression → equality ;
+        """
+        # equality is the highest precedence (last to be evaluated) operation.
+        return self.equality()
+
+    def primary(self) -> Union[Literal, Grouping]:
+        """
+        Example:
+        "foo"
+
+        Rule:
+        primary → NUMBER | STRING | "true" | "false" | "nil"
+               | "(" expression ")" ;
+        """
+        token = self.tokens[self.current_idx]
+        # Reserved types
+        reserved_types = (
+            ReservedTokenTypes.FALSE,
+            ReservedTokenTypes.TRUE,
+            ReservedTokenTypes.NIL,
+        )
+        other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
+        if self.match(*reserved_types, *other_types):
+            return Literal(token)
+        
+        if self.match(TokenTypes.LEFT_PAREN):
+            expr = self.expression()
+            if not self.match(TokenTypes.RIGHT_PAREN):
+                raise TypeError(
+                    f"Expected type {TokenTypes.RIGHT_PAREN}, found "
+                    f"{self.tokens[self.current_idx].token_type}."
+                )
+            return Grouping(expr)
+
+    def unary(self) -> Unary:
+        """
+        Example:
+        !foo
+
+        Rule:
+        unary → ( "!" | "-" ) unary
+               | primary ;
+        """
+        token = self.tokens[self.current_idx]
+        if self.match(TokenTypes.BANG, TokenTypes.MINUS):
+            return Unary(token, self.unary())
+
+        return self.primary()
+
+    def factor(self) -> Binary:
+        """
+        Example:
+        3 / 4        
+
+        Rule:
+        factor → unary ( ( "/" | "*" ) unary )* ;
+        """
+        left = self.unary()
+        while self.match(TokenTypes.SLASH, TokenTypes.STAR):
+            left = Binary(left, self.tokens[self.current_idx - 1], self.unary())
+        return left
+
+    def term(self) -> Binary:
+        """
+        Example:
+        3 + 4        
+
+        Rule:
+        factor → unary ( ( "+" | "-" ) unary )* ;
+        """
+        left = self.unary()
+        while self.match(TokenTypes.PLUS, TokenTypes.MINUS):
+            left = Binary(left, self.tokens[self.current_idx - 1], self.unary())
+        return left
+
+    def comparison(self):
+        """
+        Example:
+        foo >= 3
+
+        Rule:
+        comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+        """
+        # TODO: try to fill in following logic of how the other methods work
+        pass
+
+    # def equality(self):
+    #     """
+    #     Rule:
+    #     equality → comparison ( ( "!=" | "==" ) comparison )* ;
+    #     """
+    #     {TokenTypes.EQUAL_EQUAL, TokenTypes.BANG_EQUAL}
 
 
 def main():
