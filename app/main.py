@@ -402,6 +402,7 @@ def lex(source: str) -> dict:
     'STRING "dog" dog'
     """
     res = []
+    tokens = []
     success = True
     line_num = 0
     # TODO: might need to check if the newline is in a str once we support those? Maybe can
@@ -432,6 +433,7 @@ def lex(source: str) -> dict:
                 i += 1
             except UnterminatedLexeme as e:
                 lexed_item = f"[line {line_num}] Error: {e.args[0]}"
+                token = None
                 success = False
                 # TODO: might need to revisit this logic but at least for strings I think it's ok.
                 # We don't want to break like we did for comments because we still need to add
@@ -440,10 +442,13 @@ def lex(source: str) -> dict:
 
             if lexed_item:
                 res.append(lexed_item)
+            if token:
+                tokens.append(token)
         
     res.append("EOF  null")
     return {
         "lexed": res,
+        "tokenized": tokens,
         "success": success,
     }
 
@@ -458,6 +463,7 @@ class Expression:
 # TODO not sure any of these str formats are correct
 # TODO: don't love that some of these take a Token and some take an Expression. Not sure if that's
 # how it's intended to work.
+@dataclass
 class Literal(Expression):
     val: Token
 
@@ -505,8 +511,16 @@ class ASTPrinter:
         print(nodes)
 
 
+# TODO: left off debugging in ipython, tried calling various methods on results of parsing "2 + 3"
+# and I *think* only the 2 is getting parsed currently.
 class Parser:
     """
+    Each precedence level in our order of operations requires its own method.
+    In the grammar below, "primary" has the "highest" precedence, meaning our parser calls it first
+    and resolves it last.
+
+    Grammar
+    -------
     expression     → equality ;
     equality       → comparison ( ( "!=" | "==" ) comparison )* ;
     comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
@@ -609,7 +623,7 @@ class Parser:
             left = Binary(left, self.tokens[self.current_idx - 1], self.unary())
         return left
 
-    def comparison(self):
+    def comparison(self) -> Binary:
         """
         Example:
         foo >= 3
@@ -617,15 +631,28 @@ class Parser:
         Rule:
         comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         """
-        # TODO: try to fill in following logic of how the other methods work
-        pass
+        left = self.term()
+        while self.match(
+            TokenTypes.GREATER,
+            TokenTypes.GREATER_EQUAL,
+            TokenTypes.LESS,
+            TokenTypes.LESS_EQUAL
+        ):
+            left = Binary(left, self.tokens[self.current_idx - 1], self.term()) 
+        return left
 
-    # def equality(self):
-    #     """
-    #     Rule:
-    #     equality → comparison ( ( "!=" | "==" ) comparison )* ;
-    #     """
-    #     {TokenTypes.EQUAL_EQUAL, TokenTypes.BANG_EQUAL}
+    def equality(self) -> Binary:
+        """
+        Example:
+        foo == bar
+
+        Rule:
+        equality → comparison ( ( "!=" | "==" ) comparison )* ;
+        """
+        left = self.comparison()
+        while self.match(TokenTypes.EQUAL_EQUAL, TokenTypes.BANG_EQUAL):
+            left = Binary(left, self.tokens[self.current_idx - 1], self.comparison())
+        return left
 
 
 def main():
@@ -646,14 +673,14 @@ def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
 
+    lexed = lex(file_contents)
     if command == "tokenize":
-        lexed = lex(file_contents)
         for row in lexed["lexed"]:
             print(row, file=sys.stderr if row.startswith("[line") else sys.stdout)
         if not lexed["success"]:
             exit(65)
     elif command == "parse":
-        pass
+        print(lexed["tokenized"])
         # TODO: skim section 6.2 (non-code parts) to understand what parse is supposed to do.
 
 
