@@ -457,39 +457,45 @@ def lex(source: str) -> dict:
 # once I figure out how to more easily test locally.
 # TODO left off: start of 5.3
 class Expression:
-    pass
+    def __str__(self) -> str:
+        return f"{type(self)}()"
 
 
 # TODO not sure any of these str formats are correct
 # TODO: don't love that some of these take a Token and some take an Expression. Not sure if that's
 # how it's intended to work.
-@dataclass
 class Literal(Expression):
-    val: Token
+
+    def __init__(self, val: Token):
+        self.val = val
 
     def __str__(self) -> str:
         return self.val.lexeme
 
 
 class Unary(Expression):
-    op: Token
-    expr: Expression
+
+    def __init__(self, op: Token, expr: Expression):
+        self.op = op
+        self.expr = expr
 
     def __str__(self) -> str:
         return "(" + self.op.lexeme + str(self.expr) + ")"
 
 
 class Binary(Expression):
-    expr_left: Expression
-    op: Token
-    expr_right: Expression
+    def __init__(self, left: Expression, op: Token, right: Expression):
+        self.left = left
+        self.op = op
+        self.right = right
 
     def __str__(self) -> str:
-        return "(" + str(self.expr_left) + self.op.lexeme + str(self.expr_right) + ")"
+        return "(" + str(self.left) + self.op.lexeme + str(self.right) + ")"
 
 
 class Grouping(Expression):
-    expr: Expression
+    def __init__(self, expr: Expression):
+        self.expr = expr
 
     def __str__(self) -> str:
         return "(" + str(self.expr) + ")"
@@ -511,8 +517,12 @@ class ASTPrinter:
         print(nodes)
 
 
-# TODO: left off debugging in ipython, tried calling various methods on results of parsing "2 + 3"
-# and I *think* only the 2 is getting parsed currently.
+# TODO: calling Parser().expression() on "2+3" correctly returns a Binary, but when there are spaces
+# it fails. Check how/if book handles it, could always just ignore them for now.
+# After that, need to see about loading this into an AST I think?
+# TODO: rm decorator once done debugging.
+from app.debugging import decorate_methods, verbose
+@decorate_methods(verbose)
 class Parser:
     """
     Each precedence level in our order of operations requires its own method.
@@ -534,14 +544,15 @@ class Parser:
 
     def __init__(self, tokens: list[Token]):
         self.tokens = tokens
-        self.current_idx = 0
+        self.max_idx = len(self.tokens) - 1
+        self.curr_idx = 0
 
     def match(self, *token_types: TokenType) -> bool:
         """Check if the current token has one fo the expected token_types. If so, increment the
         index and return True. Otherwise return False without incrementing.
         """
-        if self.tokens[self.current_idx].token_type in token_types:
-            self.current_idx += 1
+        if self.curr_idx <= self.max_idx and self.tokens[self.curr_idx].token_type in token_types:
+            self.curr_idx += 1
             return True
         return False
 
@@ -562,13 +573,9 @@ class Parser:
         primary → NUMBER | STRING | "true" | "false" | "nil"
                | "(" expression ")" ;
         """
-        token = self.tokens[self.current_idx]
+        token = self.tokens[self.curr_idx]
         # Reserved types
-        reserved_types = (
-            ReservedTokenTypes.FALSE,
-            ReservedTokenTypes.TRUE,
-            ReservedTokenTypes.NIL,
-        )
+        reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
         other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
         if self.match(*reserved_types, *other_types):
             return Literal(token)
@@ -578,7 +585,7 @@ class Parser:
             if not self.match(TokenTypes.RIGHT_PAREN):
                 raise TypeError(
                     f"Expected type {TokenTypes.RIGHT_PAREN}, found "
-                    f"{self.tokens[self.current_idx].token_type}."
+                    f"{self.tokens[self.curr_idx].token_type}."
                 )
             return Grouping(expr)
 
@@ -591,7 +598,7 @@ class Parser:
         unary → ( "!" | "-" ) unary
                | primary ;
         """
-        token = self.tokens[self.current_idx]
+        token = self.tokens[self.curr_idx]
         if self.match(TokenTypes.BANG, TokenTypes.MINUS):
             return Unary(token, self.unary())
 
@@ -607,7 +614,7 @@ class Parser:
         """
         left = self.unary()
         while self.match(TokenTypes.SLASH, TokenTypes.STAR):
-            left = Binary(left, self.tokens[self.current_idx - 1], self.unary())
+            left = Binary(left, self.tokens[self.curr_idx - 1], self.unary())
         return left
 
     def term(self) -> Binary:
@@ -616,11 +623,11 @@ class Parser:
         3 + 4        
 
         Rule:
-        factor → unary ( ( "+" | "-" ) unary )* ;
+        term → factor ( ( "-" | "+" ) factor )* ;
         """
-        left = self.unary()
-        while self.match(TokenTypes.PLUS, TokenTypes.MINUS):
-            left = Binary(left, self.tokens[self.current_idx - 1], self.unary())
+        left = self.factor()
+        while self.match(TokenTypes.MINUS, TokenTypes.PLUS):
+            left = Binary(left, self.tokens[self.curr_idx - 1], self.factor())
         return left
 
     def comparison(self) -> Binary:
@@ -638,7 +645,7 @@ class Parser:
             TokenTypes.LESS,
             TokenTypes.LESS_EQUAL
         ):
-            left = Binary(left, self.tokens[self.current_idx - 1], self.term()) 
+            left = Binary(left, self.tokens[self.curr_idx - 1], self.term()) 
         return left
 
     def equality(self) -> Binary:
@@ -651,7 +658,7 @@ class Parser:
         """
         left = self.comparison()
         while self.match(TokenTypes.EQUAL_EQUAL, TokenTypes.BANG_EQUAL):
-            left = Binary(left, self.tokens[self.current_idx - 1], self.comparison())
+            left = Binary(left, self.tokens[self.curr_idx - 1], self.comparison())
         return left
 
 
@@ -683,6 +690,10 @@ def main():
         print(lexed["tokenized"])
         # TODO: skim section 6.2 (non-code parts) to understand what parse is supposed to do.
 
+    # TODO for easier debugging
+    return lexed
+
 
 if __name__ == "__main__":
-    main()
+    # TODO: for easier debugging
+    lexed = main()
