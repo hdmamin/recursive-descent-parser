@@ -475,45 +475,49 @@ class Literal(Expression):
 
 class Unary(Expression):
 
-    def __init__(self, op: Token, expr: Expression):
-        self.op = op
-        self.expr = expr
-
-    def __str__(self) -> str:
-        return "(" + self.op.lexeme + str(self.expr) + ")"
-
-
-class Binary(Expression):
-    def __init__(self, left: Expression, op: Token, right: Expression):
-        self.left = left
-        self.op = op
+    def __init__(self, val: Token, right: Expression):
+        self.val = val
         self.right = right
 
     def __str__(self) -> str:
-        return "(" + str(self.left) + self.op.lexeme + str(self.right) + ")"
+        return "(" + self.val.lexeme + str(self.right) + ")"
+
+
+class Binary(Expression):
+    def __init__(self, left: Expression, val: Token, right: Expression):
+        self.left = left
+        self.val = val
+        self.right = right
+
+    def __str__(self) -> str:
+        return "(" + str(self.left) + self.val.lexeme + str(self.right) + ")"
 
 
 class Grouping(Expression):
-    def __init__(self, expr: Expression):
-        self.expr = expr
+    def __init__(self, val: Expression):
+        self.val = val
 
     def __str__(self) -> str:
-        return "(" + str(self.expr) + ")"
+        return "(" + str(self.val) + ")"
 
 
 class ASTPrinter:
 
     @classmethod
+    # TODO: looks like maybe don't need actual AST and ASTNode class? Just use expression classes?
     def _postorder(cls, root: Optional[ASTNode]) -> list[str]:
         if not root:
             return []
-        return cls._postorder(root.left) + cls._postorder(root.right) + [root.val]
+        return (
+            cls._postorder(getattr(root, "left", None))
+            + cls._postorder(getattr(root, "right", None))
+            + [root.val]
+        )
 
     @classmethod
     def pprint(cls, ast):
-        nodes = cls._postorder(ast.root)
-        # TODO eventually will need to construct AST of expressions and use their str methods
-        # in output, but need to implement parser first.
+        # TODO: debug why order looks unexpected (maybe?) in ipython
+        nodes = cls._postorder(ast)
         print(nodes)
 
 
@@ -687,13 +691,15 @@ def main():
         if not lexed["success"]:
             exit(65)
     elif command == "parse":
-        print(lexed["tokenized"])
+        parser = Parser(lexed["tokenized"])
+        parsed = parser.expression()
+        print(parsed)
         # TODO: skim section 6.2 (non-code parts) to understand what parse is supposed to do.
 
     # TODO for easier debugging
-    return lexed
+    return locals()
 
 
 if __name__ == "__main__":
     # TODO: for easier debugging
-    lexed = main()
+    kwargs = main()
