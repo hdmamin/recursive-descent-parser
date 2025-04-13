@@ -125,6 +125,7 @@ def _number_longest_leading_substring(text: str) -> Optional[str]:
 
 
 def _number_format_literal(text: str) -> str:
+    """Format numbers (even ints) with at least one decimal place, per book conventions."""
     if "." in text:
         # Based on tests, it appears Lox won't let us end with multiple 0s after the decimal.
         text = text.rstrip("0")
@@ -362,6 +363,16 @@ class Token:
             return self.token_type.literal
         return self.token_type.literal(self.value)
 
+    @property
+    def non_null_literal(self) -> str:
+        """TODO: still don't really get why this is necessary or if it actually is.
+        Book sample parser outputs displays numbers like "3.0" (literals) but operations like 
+        ">" (lexemes). So adding this helper here.
+        """
+        if self.literal != "null":
+            return self.literal
+        return self.lexeme
+
     def lexed(self) -> str:
         """Contains lexed code corresponding to one token, consisting of
         <token_type> <lexeme> <literal>
@@ -423,6 +434,7 @@ def lex(source: str) -> dict:
                 # Skip to next line of source code.
                 break
 
+            token = None
             try:
                 token = Token.from_longest_leading_substring(line[i:])
                 lexed_item = token.lexed()
@@ -433,7 +445,6 @@ def lex(source: str) -> dict:
                 i += 1
             except UnterminatedLexeme as e:
                 lexed_item = f"[line {line_num}] Error: {e.args[0]}"
-                token = None
                 success = False
                 # TODO: might need to revisit this logic but at least for strings I think it's ok.
                 # We don't want to break like we did for comments because we still need to add
@@ -455,50 +466,71 @@ def lex(source: str) -> dict:
 
 # TODO: start of parsing section, move to a different module after finishing codecrafters or
 # once I figure out how to more easily test locally.
-# TODO left off: start of 5.3
 class Expression:
+    
     def __str__(self) -> str:
         return f"{type(self)}()"
 
 
-# TODO not sure any of these str formats are correct
-# TODO: don't love that some of these take a Token and some take an Expression. Not sure if that's
-# how it's intended to work.
+# TODO: include docstring examples of each expr type, keep forgetting.
 class Literal(Expression):
+    """
+    Example
+    foo
+    """
 
     def __init__(self, val: Token):
         self.val = val
 
     def __str__(self) -> str:
-        return self.val.lexeme
+        return self.val.non_null_literal
 
 
 class Unary(Expression):
+    """
+    Example
+    !foo
+    """
 
     def __init__(self, val: Token, right: Expression):
         self.val = val
         self.right = right
 
     def __str__(self) -> str:
-        return "(" + self.val.lexeme + str(self.right) + ")"
+        return "(" + self.val.non_null_literal + " " + str(self.right) + ")"
 
 
 class Binary(Expression):
+    """
+    Example
+    3 / 4
+    """
+
     def __init__(self, left: Expression, val: Token, right: Expression):
         self.left = left
         self.val = val
         self.right = right
 
     def __str__(self) -> str:
-        return "(" + str(self.left) + self.val.lexeme + str(self.right) + ")"
+        # TODO: not sure why but book seems to want order (lexeme, left, right). Trying it out
+        # but don't really understand why.
+        # return "(" + str(self.left) + self.val.lexeme + str(self.right) + ")"
+        return "(" + self.val.non_null_literal + " " + str(self.left) + " " + str(self.right) + ")"
 
 
 class Grouping(Expression):
+    """
+    Example
+    (foo)
+    """
+
     def __init__(self, val: Expression):
         self.val = val
 
     def __str__(self) -> str:
-        return "(" + str(self.val) + ")"
+        # TODO: don't really understand why book wants us to include word "group" here, format
+        # doesn't really seem to match rest of expressions. But let's see how this looks.
+        return "(group" + str(self.val) + ")"
 
 
 class ASTPrinter:
@@ -516,7 +548,6 @@ class ASTPrinter:
 
     @classmethod
     def pprint(cls, ast):
-        # TODO: debug why order looks unexpected (maybe?) in ipython
         nodes = cls._postorder(ast)
         print(nodes)
 
@@ -525,8 +556,6 @@ class ASTPrinter:
 # it fails. Check how/if book handles it, could always just ignore them for now.
 # After that, need to see about loading this into an AST I think?
 # TODO: rm decorator once done debugging.
-from app.debugging import decorate_methods, verbose
-@decorate_methods(verbose)
 class Parser:
     """
     Each precedence level in our order of operations requires its own method.
@@ -547,7 +576,9 @@ class Parser:
     """
 
     def __init__(self, tokens: list[Token]):
-        self.tokens = tokens
+        # TODO: book doesn't really address what to do with spaces here so just skipping them for
+        # now, otherwise our grammar breaks down.
+        self.tokens = [token for token in tokens if token.token_type != TokenTypes.SPACE]
         self.max_idx = len(self.tokens) - 1
         self.curr_idx = 0
 
