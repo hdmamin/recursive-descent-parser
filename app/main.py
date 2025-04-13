@@ -530,7 +530,7 @@ class Grouping(Expression):
     def __str__(self) -> str:
         # TODO: don't really understand why book wants us to include word "group" here, format
         # doesn't really seem to match rest of expressions. But let's see how this looks.
-        return "(group" + str(self.val) + ")"
+        return "(group " + str(self.val) + ")"
 
 
 class ASTPrinter:
