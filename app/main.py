@@ -330,11 +330,19 @@ def infer_token_type(text: str, trie: Optional[Trie] = None) -> Optional[type]:
 
 class Token:
 
-    def __init__(self, value: str, token_type: Optional[type] = None):
+    def __init__(self, value: str, line: int, token_type: Optional[type] = None):
         """
+        Parameters
+        ----------
+        value : str
+            The chunk of continuguous characters the token is comprised of.
+        line : int
+            The line number in the source code that the token belongs to. 1-indexed. This helps
+            the parser report better error messages later.
         Strongly recommend specifying token_type explicitly.
-        # TODO: consider removing implicit option?
+        # TODO: consider removing implicit token_type option?
         """
+        self.line = line
         self.token_type = token_type or TokenTypes.lexeme2type(value)
         self.value = value
 
@@ -394,7 +402,7 @@ class Token:
         return len(self.lexeme)
 
     @classmethod
-    def from_longest_leading_substring(cls, text: str):
+    def from_longest_leading_substring(cls, text: str, line: int):
         token_type = infer_token_type(text, RESERVED_TYPES_TRIE) or infer_token_type(text)
         if not token_type:
             raise ValueError(f"Unexpected character: {text[0]}")
@@ -405,12 +413,15 @@ class Token:
                 f"Unexpected behavior: inferred token_type={token_type} but could not find a valid "
                 f"leading substring from {text!r}."
             )
-        return cls(substring, token_type=token_type)
+        return cls(substring, line=line, token_type=token_type)
 
 
 def lex(source: str) -> dict:
     """Each str contains one line of lexed source code corresponding to a single token, e.g.
     'STRING "dog" dog'
+
+    (Codecrafters wants this to execute when the script is called with the "tokenize" command
+    but it does more than just tokenizing.)
     """
     res = []
     tokens = []
@@ -436,7 +447,7 @@ def lex(source: str) -> dict:
 
             token = None
             try:
-                token = Token.from_longest_leading_substring(line[i:])
+                token = Token.from_longest_leading_substring(line[i:], line=line_num)
                 lexed_item = token.lexed()
                 i += len(token)
             except ValueError:
@@ -552,10 +563,16 @@ class ASTPrinter:
         print(nodes)
 
 
+class ParsingError(Exception):
+    """Raise when the parser hits an invalid token given the current state."""
+
+
 # TODO: calling Parser().expression() on "2+3" correctly returns a Binary, but when there are spaces
 # it fails. Check how/if book handles it, could always just ignore them for now.
 # After that, need to see about loading this into an AST I think?
 # TODO: rm decorator once done debugging.
+from app.debugging import decorate_methods, verbose
+@decorate_methods(verbose)
 class Parser:
     """
     Each precedence level in our order of operations requires its own method.
@@ -591,6 +608,21 @@ class Parser:
             return True
         return False
 
+    def current_token(self) -> Token:
+        if self.curr_idx <= self.max_idx:
+            return self.tokens[self.curr_idx]
+        raise ParsingError(
+            f"Parsing error at line {self.previous_token().line}: "
+            f"Invalid index {self.curr_idx}, max_idx is {self.max_idx}."
+        )
+
+    def previous_token(self) -> Token:
+        if self.curr_idx - 1 <= self.max_idx:
+            return self.tokens[self.curr_idx - 1]
+        raise ParsingError(
+            f"Parsing error: Invalid index {self.curr_idx - 1}, max_idx is {self.max_idx}."
+        )
+
     def expression(self) -> Expression:
         """
         Rule:
@@ -598,6 +630,37 @@ class Parser:
         """
         # equality is the highest precedence (last to be evaluated) operation.
         return self.equality()
+
+    def parse(self):
+        res = {
+            "expressions": [],
+            "success": True,
+            "error": None,
+        }
+        # TODO: rm if possible, part of the same error handling logic below.
+        # prev_idx = None
+        # Confirmed that we can't just change this to <, that would skip parsing the last token
+        # in some cases.
+        while self.curr_idx <= self.max_idx:
+            # TODO: probably better solution here but was trying to use this to avoid getting
+            # stuck in inf loop on parsing errors in primary. However, this logic incorrectly
+            # fails the current multiline example in tmp.txt (worked when it was first line only).
+            # if self.curr_idx == prev_idx:
+            #     res["success"] = False
+            #     res["error"] = ParsingError(f"Parsing error at line {self.current_token().line}")
+            #     break
+
+            try:
+                res["expressions"].append(self.expression())
+            except ParsingError as e:
+                res["success"] = False
+                res["error"] = e
+                # TODO: may eventually want to keep parsing but for now we return early.
+                break
+
+            # TODO: hopefully rm eventually
+            # prev_idx = self.curr_idx
+        return res
 
     def primary(self) -> Union[Literal, Grouping]:
         """
@@ -608,7 +671,7 @@ class Parser:
         primary → NUMBER | STRING | "true" | "false" | "nil"
                | "(" expression ")" ;
         """
-        token = self.tokens[self.curr_idx]
+        token = self.current_token()
         # Reserved types
         reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
         other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
@@ -620,9 +683,26 @@ class Parser:
             if not self.match(TokenTypes.RIGHT_PAREN):
                 raise TypeError(
                     f"Expected type {TokenTypes.RIGHT_PAREN}, found "
-                    f"{self.tokens[self.curr_idx].token_type}."
+                    f"{self.current_token().token_type}."
                 )
             return Grouping(expr)
+
+        # TODO: left off: troubleshooting inf while loop, see notes below and in parse() method.
+        # TODO: "(foo" seems to be causing us to get stuck in an infinite loop that I think
+        # touches this part of the code.
+        # Clue: that only happens if we raise a ParsingError; if we raise RuntimeError, no infinite
+        # loop.
+        # Think maybe what's happening is error handling in parse() doesn't catch runtimeerror so
+        # we get exit(1) instead of desired exit(65), and if we do use ParsingError below, then
+        # cur_idx == max_idx forever. Maybe just need to change that loop to be < instead of <= ?
+        # Need to make sure that doesn't prematurely truncate parsing of valid code.
+        # Another option is to add a check in the while loop that we're not running repeatedly with
+        # the same curr_idx. (Prob best not to put too much time into this decision yet bc we may
+        # need to change it anyway to find additional errors, recall book does something complex
+        # to "unwind" state or something.)
+        # raise ParsingError(f"Parsing error at line {self.current_token().line}.")
+        raise RuntimeError(f"Parsing error at line {self.current_token().line}. {self.curr_idx=}")
+        # raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
     def unary(self) -> Unary:
         """
@@ -633,7 +713,7 @@ class Parser:
         unary → ( "!" | "-" ) unary
                | primary ;
         """
-        token = self.tokens[self.curr_idx]
+        token = self.current_token()
         if self.match(TokenTypes.BANG, TokenTypes.MINUS):
             return Unary(token, self.unary())
 
@@ -649,7 +729,7 @@ class Parser:
         """
         left = self.unary()
         while self.match(TokenTypes.SLASH, TokenTypes.STAR):
-            left = Binary(left, self.tokens[self.curr_idx - 1], self.unary())
+            left = Binary(left, self.previous_token(), self.unary())
         return left
 
     def term(self) -> Binary:
@@ -662,7 +742,7 @@ class Parser:
         """
         left = self.factor()
         while self.match(TokenTypes.MINUS, TokenTypes.PLUS):
-            left = Binary(left, self.tokens[self.curr_idx - 1], self.factor())
+            left = Binary(left, self.previous_token(), self.factor())
         return left
 
     def comparison(self) -> Binary:
@@ -680,7 +760,7 @@ class Parser:
             TokenTypes.LESS,
             TokenTypes.LESS_EQUAL
         ):
-            left = Binary(left, self.tokens[self.curr_idx - 1], self.term()) 
+            left = Binary(left, self.previous_token(), self.term()) 
         return left
 
     def equality(self) -> Binary:
@@ -693,7 +773,7 @@ class Parser:
         """
         left = self.comparison()
         while self.match(TokenTypes.EQUAL_EQUAL, TokenTypes.BANG_EQUAL):
-            left = Binary(left, self.tokens[self.curr_idx - 1], self.comparison())
+            left = Binary(left, self.previous_token(), self.comparison())
         return left
 
 
@@ -722,9 +802,23 @@ def main():
         if not lexed["success"]:
             exit(65)
     elif command == "parse":
+        # TODO: can probably find a cleaner solution here but my tokenizer is catching some errors
+        # before we reach the parsing stage and Codecrafters wants us to exit in that case.
+        if not lexed["success"]:
+            for row in lexed["lexed"]:
+                if row.lower().startswith("[line "):
+                    exit(65)
+
         parser = Parser(lexed["tokenized"])
-        parsed = parser.expression()
-        print(parsed)
+        # TODO: I think this only parses the first line. Seems like maybe what we want is a parse()
+        # method that calls expression() repeatedly (maybe until we hit a parsing error?)
+        parsed = parser.parse()
+        if parsed["success"]:
+            for expr in parsed["expressions"]:
+                print(expr)
+        else:
+            print(parsed["error"], file=sys.stderr)
+            exit(65)
         # TODO: skim section 6.2 (non-code parts) to understand what parse is supposed to do.
 
     # TODO for easier debugging
