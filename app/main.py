@@ -392,6 +392,8 @@ class Token:
         
         # TODO: for now we do not convert bools or nils or operators to non-str types,
         # not sure if that's correct.
+        # TODO: test seems to want us to convert False -> false. Not sure if this is a bool-specific
+        # thing or if lox should be generally case insensitive?
         return self.value
 
     def lexed(self) -> str:
