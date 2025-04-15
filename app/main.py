@@ -477,6 +477,13 @@ def lex(source: str) -> dict:
 
 # TODO: start of parsing section, move to a different module after finishing codecrafters or
 # once I figure out how to more easily test locally.
+def truthy(literal: str) -> bool:
+    """Determine whether a value is truthy. In Lox, false and nil are considered falsy,
+    everything else is considered truthy. Notice that we're passing in a string, NOT a Token.
+    """
+    return literal not in (ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.NIL.lexeme)
+
+
 class Expression:
     
     def __str__(self) -> str:
@@ -496,6 +503,10 @@ class Literal(Expression):
     def __str__(self) -> str:
         return self.val.non_null_literal
 
+    def evaluate(self):
+        # TODO: seems odd that this is same as __str__, not sure if correct?
+        return self.val.non_null_literal
+
 
 class Unary(Expression):
     """
@@ -509,6 +520,16 @@ class Unary(Expression):
 
     def __str__(self) -> str:
         return "(" + self.val.non_null_literal + " " + str(self.right) + ")"
+
+    def evaluate(self):
+        # TODO: seems odd that this is same as __str__, not sure if correct?
+        right = float(self.right.evaluate())
+        if self.val.token_type == TokenTypes.BANG:
+            return not truthy(right)
+        if self.val.token_type == TokenTypes.MINUS:
+            return -right
+
+        raise ValueError("Unexpected operator in Unary: {self.val.token_type}")
 
 
 class Binary(Expression):
@@ -528,6 +549,50 @@ class Binary(Expression):
         # return "(" + str(self.left) + self.val.lexeme + str(self.right) + ")"
         return "(" + self.val.non_null_literal + " " + str(self.left) + " " + str(self.right) + ")"
 
+    def evaluate(self):
+        left = self.left.evaluate()
+        right = self.right.evaluate()
+
+        # TODO: based on book, seems like my numbers should maybe already be cast to numeric
+        # types by this point? Not sure where that was supposed to occur but would probably make
+        # downstream stuff cleaner.
+        left_is_numeric = left.replace(".", "").isdigit()
+        right_is_numeric = right.replace(".", "").isdigit()
+        if left_is_numeric:
+            left = float(left)
+        if right_is_numeric:
+            right = float(right)
+
+        # TODO: maybe can give Token/TokenType an optional "op" field so we can just call
+        # self.val.op(left, right)?
+        try:
+            if self.val.token_type == TokenTypes.SLASH:
+                return left / right
+            if self.val.token_type == TokenTypes.STAR:
+                return left * right
+            if self.val.token_type == TokenTypes.MINUS:
+                return left - right
+            if self.val.token_type == TokenTypes.PLUS:
+                return left + right
+            if self.val.token_type == TokenTypes.GREATER:
+                return left > right
+            if self.val.token_type == TokenTypes.GREATER_EQUAL:
+                return left >= right
+            if self.val.token_type == TokenTypes.LESS:
+                return left < right
+            if self.val.token_type == TokenTypes.LESS_EQUAL:
+                return left <= right
+            # Note that these two cases rely on lox's definition of equality matching python's.
+            # Based on the book definition this seems to be the case.
+            if self.val.token_type == TokenTypes.BANG_EQUAL:
+                return left != right
+            if self.val.token_type == TokenTypes.EQUAL_EQUAL:
+                return left == right
+        except TypeError:
+            raise ParsingError("Unexpected operator in Binary: {self.val.token_type}")
+
+        raise ParsingError("Unexpected operator in Binary: {self.val.token_type}")
+
 
 class Grouping(Expression):
     """
@@ -542,6 +607,9 @@ class Grouping(Expression):
         # TODO: don't really understand why book wants us to include word "group" here, format
         # doesn't really seem to match rest of expressions. But let's see how this looks.
         return "(group " + str(self.val) + ")"
+
+    def evaluate(self):
+        return self.val.evaluate()
 
 
 class ASTPrinter:
@@ -632,6 +700,15 @@ class Parser:
         return self.equality()
 
     def parse(self):
+        """Parse all tokens in the source code into expressions.
+
+        Returns
+        -------
+        dict
+            expressions: list[str]
+            success: bool
+            error: Optional[Exception]
+        """
         res = {
             "expressions": [],
             "success": True,
@@ -758,17 +835,17 @@ def main():
     command = sys.argv[1]
     filename = sys.argv[2]
 
-    if command not in {"tokenize", "parse"}:
-        print(f"Unknown command: {command}", file=sys.stderr)
-        exit(1)
-
     with open(filename) as file:
         file_contents = file.read()
 
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
-
     lexed = lex(file_contents)
+    if lexed["success"]:
+        parser = Parser(lexed["tokenized"])
+        parsed = parser.parse()
+
+    # Print results for codecrafters.
     if command == "tokenize":
         for row in lexed["lexed"]:
             print(row, file=sys.stderr if row.startswith("[line") else sys.stdout)
@@ -777,21 +854,35 @@ def main():
     elif command == "parse":
         # TODO: can probably find a cleaner solution here but my tokenizer is catching some errors
         # before we reach the parsing stage and Codecrafters wants us to exit in that case.
+        # Think codecrafters will eventually check error messages but for now we just exit.
         if not lexed["success"]:
-            for row in lexed["lexed"]:
-                if row.lower().startswith("[line "):
-                    exit(65)
+            exit(65)
+            # for row in lexed["lexed"]:
+            #     if row.lower().startswith("[line "):
+                    # print(row)
+                    # exit(65)
 
-        parser = Parser(lexed["tokenized"])
-        # TODO: I think this only parses the first line. Seems like maybe what we want is a parse()
-        # method that calls expression() repeatedly (maybe until we hit a parsing error?)
-        parsed = parser.parse()
+        # At this point we know `parsed` exists.
         if parsed["success"]:
             for expr in parsed["expressions"]:
                 print(expr)
         else:
             print(parsed["error"], file=sys.stderr)
             exit(65)
+    elif command == "evaluate":
+        # TODO: again, would like to consolidate and raise this only once instead of in each
+        # command, but codecrafters is picky about when/where errors are raised. Clean up later.
+        if not lexed["success"]:
+            exit(65)
+
+        for expr in parsed["expressions"]:
+            print(expr.evaluate())
+        # TODO: left off here, maybe can move some parsing logic above the if/elif blocks? Need to
+        # be careful IIRC so that the tokenization errors are raised at the right time if
+        # command='parse'.
+    else:
+        print(f"Unknown command: {command}", file=sys.stderr)
+        exit(1)
 
     # TODO for easier debugging
     return locals()
