@@ -572,7 +572,7 @@ class ParsingError(Exception):
 # After that, need to see about loading this into an AST I think?
 # TODO: rm decorator once done debugging.
 from app.debugging import decorate_methods, verbose
-@decorate_methods(verbose)
+# @decorate_methods(verbose)
 class Parser:
     """
     Each precedence level in our order of operations requires its own method.
@@ -637,19 +637,7 @@ class Parser:
             "success": True,
             "error": None,
         }
-        # TODO: rm if possible, part of the same error handling logic below.
-        # prev_idx = None
-        # Confirmed that we can't just change this to <, that would skip parsing the last token
-        # in some cases.
         while self.curr_idx <= self.max_idx:
-            # TODO: probably better solution here but was trying to use this to avoid getting
-            # stuck in inf loop on parsing errors in primary. However, this logic incorrectly
-            # fails the current multiline example in tmp.txt (worked when it was first line only).
-            # if self.curr_idx == prev_idx:
-            #     res["success"] = False
-            #     res["error"] = ParsingError(f"Parsing error at line {self.current_token().line}")
-            #     break
-
             try:
                 res["expressions"].append(self.expression())
             except ParsingError as e:
@@ -658,8 +646,6 @@ class Parser:
                 # TODO: may eventually want to keep parsing but for now we return early.
                 break
 
-            # TODO: hopefully rm eventually
-            # prev_idx = self.curr_idx
         return res
 
     def primary(self) -> Union[Literal, Grouping]:
@@ -675,7 +661,9 @@ class Parser:
         # Reserved types
         reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
         other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
-        if self.match(*reserved_types, *other_types):
+        # TODO: book doesn't include IDENTIFIER here yet but codecraftesr tests seem to. Haven't
+        # updated docstrings yet to reflect this, just testing.
+        if self.match(*reserved_types, *other_types, TokenTypes.IDENTIFIER):
             return Literal(token)
         
         if self.match(TokenTypes.LEFT_PAREN):
@@ -687,21 +675,7 @@ class Parser:
                 )
             return Grouping(expr)
 
-        # TODO: left off: troubleshooting inf while loop, see notes below and in parse() method.
-        # TODO: "(foo" seems to be causing us to get stuck in an infinite loop that I think
-        # touches this part of the code.
-        # Clue: that only happens if we raise a ParsingError; if we raise RuntimeError, no infinite
-        # loop.
-        # Think maybe what's happening is error handling in parse() doesn't catch runtimeerror so
-        # we get exit(1) instead of desired exit(65), and if we do use ParsingError below, then
-        # cur_idx == max_idx forever.
-        # Another option is to add a check in the while loop that we're not running repeatedly with
-        # the same curr_idx. (Prob best not to put too much time into this decision yet bc we may
-        # need to change it anyway to find additional errors, recall book does something complex
-        # to "unwind" state or something.)
-        # raise ParsingError(f"Parsing error at line {self.current_token().line}.")
-        raise RuntimeError(f"Parsing error at line {self.current_token().line}. {self.curr_idx=}")
-        # raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
+        raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
     def unary(self) -> Unary:
         """
@@ -817,9 +791,7 @@ def main():
                 print(expr)
         else:
             print(parsed["error"], file=sys.stderr)
-            print('exit 65')
             exit(65)
-        # TODO: skim section 6.2 (non-code parts) to understand what parse is supposed to do.
 
     # TODO for easier debugging
     return locals()
