@@ -694,8 +694,7 @@ class Parser:
         # loop.
         # Think maybe what's happening is error handling in parse() doesn't catch runtimeerror so
         # we get exit(1) instead of desired exit(65), and if we do use ParsingError below, then
-        # cur_idx == max_idx forever. Maybe just need to change that loop to be < instead of <= ?
-        # Need to make sure that doesn't prematurely truncate parsing of valid code.
+        # cur_idx == max_idx forever.
         # Another option is to add a check in the while loop that we're not running repeatedly with
         # the same curr_idx. (Prob best not to put too much time into this decision yet bc we may
         # need to change it anyway to find additional errors, recall book does something complex
@@ -818,6 +817,7 @@ def main():
                 print(expr)
         else:
             print(parsed["error"], file=sys.stderr)
+            print('exit 65')
             exit(65)
         # TODO: skim section 6.2 (non-code parts) to understand what parse is supposed to do.
 

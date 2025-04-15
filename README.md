@@ -1,3 +1,16 @@
+Harrison's notes
+- to test locally, first activate an env where pipenv is installed:
+
+```
+conda activate py310
+```
+
+Then run this command, where the last arg is a path containing some snippet of lox code you want to parse:
+
+```
+./your_program.sh parse /tmp/tmp.txt 
+```
+
 [![progress-banner](https://backend.codecrafters.io/progress/interpreter/f565001c-a282-4eb3-afc4-3c00f9645763)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
 This is a starting point for Python solutions to the
