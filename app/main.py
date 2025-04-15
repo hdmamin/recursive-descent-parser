@@ -381,6 +381,19 @@ class Token:
             return self.literal
         return self.lexeme
 
+    def evaluate(self) -> Union[str, int, float]:
+        """When evaluating expressions, we'll want to grab the actual value of the token, converted
+        to a numeric type when appropriate. This will distinguish between int and float since this
+        is what the book/tests require for evaluation; but note this will not when at the lexing
+        and parsing stages, where they expect all numbers to have a trailing decimal place.
+        """
+        if self.token_type == TokenTypes.NUMBER:
+            return to_numeric_if_necessary(self.value)
+        
+        # TODO: for now we do not convert bools or nils or operators to non-str types,
+        # not sure if that's correct.
+        return self.value
+
     def lexed(self) -> str:
         """Contains lexed code corresponding to one token, consisting of
         <token_type> <lexeme> <literal>
@@ -483,6 +496,16 @@ def truthy(literal: str) -> bool:
     """
     return literal not in (ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.NIL.lexeme)
 
+        
+def to_numeric_if_necessary(val: str) -> Union[int, float, str]:
+    """Cast a str to int/float if applicable.
+    """
+    if val.isdigit():
+        return int(val)
+    if val.replace(".", "").isdigit():
+        return float(val)
+    return val
+
 
 class Expression:
     
@@ -490,7 +513,9 @@ class Expression:
         return f"{type(self)}()"
 
 
-# TODO: include docstring examples of each expr type, keep forgetting.
+# TODO: seems like evaluate() needs to use token lexemes, not literals. Will need to strip
+# quotes from strings.
+# TODO: include docstring examples of each expr type, keep forgetting what each is.
 class Literal(Expression):
     """
     Example
@@ -504,8 +529,7 @@ class Literal(Expression):
         return self.val.non_null_literal
 
     def evaluate(self):
-        # TODO: seems odd that this is same as __str__, not sure if correct?
-        return self.val.non_null_literal
+        return self.val.evaluate()
 
 
 class Unary(Expression):
@@ -523,7 +547,7 @@ class Unary(Expression):
 
     def evaluate(self):
         # TODO: seems odd that this is same as __str__, not sure if correct?
-        right = float(self.right.evaluate())
+        right = self.right.evaluate()
         if self.val.token_type == TokenTypes.BANG:
             return not truthy(right)
         if self.val.token_type == TokenTypes.MINUS:
@@ -552,16 +576,6 @@ class Binary(Expression):
     def evaluate(self):
         left = self.left.evaluate()
         right = self.right.evaluate()
-
-        # TODO: based on book, seems like my numbers should maybe already be cast to numeric
-        # types by this point? Not sure where that was supposed to occur but would probably make
-        # downstream stuff cleaner.
-        left_is_numeric = left.replace(".", "").isdigit()
-        right_is_numeric = right.replace(".", "").isdigit()
-        if left_is_numeric:
-            left = float(left)
-        if right_is_numeric:
-            right = float(right)
 
         # TODO: maybe can give Token/TokenType an optional "op" field so we can just call
         # self.val.op(left, right)?
