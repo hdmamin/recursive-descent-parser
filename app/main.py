@@ -513,6 +513,14 @@ def to_numeric_if_necessary(val: str) -> Union[int, float, str]:
     return val
 
 
+def boolean_lexeme(val: bool) -> str:
+    """Map a python boolean to a string containing the appropriate lox lexeme. (In practice,
+    this is currently equivalent to str(val).lower(), but that felt a little riskier in case we
+    ever changed how lox represents bools.)
+    """
+    return [ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.TRUE.lexeme][val]
+
+
 class Expression:
     
     def __str__(self) -> str:
@@ -556,7 +564,7 @@ class Unary(Expression):
         if self.val.token_type == TokenTypes.BANG:
             # Horribly hacky but we can't just return `not truthy(right)` because that will return a
             # python bool rather than the string codecrafters expects.
-            return [ReservedTokenTypes.TRUE.lexeme, ReservedTokenTypes.FALSE.lexeme][truthy(right)]
+            return boolean_lexeme(not truthy(right))
         if self.val.token_type == TokenTypes.MINUS:
             # TODO: may need to add some error handling here for non-numeric vals?
             return -right
@@ -590,8 +598,10 @@ class Binary(Expression):
         try:
             if self.val.token_type == TokenTypes.SLASH:
                 res = left / right
-                # If both operands are ints, we want to return an int as well.
-                if isinstance(left, int) and isinstance(right, int) and res == int(res):
+                # If both operands and the output are all ints, we want to return an int as well.
+                # Python division always returns a float so is_integer method should be available.
+                # But left and right could be ints or floats.
+                if isinstance(left, int) and isinstance(right, int) and res.is_integer():
                     return int(res)
                 return res
             if self.val.token_type == TokenTypes.STAR:
@@ -601,19 +611,19 @@ class Binary(Expression):
             if self.val.token_type == TokenTypes.PLUS:
                 return left + right
             if self.val.token_type == TokenTypes.GREATER:
-                return left > right
+                return boolean_lexeme(left > right)
             if self.val.token_type == TokenTypes.GREATER_EQUAL:
-                return left >= right
+                return boolean_lexeme(left >= right)
             if self.val.token_type == TokenTypes.LESS:
-                return left < right
+                return boolean_lexeme(left < right)
             if self.val.token_type == TokenTypes.LESS_EQUAL:
-                return left <= right
+                return boolean_lexeme(left <= right)
             # Note that these two cases rely on lox's definition of equality matching python's.
             # Based on the book definition this seems to be the case.
             if self.val.token_type == TokenTypes.BANG_EQUAL:
-                return left != right
+                return boolean_lexeme(left != right)
             if self.val.token_type == TokenTypes.EQUAL_EQUAL:
-                return left == right
+                return boolean_lexeme(left == right)
         except TypeError:
             raise ParsingError("Unexpected operator in Binary: {self.val.token_type}")
 
