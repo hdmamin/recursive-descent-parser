@@ -589,7 +589,15 @@ class Binary(Expression):
         # self.val.op(left, right)?
         try:
             if self.val.token_type == TokenTypes.SLASH:
-                return left / right
+                res = left / right
+                # If both operands are ints, we need to remove the trailing ".0". Not totally clear
+                # why because lox said all numbers should have trailing ".0", but the tests have
+                # spoken.
+                # if "." not in self.left.lexeme and "." not in self.right.lexeme:
+                #     res = int(res)
+                if isinstance(left, int) and isinstance(right, int):
+                    return int(res)
+                return res
             if self.val.token_type == TokenTypes.STAR:
                 return left * right
             if self.val.token_type == TokenTypes.MINUS:
