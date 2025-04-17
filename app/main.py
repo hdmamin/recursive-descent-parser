@@ -495,6 +495,10 @@ def lex(source: str) -> dict:
 def truthy(literal: str) -> bool:
     """Determine whether a value is truthy. In Lox, false and nil are considered falsy,
     everything else is considered truthy. Notice that we're passing in a string, NOT a Token.
+
+    Notice that this returns a python boolean which is useful for in-program logic. But if you are
+    trying to print to stdout for codecrafters tests, bools must be represented as lowercase
+    strings, not python bools.
     """
     return literal not in (ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.NIL.lexeme)
 
@@ -548,11 +552,13 @@ class Unary(Expression):
         return "(" + self.val.non_null_literal + " " + str(self.right) + ")"
 
     def evaluate(self):
-        # TODO: seems odd that this is same as __str__, not sure if correct?
         right = self.right.evaluate()
         if self.val.token_type == TokenTypes.BANG:
-            return not truthy(right)
+            # Horribly hacky but we can't just return `not truthy(right)` because that will return a
+            # python bool rather than the string codecrafters expects.
+            return [ReservedTokenTypes.TRUE.lexeme, ReservedTokenTypes.FALSE.lexeme][truthy(right)]
         if self.val.token_type == TokenTypes.MINUS:
+            # TODO: may need to add some error handling here for non-numeric vals?
             return -right
 
         raise ValueError("Unexpected operator in Unary: {self.val.token_type}")
