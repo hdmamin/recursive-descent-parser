@@ -525,6 +525,7 @@ def is_number(val: Any) -> bool:
     """Return True if a value is an int/float, false otherwise. Note that we return a python bool,
     not lox's TokenTypes.BOOL, and we expect a python variable input, not a Token or Token.lexeme.
     """
+    # Need to handle bool case separately because python counts bools as ints.
     return isinstance(val, (int, float)) and not isinstance(val, bool)
 
 
@@ -576,7 +577,7 @@ class Unary(Expression):
             # Careful, python considers bools as ints. We operate on the evaluated right vs the
             # raw self.right because the latter is an expression, not a token, so has no token_type
             # attr we can reference.
-            if isinstance(right, (int, float)) and not isinstance(right, bool):
+            if is_number(right):
                 return -right
             raise RuntimeError(f"Operand must be a number.\n[line {self.val.line}]")
 
@@ -608,6 +609,8 @@ class Binary(Expression):
         # self.val.op(left, right)?
         try:
             if self.val.token_type == TokenTypes.SLASH:
+                if not (is_number(left) and is_number(right)):
+                    raise RuntimeError(f"Operands must be numbers.\n[line {self.val.line}]")
                 res = left / right
                 # If both operands and the output are all ints, we want to return an int as well.
                 # Python division always returns a float so is_integer method should be available.
@@ -616,6 +619,8 @@ class Binary(Expression):
                     return int(res)
                 return res
             if self.val.token_type == TokenTypes.STAR:
+                if not (is_number(left) and is_number(right)):
+                    raise RuntimeError(f"Operands must be numbers.\n[line {self.val.line}]")
                 return left * right
             if self.val.token_type == TokenTypes.MINUS:
                 return left - right
@@ -636,9 +641,9 @@ class Binary(Expression):
             if self.val.token_type == TokenTypes.EQUAL_EQUAL:
                 return boolean_lexeme(left == right)
         except TypeError:
-            raise ParsingError("Unexpected operator in Binary: {self.val.token_type}")
+            raise ParsingError(f"Multiplication failed with operator: {self.val.token_type}")
 
-        raise ParsingError("Unexpected operator in Binary: {self.val.token_type}")
+        raise ParsingError(f"Unexpected operator in Binary: {self.val.token_type}")
 
 
 class Grouping(Expression):
