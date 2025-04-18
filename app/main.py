@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 import logging
 import sys
-from typing import Union, Callable, Optional
+from typing import Any, Union, Callable, Optional
 
 from app.data_structures import Trie, ASTNode, AST
 
@@ -521,6 +521,13 @@ def boolean_lexeme(val: bool) -> str:
     return [ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.TRUE.lexeme][val]
 
 
+def is_number(val: Any) -> bool:
+    """Return True if a value is an int/float, false otherwise. Note that we return a python bool,
+    not lox's TokenTypes.BOOL, and we expect a python variable input, not a Token or Token.lexeme.
+    """
+    return isinstance(val, (int, float)) and not isinstance(val, bool)
+
+
 class Expression:
     
     def __str__(self) -> str:
@@ -566,8 +573,12 @@ class Unary(Expression):
             # python bool rather than the string codecrafters expects.
             return boolean_lexeme(not truthy(right))
         if self.val.token_type == TokenTypes.MINUS:
-            # TODO: may need to add some error handling here for non-numeric vals?
-            return -right
+            # Careful, python considers bools as ints. We operate on the evaluated right vs the
+            # raw self.right because the latter is an expression, not a token, so has no token_type
+            # attr we can reference.
+            if isinstance(right, (int, float)) and not isinstance(right, bool):
+                return -right
+            raise RuntimeError(f"Operand must be a number.\n[line {self.val.line}]")
 
         raise ValueError("Unexpected operator in Unary: {self.val.token_type}")
 
@@ -727,15 +738,7 @@ class Parser:
             f"Parsing error: Invalid index {self.curr_idx - 1}, max_idx is {self.max_idx}."
         )
 
-    def expression(self) -> Expression:
-        """
-        Rule:
-        expression → equality ;
-        """
-        # equality is the highest precedence (last to be evaluated) operation.
-        return self.equality()
-
-    def parse(self):
+    def parse(self) -> dict:
         """Parse all tokens in the source code into expressions.
 
         Returns
@@ -744,6 +747,9 @@ class Parser:
             expressions: list[str]
             success: bool
             error: Optional[Exception]
+
+            Note that we do NOT try to evalute the expressions yet. We may still encounter
+            additional errors when we do.
         """
         res = {
             "expressions": [],
@@ -760,6 +766,14 @@ class Parser:
                 break
 
         return res
+
+    def expression(self) -> Expression:
+        """
+        Rule:
+        expression → equality ;
+        """
+        # equality is the highest precedence (last to be evaluated) operation.
+        return self.equality()
 
     def primary(self) -> Union[Literal, Grouping]:
         """
@@ -912,7 +926,11 @@ def main():
             exit(65)
 
         for expr in parsed["expressions"]:
-            print(expr.evaluate())
+            try:
+                print(expr.evaluate())
+            except RuntimeError as e:
+                print(e, file=sys.stderr)
+                exit(70)
         # TODO: left off here, maybe can move some parsing logic above the if/elif blocks? Need to
         # be careful IIRC so that the tokenization errors are raised at the right time if
         # command='parse'.
