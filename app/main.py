@@ -381,20 +381,33 @@ class Token:
             return self.literal
         return self.lexeme
 
-    def evaluate(self) -> Union[str, int, float]:
-        """When evaluating expressions, we'll want to grab the actual value of the token, converted
-        to a numeric type when appropriate. This will distinguish between int and float since this
-        is what the book/tests require for evaluation; but note this will not when at the lexing
-        and parsing stages, where they expect all numbers to have a trailing decimal place.
+    def evaluate(self) -> Any:
+        """Return the associated python value represented by a Lox token.
+        This is necessary when evaluating expressions: we need to grab the actual value of the
+        token so we can perform various operations on it. We will have to cast back to a lox
+        datatype before returning.
+
+        Here we distinguish between int and float since this
+        is what the book/tests require for evaluation; but note this cannot be used at the lexing
+        and parsing stages, where the book expects all numbers to have a trailing decimal place.
         """
+        if self.token_type == TokenTypes.STRING:
+            return self.value
+
         if self.token_type == TokenTypes.NUMBER:
             return to_numeric_if_necessary(self.value)
-        
-        # TODO: for now we do not convert bools or nils or operators to non-str types,
-        # not sure if that's correct.
-        # TODO: test seems to want us to convert False -> false. Not sure if this is a bool-specific
-        # thing or if lox should be generally case insensitive?
-        return self.value
+
+        if self.token_type == ReservedTokenTypes.TRUE:
+            return True
+
+        if self.token_type == ReservedTokenTypes.FALSE:
+            return False
+
+        if self.token_type == ReservedTokenTypes.NIL:
+            return None
+
+        # Not sure if this will be a problem.
+        raise RuntimeError(f"Token.evaluate not implemented for {self.token_type}.")
 
     def lexed(self) -> str:
         """Contains lexed code corresponding to one token, consisting of
@@ -492,15 +505,21 @@ def lex(source: str) -> dict:
 
 # TODO: start of parsing section, move to a different module after finishing codecrafters or
 # once I figure out how to more easily test locally.
-def truthy(literal: str) -> bool:
+def truthy(val: Any) -> bool:
     """Determine whether a value is truthy. In Lox, false and nil are considered falsy,
-    everything else is considered truthy. Notice that we're passing in a string, NOT a Token.
+    everything else is considered truthy.
 
     Notice that this returns a python boolean which is useful for in-program logic. But if you are
     trying to print to stdout for codecrafters tests, bools must be represented as lowercase
     strings, not python bools.
+
+    Parameters
+    ----------
+    val : Any
+        A python object, not a literal or Token. E.g we expect False rather than "false" or
+        ReservedTokenTypes.FALSE.
     """
-    return literal not in (ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.NIL.lexeme)
+    return val not in (False, None)
 
         
 def to_numeric_if_necessary(val: str) -> Union[int, float, str]:
@@ -623,8 +642,22 @@ class Binary(Expression):
                     raise RuntimeError(f"Operands must be numbers.\n[line {self.val.line}]")
                 return left * right
             if self.val.token_type == TokenTypes.MINUS:
+                if not (
+                    (isinstance(left, str) and isinstance(right, str))
+                    or (is_number(left) and is_number(right))
+                ):
+                    raise RuntimeError(
+                        f"Operands must be two numbers or two strings.\n[line {self.val.line}]"
+                    )
                 return left - right
             if self.val.token_type == TokenTypes.PLUS:
+                if not (
+                    (isinstance(left, str) and isinstance(right, str))
+                    or (is_number(left) and is_number(right))
+                ):
+                    raise RuntimeError(
+                        f"Operands must be two numbers or two strings.\n[line {self.val.line}]"
+                    )
                 return left + right
             if self.val.token_type == TokenTypes.GREATER:
                 return boolean_lexeme(left > right)
