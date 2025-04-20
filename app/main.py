@@ -591,6 +591,14 @@ class Unary(Expression):
         if self.val.token_type == TokenTypes.BANG:
             # Horribly hacky but we can't just return `not truthy(right)` because that will return a
             # python bool rather than the string codecrafters expects.
+            # TODO: problem is that now Token.evaluate() returns a python dtype but this returns a
+            # str bc tests require that. But Binary.evaluate() calls unary.evaluate() so it expects
+            # evaluate() to return a python var, not a str.
+            # gpt suggests making evaluate() ALWAYS return a python val and then handling formatting
+            # totally separately. So I think we want to remove all the boolean_lexeme usages from
+            # inside eval methods and handle that at the end. Could do one big general purpose
+            # python_val_to_lox_val() func OR use __str__ or __repr__ or to_lox() method in each
+            # expr class.
             return boolean_lexeme(not truthy(right))
         if self.val.token_type == TokenTypes.MINUS:
             # Careful, python considers bools as ints. We operate on the evaluated right vs the
