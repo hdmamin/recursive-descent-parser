@@ -548,6 +548,19 @@ def is_number(val: Any) -> bool:
     return isinstance(val, (int, float)) and not isinstance(val, bool)
 
 
+def to_lox_dtype(val: Any) -> Union[str, int, float]:
+    """Convert a python object to its corresponding lox datatype.
+    Only a few types need to be converted.
+    """
+    # Have to be a little careful here - initially tried to define a dict mapping python vals to
+    # lox vals but python treats bools as ints so it's easy to get unexpected results that way.
+    if isinstance(val, bool):
+        return boolean_lexeme(val)
+    if val is None:
+        return ReservedTokenTypes.NIL.lexeme
+    return val
+
+
 class Expression:
     
     def __str__(self) -> str:
@@ -570,6 +583,9 @@ class Literal(Expression):
         return self.val.non_null_literal
 
     def evaluate(self):
+        """This returns the relevant python value, not the lox value. E.g. None rather than
+        ReservedTokenTypes.NIL.
+        """
         return self.val.evaluate()
 
 
@@ -587,6 +603,9 @@ class Unary(Expression):
         return "(" + self.val.non_null_literal + " " + str(self.right) + ")"
 
     def evaluate(self):
+        """This returns the relevant python value, not the lox value. E.g. None rather than
+        ReservedTokenTypes.NIL.
+        """
         right = self.right.evaluate()
         if self.val.token_type == TokenTypes.BANG:
             # Horribly hacky but we can't just return `not truthy(right)` because that will return a
@@ -599,7 +618,7 @@ class Unary(Expression):
             # inside eval methods and handle that at the end. Could do one big general purpose
             # python_val_to_lox_val() func OR use __str__ or __repr__ or to_lox() method in each
             # expr class.
-            return boolean_lexeme(not truthy(right))
+            return not truthy(right)
         if self.val.token_type == TokenTypes.MINUS:
             # Careful, python considers bools as ints. We operate on the evaluated right vs the
             # raw self.right because the latter is an expression, not a token, so has no token_type
@@ -629,6 +648,9 @@ class Binary(Expression):
         return "(" + self.val.non_null_literal + " " + str(self.left) + " " + str(self.right) + ")"
 
     def evaluate(self):
+        """This returns the relevant python value, not the lox value. E.g. None rather than
+        ReservedTokenTypes.NIL.
+        """
         left = self.left.evaluate()
         right = self.right.evaluate()
 
@@ -667,20 +689,24 @@ class Binary(Expression):
                         f"Operands must be two numbers or two strings.\n[line {self.val.line}]"
                     )
                 return left + right
-            if self.val.token_type == TokenTypes.GREATER:
-                return boolean_lexeme(left > right)
-            if self.val.token_type == TokenTypes.GREATER_EQUAL:
-                return boolean_lexeme(left >= right)
-            if self.val.token_type == TokenTypes.LESS:
-                return boolean_lexeme(left < right)
-            if self.val.token_type == TokenTypes.LESS_EQUAL:
-                return boolean_lexeme(left <= right)
             # Note that these two cases rely on lox's definition of equality matching python's.
             # Based on the book definition this seems to be the case.
             if self.val.token_type == TokenTypes.BANG_EQUAL:
-                return boolean_lexeme(left != right)
+                return left != right
             if self.val.token_type == TokenTypes.EQUAL_EQUAL:
-                return boolean_lexeme(left == right)
+                return left == right
+            
+            # This condition applies to all 4 remaining operation types.
+            if not (is_number(left) and is_number(right)):
+                raise RuntimeError(f"Operands must be numbers.\n[line {self.val.line}]")
+            if self.val.token_type == TokenTypes.GREATER:
+                return left > right
+            if self.val.token_type == TokenTypes.GREATER_EQUAL:
+                return left >= right
+            if self.val.token_type == TokenTypes.LESS:
+                return left < right
+            if self.val.token_type == TokenTypes.LESS_EQUAL:
+                return left <= right
         except TypeError:
             raise ParsingError(f"Multiplication failed with operator: {self.val.token_type}")
 
@@ -702,6 +728,9 @@ class Grouping(Expression):
         return "(group " + str(self.val) + ")"
 
     def evaluate(self):
+        """This returns the relevant python value, not the lox value. E.g. None rather than
+        ReservedTokenTypes.NIL.
+        """
         return self.val.evaluate()
 
 
@@ -973,7 +1002,7 @@ def main():
 
         for expr in parsed["expressions"]:
             try:
-                print(expr.evaluate())
+                print(to_lox_dtype(expr.evaluate()))
             except RuntimeError as e:
                 print(e, file=sys.stderr)
                 exit(70)
