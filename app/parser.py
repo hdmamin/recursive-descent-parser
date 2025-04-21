@@ -176,6 +176,18 @@ class Grouping(Expression):
         return self.val.evaluate()
 
 
+class Statement:
+    pass
+
+
+class PrintStatement(Statement):
+    
+    def __init__(self, expr: Expression):
+        self.expr = expr
+
+    # TODO: evaluate and possibly __str__ methods
+
+
 class ParsingError(Exception):
     """Raise when the parser hits an invalid token given the current state."""
 
