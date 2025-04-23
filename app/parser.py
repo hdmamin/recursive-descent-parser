@@ -177,7 +177,32 @@ class Grouping(Expression):
 
 
 class Statement:
-    pass
+    """Statements 'do things' that have side effects, but do not return a value.
+    This is in contrast to expressions, which compute and return a value.
+
+
+    Grammar:
+
+    program        → statement* EOF ;
+
+    statement      → exprStmt
+                     | printStmt ;
+
+    exprStmt       → expression ";" ;
+    printStmt      → "print" expression ";" ;
+    """
+
+
+class ExpressionStatement(Statement):
+    
+    def __init__(self, expr: Expression):
+        self.expr = expr
+
+    def __str__(self) -> str:
+        return f"({self.expr};)"
+    
+    def evaluate(self) -> None:
+        self.expr.evaluate()
 
 
 class PrintStatement(Statement):
@@ -185,7 +210,11 @@ class PrintStatement(Statement):
     def __init__(self, expr: Expression):
         self.expr = expr
 
-    # TODO: evaluate and possibly __str__ methods
+    def __str__(self) -> str:
+        return f"(print {self.expr})"
+
+    def evaluate(self) -> None:
+        print(self.expr.evaluate())
 
 
 class ParsingError(Exception):
@@ -246,6 +275,11 @@ class Parser:
         self.max_idx = len(self.tokens) - 1
         self.curr_idx = 0
 
+        self.expr_idx = 0
+        # These will be populated by parse().
+        self.expressions = []
+        self.max_expr_idx = None
+
     def match(self, *token_types: TokenType) -> bool:
         """Check if the current token has one fo the expected token_types. If so, increment the
         index and return True. Otherwise return False without incrementing.
@@ -297,6 +331,8 @@ class Parser:
                 # TODO: may eventually want to keep parsing but for now we return early.
                 break
 
+        self.expressions = res["expressions"].copy()
+        self.max_expr_idx = len(self.expressions)
         return res
 
     def expression(self) -> Expression:
@@ -407,3 +443,34 @@ class Parser:
         while self.match(TokenTypes.EQUAL_EQUAL, TokenTypes.BANG_EQUAL):
             left = Binary(left, self.previous_token(), self.comparison())
         return left
+
+    def statement(self):
+        # TODO: kinda analogous to parse? Or like an amalgamation of all our expr methods
+        # (equality/binary/unary/etc)
+        token = self.current_token()
+        # TODO: this is wrong, I'm trying to compare an expr to a token type.
+        if self.match(token, ReservedTokenTypes.PRINT):
+            return self.print_statement()
+        return self.expression_statement()
+
+    def current_expression(self) -> Expression:
+        if self.expr_idx <= self.max_expr_idx:
+            return self.expressions[self.expr_idx]
+        # TODO: not sure if this is the right error type. Also should probably improve error message
+        # (currently geared more for debugging than for end user experience).
+        raise SyntaxError(
+            f"Syntax error. Invalid index {self.expr_idx}, max_idx is {self.max_expr_idx}."
+        )
+
+    def expression_statement(self):
+        pass
+
+    def print_statement(self):
+        expr = self.current_expression()
+        if self.current_expression() != TokenTypes.SEMICOLON:
+            raise SyntaxError("TODO")
+        # TODO: need to check if next statement is a semicolon.
+        # Also unclear on why the match logic isn't implemented here - looks like book implements it
+        # in the more generic statement() method, analogous to parse().
+        return PrintStatement(expr)
+        
