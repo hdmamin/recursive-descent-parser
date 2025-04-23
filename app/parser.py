@@ -275,10 +275,11 @@ class Parser:
         self.max_idx = len(self.tokens) - 1
         self.curr_idx = 0
 
-        self.expr_idx = 0
-        # These will be populated by parse().
-        self.expressions = []
-        self.max_expr_idx = None
+        # TODO rm?
+        # self.expr_idx = 0
+        # # These will be populated by parse().
+        # self.expressions = []
+        # self.max_expr_idx = None
 
     def match(self, *token_types: TokenType) -> bool:
         """Check if the current token has one fo the expected token_types. If so, increment the
@@ -331,8 +332,9 @@ class Parser:
                 # TODO: may eventually want to keep parsing but for now we return early.
                 break
 
-        self.expressions = res["expressions"].copy()
-        self.max_expr_idx = len(self.expressions)
+        # TODO rm?
+        # self.expressions = res["expressions"].copy()
+        # self.max_expr_idx = len(self.expressions)
         return res
 
     def expression(self) -> Expression:
@@ -444,15 +446,19 @@ class Parser:
             left = Binary(left, self.previous_token(), self.comparison())
         return left
 
-    def statement(self):
-        # TODO: kinda analogous to parse? Or like an amalgamation of all our expr methods
-        # (equality/binary/unary/etc)
+    def statement(self) -> Statement:
+        # TODO: I think this is kind of analogous to expression(), and we will swap it out for that
+        # in parse(). Will need to figure out how to distinguish between parsingerrors and syntax
+        # errors, not actually too sure at this stage what that difference should be.
         token = self.current_token()
-        # TODO: this is wrong, I'm trying to compare an expr to a token type.
         if self.match(token, ReservedTokenTypes.PRINT):
             return self.print_statement()
         return self.expression_statement()
 
+    # TODO think I can rm? This was when I thought we were supposed to finish parsing
+    # tokens->expressions upfront, but looks like we actually go to statements in one go.
+    # There are some related attrs in init and values set in parse that I will need to delete too if
+    # that's correct.
     def current_expression(self) -> Expression:
         if self.expr_idx <= self.max_expr_idx:
             return self.expressions[self.expr_idx]
@@ -462,15 +468,27 @@ class Parser:
             f"Syntax error. Invalid index {self.expr_idx}, max_idx is {self.max_expr_idx}."
         )
 
-    def expression_statement(self):
-        pass
+    def expression_statement(self) -> ExpressionStatement:
+        """
+        Example:
+        foo();
+        """
+        expr = self.expression()
+        # At this point we know the statement needs a semicolon next to finish it.
+        if self.match(TokenTypes.SEMICOLON):
+            raise SyntaxError("Expect ';' after expression.")
 
-    def print_statement(self):
-        expr = self.current_expression()
-        if self.current_expression() != TokenTypes.SEMICOLON:
-            raise SyntaxError("TODO")
-        # TODO: need to check if next statement is a semicolon.
-        # Also unclear on why the match logic isn't implemented here - looks like book implements it
-        # in the more generic statement() method, analogous to parse().
+        return ExpressionStatement(expr)
+
+    def print_statement(self) -> PrintStatement:
+        """
+        Example:
+        print foo;
+        """
+        expr = self.expression()
+        # At this point we know the statement needs a semicolon next to finish it.
+        if self.match(TokenTypes.SEMICOLON):
+            raise SyntaxError("Expect ';' after expression.")
+
         return PrintStatement(expr)
         
