@@ -6,32 +6,11 @@ from app.data_structures import ASTNode
 from app.lexer import (
     Token, TokenType, TokenTypes, ReservedTokenTypes, TYPES_TRIE, RESERVED_TYPES_TRIE, lex
 )
-from app.parser import Parser
+from app.parser import Parser, boolean_lexeme, to_lox_dtype
 
 
 logger = logging.getLogger()
 logging.basicConfig()
-
-
-def boolean_lexeme(val: bool) -> str:
-    """Map a python boolean to a string containing the appropriate lox lexeme. (In practice,
-    this is currently equivalent to str(val).lower(), but that felt a little riskier in case we
-    ever changed how lox represents bools.)
-    """
-    return [ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.TRUE.lexeme][val]
-
-
-def to_lox_dtype(val: Any) -> Union[str, int, float]:
-    """Convert a python object to its corresponding lox datatype.
-    Only a few types need to be converted.
-    """
-    # Have to be a little careful here - initially tried to define a dict mapping python vals to
-    # lox vals but python treats bools as ints so it's easy to get unexpected results that way.
-    if isinstance(val, bool):
-        return boolean_lexeme(val)
-    if val is None:
-        return ReservedTokenTypes.NIL.lexeme
-    return val
 
 
 # TODO: prob can delete?
@@ -112,8 +91,19 @@ def main():
         # be careful IIRC so that the tokenization errors are raised at the right time if
         # command='parse'.
     elif command == "run":
-        pass
-        # TODO
+        # TODO: not sure if this is valid, just treating any error here like a syntax error.
+        # Might need to modify parser to better distinguish between parsing and syntax errors.
+        # The ParsingError at the end of primary() was causing problems in run mode when I checked
+        # here specifically for syntaxerrors, but not sure if we rely on that for previous chapter's
+        # tests to pass? Really should save all test cases from previous runs so I can run the full
+        # past test suite on my own.
+        if not parsed["success"]:
+            # TODO rm print
+            # print(f'Exiting with code 65 due to syntax error: {parsed["error"]}')
+            exit(65)
+
+        for statement in parsed["statements"]:
+            statement.evaluate()
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
         exit(1)

@@ -214,11 +214,33 @@ class PrintStatement(Statement):
         return f"(print {self.expr})"
 
     def evaluate(self) -> None:
-        print(self.expr.evaluate())
+        print(to_lox_dtype(self.expr.evaluate()))
 
 
 class ParsingError(Exception):
     """Raise when the parser hits an invalid token given the current state."""
+
+
+def boolean_lexeme(val: bool) -> str:
+    """Map a python boolean to a string containing the appropriate lox lexeme. (In practice,
+    this is currently equivalent to str(val).lower(), but that felt a little riskier in case we
+    ever changed how lox represents bools.)
+    """
+    return [ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.TRUE.lexeme][val]
+
+
+def to_lox_dtype(val: Any) -> Union[str, int, float]:
+    """Convert a python object to its corresponding lox datatype.
+    Only a few types need to be converted.
+    """
+    # Have to be a little careful here - initially tried to define a dict mapping python vals to
+    # lox vals but python treats bools as ints so it's easy to get unexpected results that way.
+    if isinstance(val, bool):
+        return boolean_lexeme(val)
+    if val is None:
+        return ReservedTokenTypes.NIL.lexeme
+    return val
+
 
 
 def is_number(val: Any) -> bool:
@@ -312,15 +334,35 @@ class Parser:
             Note that we do NOT try to evalute the expressions yet. We may still encounter
             additional errors when we do.
         """
+        # res = {
+        #     "expressions": [],
+        #     "success": True,
+        #     "error": None,
+        # }
+        # while self.curr_idx <= self.max_idx:
+        #     try:
+        #         res["expressions"].append(self.expression())
+        #     except ParsingError as e:
+        #         res["success"] = False
+        #         res["error"] = e
+        #         # TODO: may eventually want to keep parsing but for now we return early.
+        #         break
+
+        # return res
+
+        # TODO: trying to convert parsing expressions to parsing statements. Keeping old
+        # implementation above in the meantime.
         res = {
-            "expressions": [],
+            "statements": [],
             "success": True,
             "error": None,
         }
         while self.curr_idx <= self.max_idx:
             try:
-                res["expressions"].append(self.expression())
-            except ParsingError as e:
+                res["statements"].append(self.statement())
+            # TODO: may need to handle these differently, syntaxerrors are raised when statement
+            # parsing fails while parsingerrors are raised when expression parsing fails.
+            except (ParsingError, SyntaxError) as e:
                 res["success"] = False
                 res["error"] = e
                 # TODO: may eventually want to keep parsing but for now we return early.
@@ -438,9 +480,9 @@ class Parser:
         return left
 
     def statement(self) -> Statement:
-        # TODO: I think this is kind of analogous to expression(), and we will swap it out for that
-        # in parse(). Will need to figure out how to distinguish between parsingerrors and syntax
-        # errors, not actually too sure at this stage what that difference should be.
+        # Kind of analogous to `expression` method. However, this handles more of the delegation
+        # to different statement methods whereas expression fully offloads that to the methods it
+        # calls.
         token = self.current_token()
         if self.match(token, ReservedTokenTypes.PRINT):
             return self.print_statement()
@@ -453,7 +495,7 @@ class Parser:
         """
         expr = self.expression()
         # At this point we know the statement needs a semicolon next to finish it.
-        if self.match(TokenTypes.SEMICOLON):
+        if not self.match(TokenTypes.SEMICOLON):
             raise SyntaxError("Expect ';' after expression.")
 
         return ExpressionStatement(expr)
@@ -465,7 +507,7 @@ class Parser:
         """
         expr = self.expression()
         # At this point we know the statement needs a semicolon next to finish it.
-        if self.match(TokenTypes.SEMICOLON):
+        if not self.match(TokenTypes.SEMICOLON):
             raise SyntaxError("Expect ';' after expression.")
 
         return PrintStatement(expr)
