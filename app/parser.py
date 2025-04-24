@@ -275,12 +275,6 @@ class Parser:
         self.max_idx = len(self.tokens) - 1
         self.curr_idx = 0
 
-        # TODO rm?
-        # self.expr_idx = 0
-        # # These will be populated by parse().
-        # self.expressions = []
-        # self.max_expr_idx = None
-
     def match(self, *token_types: TokenType) -> bool:
         """Check if the current token has one fo the expected token_types. If so, increment the
         index and return True. Otherwise return False without incrementing.
@@ -332,9 +326,6 @@ class Parser:
                 # TODO: may eventually want to keep parsing but for now we return early.
                 break
 
-        # TODO rm?
-        # self.expressions = res["expressions"].copy()
-        # self.max_expr_idx = len(self.expressions)
         return res
 
     def expression(self) -> Expression:
@@ -454,19 +445,6 @@ class Parser:
         if self.match(token, ReservedTokenTypes.PRINT):
             return self.print_statement()
         return self.expression_statement()
-
-    # TODO think I can rm? This was when I thought we were supposed to finish parsing
-    # tokens->expressions upfront, but looks like we actually go to statements in one go.
-    # There are some related attrs in init and values set in parse that I will need to delete too if
-    # that's correct.
-    def current_expression(self) -> Expression:
-        if self.expr_idx <= self.max_expr_idx:
-            return self.expressions[self.expr_idx]
-        # TODO: not sure if this is the right error type. Also should probably improve error message
-        # (currently geared more for debugging than for end user experience).
-        raise SyntaxError(
-            f"Syntax error. Invalid index {self.expr_idx}, max_idx is {self.max_expr_idx}."
-        )
 
     def expression_statement(self) -> ExpressionStatement:
         """
