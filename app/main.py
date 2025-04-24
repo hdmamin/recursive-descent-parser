@@ -81,15 +81,21 @@ def main():
         if not lexed["success"]:
             exit(65)
 
-        for expr in parsed["expressions"]:
-            try:
-                print(to_lox_dtype(expr.evaluate()))
-            except RuntimeError as e:
-                print(e, file=sys.stderr)
-                exit(70)
-        # TODO: left off here, maybe can move some parsing logic above the if/elif blocks? Need to
-        # be careful IIRC so that the tokenization errors are raised at the right time if
-        # command='parse'.
+        if parsed["success"]:
+            for expr in parsed["expressions"]:
+                try:
+                    print(to_lox_dtype(expr.evaluate()))
+                except RuntimeError as e:
+                    print(e, file=sys.stderr)
+                    exit(70)
+        # TODO: added this condition bc examples like evaluate "world" + 3 were NOT failing otherwise.
+        # But now this also fails examples like "foo" != "baz", which I guess is an invalid statement
+        # (no semicolon) but a valid expression? Both examples raise syntaxerrors so need to figure
+        # out how to distinguish between those.
+        else:
+            print(type(parsed['error']))
+            print(parsed["error"], file=sys.stderr)
+            exit(70)
     elif command == "run":
         # TODO: not sure if this is valid, just treating any error here like a syntax error.
         # Might need to modify parser to better distinguish between parsing and syntax errors.

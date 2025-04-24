@@ -327,7 +327,8 @@ class Parser:
         Returns
         -------
         dict
-            expressions: list[str]
+            expressions: list[Expression]
+            statements: list[Statement]
             success: bool
             error: Optional[Exception]
 
@@ -354,6 +355,7 @@ class Parser:
         # implementation above in the meantime.
         res = {
             "statements": [],
+            "expressions": [],
             "success": True,
             "error": None,
         }
@@ -368,6 +370,8 @@ class Parser:
                 # TODO: may eventually want to keep parsing but for now we return early.
                 break
 
+        # TODO: will need to change this logic once we implement more complex statement types.
+        res["expressions"] = [statement.expr for statement in res["statements"]]
         return res
 
     def expression(self) -> Expression:
