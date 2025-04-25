@@ -321,11 +321,20 @@ class Parser:
             f"Parsing error: Invalid index {self.curr_idx - 1}, max_idx is {self.max_idx}."
         )
 
-    def parse(self) -> dict:
+    def parse(self, mode: str = "run") -> dict:
         """Parse all tokens in the source code into expressions.
+
+        Parameters
+        ----------
+        mode : str
+            One of ("run", "evaluate", "parse") indicating what we're trying to do to the program.
+            If "evaluate" or "parse",
+            we construct a list of Expressions (do not need trailing semicolons). If "run", we
+            construct a list of Statements (do require trailing semicolons).
 
         Returns
         -------
+        TODO update docs
         dict
             expressions: list[Expression]
             statements: list[Statement]
@@ -345,7 +354,7 @@ class Parser:
         #         res["expressions"].append(self.expression())
         #     except ParsingError as e:
         #         res["success"] = False
-        #         res["error"] = e
+        #         res["error"] = eor ""
         #         # TODO: may eventually want to keep parsing but for now we return early.
         #         break
 
@@ -353,15 +362,16 @@ class Parser:
 
         # TODO: trying to convert parsing expressions to parsing statements. Keeping old
         # implementation above in the meantime.
+        method_name = {"run": "statement", "evaluate": "expression", "parse": "expression"}[mode]
+        method = getattr(self, method_name)
         res = {
-            "statements": [],
-            "expressions": [],
+            f"{method_name}s": [],
             "success": True,
             "error": None,
         }
         while self.curr_idx <= self.max_idx:
             try:
-                res["statements"].append(self.statement())
+                res[f"{method_name}s"].append(method())
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
@@ -371,7 +381,8 @@ class Parser:
                 break
 
         # TODO: will need to change this logic once we implement more complex statement types.
-        res["expressions"] = [statement.expr for statement in res["statements"]]
+        # TODO: or update res key name to use mode if we end up needing to keep this.
+        # res["expressions"] = [statement.expr for statement in res["statements"]]
         return res
 
     def expression(self) -> Expression:

@@ -47,9 +47,9 @@ def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
     lexed = lex(file_contents)
-    if lexed["success"]:
+    if lexed["success"] and command in ("parse", "evaluate", "run"):
         parser = Parser(lexed["tokenized"])
-        parsed = parser.parse()
+        parsed = parser.parse(mode=command)
 
     # Print results for codecrafters.
     if command == "tokenize":
@@ -81,21 +81,13 @@ def main():
         if not lexed["success"]:
             exit(65)
 
-        if parsed["success"]:
-            for expr in parsed["expressions"]:
-                try:
-                    print(to_lox_dtype(expr.evaluate()))
-                except RuntimeError as e:
-                    print(e, file=sys.stderr)
-                    exit(70)
-        # TODO: added this condition bc examples like evaluate "world" + 3 were NOT failing otherwise.
-        # But now this also fails examples like "foo" != "baz", which I guess is an invalid statement
-        # (no semicolon) but a valid expression? Both examples raise syntaxerrors so need to figure
-        # out how to distinguish between those.
-        else:
-            print(type(parsed['error']))
-            print(parsed["error"], file=sys.stderr)
-            exit(70)
+        # if parsed["success"]:
+        for expr in parsed["expressions"]:
+            try:
+                print(to_lox_dtype(expr.evaluate()))
+            except RuntimeError as e:
+                print(e, file=sys.stderr)
+                exit(70)
     elif command == "run":
         # TODO: not sure if this is valid, just treating any error here like a syntax error.
         # Might need to modify parser to better distinguish between parsing and syntax errors.
@@ -104,8 +96,6 @@ def main():
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
         if not parsed["success"]:
-            # TODO rm print
-            # print(f'Exiting with code 65 due to syntax error: {parsed["error"]}')
             exit(65)
 
         for statement in parsed["statements"]:
