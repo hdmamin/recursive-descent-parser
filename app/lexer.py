@@ -468,6 +468,13 @@ def lex(source: str) -> dict:
     # splitlines at the f.read() level and pass in list[str] to this func.
     lines = deque(source.splitlines())
     while lines:
+        # TODO: currently process each line individually and view it as self contained. But if we
+        # have open quotes or parentheses, a semantic line can actually continue onto the next
+        # litearl line. Thinking out loud: could try to split on multiple chars upfront but we
+        # actually want to split in fewer instances, not more. Could check in Unterminated lexeme
+        # if we're in an open str/parens situation, but not sure if that will work, maybe I need
+        # to feed in the whole sequence to "from_longest_leading_substring" to begin with. Need to
+        # think more about this.
         line = lines.popleft()
         line_num += 1
         i = 0

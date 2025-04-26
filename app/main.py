@@ -47,9 +47,14 @@ def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
     lexed = lex(file_contents)
-    if lexed["success"] and command in ("parse", "evaluate", "run"):
+    if lexed["success"]:
         parser = Parser(lexed["tokenized"])
         parsed = parser.parse(mode=command)
+    else:
+        # TODO: running into unterminated str errors when the closing quotes are on a different line
+        # than the opening quotes.
+        print(lexed) # TODO rm
+        parsed = {"success": False}
 
     # Print results for codecrafters.
     if command == "tokenize":
