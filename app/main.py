@@ -103,7 +103,11 @@ def main():
             exit(65)
 
         for statement in parsed["statements"]:
-            statement.evaluate()
+            try:
+                statement.evaluate()
+            except RuntimeError as e:
+                print(e, file=sys.stderr)
+                exit(70)
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
         exit(1)

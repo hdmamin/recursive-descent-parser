@@ -11,6 +11,17 @@ Then run this command, where the last arg is a path containing some snippet of l
 ./your_program.sh parse /tmp/tmp.txt 
 ```
 
+To test if a refactor broke functionality from previous rounds, run:
+```
+codecrafters test --previous
+```
+(This tests both previous rounds and the current round.)
+
+Other options I was looking into previously, may want to get one of these working eventually:
+- Found what I believe is the repo used to run tests, may be able to get this running locally or at least extract test cases.
+    https://github.com/codecrafters-io/interpreter-tester 
+- running `codecrafters submit 2>&1 | tee logs/{section_name}-{section_step_number}.txt` to save all output from running tests, should be able to parse this later into runnable tests.
+
 [![progress-banner](https://backend.codecrafters.io/progress/interpreter/f565001c-a282-4eb3-afc4-3c00f9645763)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
 This is a starting point for Python solutions to the
