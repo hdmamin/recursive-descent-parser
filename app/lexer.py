@@ -492,19 +492,28 @@ def lex(source: str) -> dict:
             token = None
             try:
                 token = Token.from_longest_leading_substring(line[i:], line=line_num)
-                lexed_item = token.lexed()
-                i += len(token)
             except ValueError:
                 lexed_item = f"[line {line_num}] Error: Unexpected character: {line[i]}"
                 success = False
                 i += 1
             except UnterminatedLexeme as e:
-                lexed_item = f"[line {line_num}] Error: {e.args[0]}"
-                success = False
-                # TODO: might need to revisit this logic but at least for strings I think it's ok.
-                # We don't want to break like we did for comments because we still need to add
-                # our lexed_item to res down below.
-                i = max_idx + 1
+                # Handle case where we're in a multi-line string.
+                if line[i] == '"' and lines:
+                    line_2 = lines.popleft()
+                    line = line + "\n" + line_2
+                    line_num += 1
+                    max_idx += len(line_2) + 1
+                    continue
+                else:
+                    lexed_item = f"[line {line_num}] Error: {e.args[0]}"
+                    success = False
+                    # TODO: might need to revisit this logic but at least for strings I think it's ok.
+                    # We don't want to break like we did for comments because we still need to add
+                    # our lexed_item to res down below.
+                    i = max_idx + 1
+            else:
+                lexed_item = token.lexed()
+                i += len(token)
 
             if lexed_item:
                 res.append(lexed_item)
