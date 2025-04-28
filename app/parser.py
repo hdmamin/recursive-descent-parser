@@ -3,6 +3,9 @@ from typing import Any, Union
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
 
+SENTINEL = object()
+
+
 class Expression:
     
     def __str__(self) -> str:
@@ -183,13 +186,15 @@ class Statement:
 
     Grammar:
 
-    program        → statement* EOF ;
+    program        → declaration* EOF ;
+
+    declaration    → varDecl
+                | statement ;
 
     statement      → exprStmt
-                     | printStmt ;
-
-    exprStmt       → expression ";" ;
+                | printStmt ;
     printStmt      → "print" expression ";" ;
+    varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
     """
 
 
@@ -215,6 +220,22 @@ class PrintStatement(Statement):
 
     def evaluate(self) -> None:
         print(to_lox_dtype(self.expr.evaluate()))
+
+    
+class VariableDeclaration(Statement):
+    
+    def __init__(self, name: str, expr: Expression) -> None:
+        self.name = name
+        self.expr = expr
+        # We will set this in evaluate. Don't use default=None because evaluate could return None.
+        self.value = SENTINEL
+
+    # TODO: getting displayed like "((a = foo);)", guessing that may not be correct.
+    def __str__(self) -> str:
+        return f"({self.name} = {self.expr})"
+
+    def evaluate(self) -> None:
+        self.value = self.expr.evaluate()
 
 
 class ParsingError(Exception):
@@ -286,8 +307,9 @@ class Parser:
     factor         → unary ( ( "/" | "*" ) unary )* ;
     unary          → ( "!" | "-" ) unary
                 | primary ;
-    primary        → NUMBER | STRING | "true" | "false" | "nil"
-                | "(" expression ")" ;
+    primary        → "true" | "false" | "nil" | NUMBER | STRING
+               | "(" expression ")"
+               | IDENTIFIER ;
     """
 
     def __init__(self, tokens: list[Token]):
@@ -381,16 +403,30 @@ class Parser:
         "foo"
 
         Rule:
-        primary → NUMBER | STRING | "true" | "false" | "nil"
-               | "(" expression ")" ;
+        primary        → "true" | "false" | "nil" | NUMBER | STRING
+               | "(" expression ")"
+               | IDENTIFIER ;
         """
         token = self.current_token()
         # Reserved types
         reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
         other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
-        # TODO: book doesn't include IDENTIFIER here yet but codecraftesr tests seem to. Haven't
-        # updated docstrings yet to reflect this, just testing.
-        if self.match(*reserved_types, *other_types, TokenTypes.IDENTIFIER):
+        
+        # TODO: can see that parsing 'var a = "foo"' works, but subsequent "print a" does not.
+        if self.match(ReservedTokenTypes.VAR):
+            name = self.current_token()
+            if self.match(TokenTypes.IDENTIFIER):
+                # TODO: handle case where user does "var x;" with no assigned value.
+                if self.match(TokenTypes.EQUAL):
+                    expr = self.expression()
+                    return VariableDeclaration(name.lexeme, expr)
+            # TODO: make sure this error handling is ok, I want all the else cases above to
+            # end up here but need to check if they do.
+            else:
+                # TODO: not sure if should be parsing/syntax/runtime error.
+                raise ParsingError(f"Invalid variable declaration at line {token.line}")
+
+        if self.match(*reserved_types, *other_types):
             return Literal(token)
         
         if self.match(TokenTypes.LEFT_PAREN):
