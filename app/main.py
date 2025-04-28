@@ -100,6 +100,9 @@ def main():
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
         if not parsed["success"]:
+            print("todo 65")
+            print(lexed)
+            print(parsed)
             exit(65)
 
         for statement in parsed["statements"]:

@@ -344,24 +344,6 @@ class Parser:
             Note that we do NOT try to evalute the expressions yet. We may still encounter
             additional errors when we do.
         """
-        # res = {
-        #     "expressions": [],
-        #     "success": True,
-        #     "error": None,
-        # }
-        # while self.curr_idx <= self.max_idx:
-        #     try:
-        #         res["expressions"].append(self.expression())
-        #     except ParsingError as e:
-        #         res["success"] = False
-        #         res["error"] = eor ""
-        #         # TODO: may eventually want to keep parsing but for now we return early.
-        #         break
-
-        # return res
-
-        # TODO: trying to convert parsing expressions to parsing statements. Keeping old
-        # implementation above in the meantime.
         method_name = {"run": "statement", "evaluate": "expression", "parse": "expression"}[mode]
         method = getattr(self, method_name)
         res = {
