@@ -381,7 +381,7 @@ class Parser:
             Note that we do NOT try to evalute the expressions yet. We may still encounter
             additional errors when we do.
         """
-        method_name = {"run": "statement", "evaluate": "expression", "parse": "expression"}[mode]
+        method_name = {"run": "declaration", "evaluate": "expression", "parse": "expression"}[mode]
         method = getattr(self, method_name)
         res = {
             f"{method_name}s": [],
@@ -426,21 +426,21 @@ class Parser:
         """
         token = self.current_token()
         
-        # TODO: can see that parsing 'var a = "foo"' works, but subsequent "print a" does not.
-        if self.match(ReservedTokenTypes.VAR):
-            name = self.current_token()
-            if self.match(TokenTypes.IDENTIFIER):
-                # TODO: handle case where user does "var x;" with no assigned value.
-                if self.match(TokenTypes.EQUAL):
-                    expr = self.expression()
-                    declaration = VariableDeclaration(name.lexeme, expr)
-                    Environment.set(declaration)
-                    return declaration
-            # TODO: make sure this error handling is ok, I want all the else cases above to
-            # end up here but need to check if they do.
-            else:
-                # TODO: not sure if should be parsing/syntax/runtime error.
-                raise ParsingError(f"Invalid variable declaration at line {token.line}")
+        # TODO: delete
+        # if self.match(ReservedTokenTypes.VAR):
+        #     name = self.current_token()
+        #     if self.match(TokenTypes.IDENTIFIER):
+        #         # TODO: handle case where user does "var x;" with no assigned value.
+        #         if self.match(TokenTypes.EQUAL):
+        #             expr = self.expression()
+        #             declaration = VariableDeclaration(name.lexeme, expr)
+        #             Environment.set(declaration)
+        #             return declaration
+        #     # TODO: make sure this error handling is ok, I want all the else cases above to
+        #     # end up here but need to check if they do.
+        #     else:
+        #         # TODO: not sure if should be parsing/syntax/runtime error.
+        #         raise ParsingError(f"Invalid variable declaration at line {token.line}")
 
         reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
         other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
@@ -575,3 +575,43 @@ class Parser:
 
         return PrintStatement(expr)
         
+    def synchronize(self):
+        """TODO: error handling for when we hit a parsing error."""
+
+    def declaration(self):
+        """Kind of analogous to `expression` and `statement` methods.
+        """
+        try:
+            if self.match(ReservedTokenTypes.VAR):
+                return self.variable_declaration()
+            else:
+                # TODO: we get stuck in an inf loop here when hitting the ending semicolon in
+                # "print a;". I think issue is maybe partly that I haven't defined how to return
+                # a statement containing an existing variable yet. Maybe also something about
+                # index never progressing past the max idx bc of some kind of error so we get stuck
+                # forever?
+                print("else", self.current_token())
+                return self.statement()
+        except ParsingError:
+            self.synchronize()
+        
+    def variable_declaration(self):
+        """Called *after* we've already confirmed there was a preceding VAR token and current_token
+        now points to the token after that.
+        """
+        name = self.current_token()
+        # TODO: can probably refactor so all the else clauses/error handling is cleaner.
+        if self.match(TokenTypes.IDENTIFIER):
+            if self.match(TokenTypes.EQUAL):
+                expr = self.expression()
+                declaration = VariableDeclaration(name.lexeme, expr)
+                Environment.set(declaration)
+                print('set var', vars(declaration)) # TODO rm
+                if self.match(TokenTypes.SEMICOLON):
+                    return declaration
+                else:
+                    raise SyntaxError("Expect ';' after variable declaration.")
+            else:
+                raise NotImplementedError("TODO: handle case where user does 'var x;' with no assigned value.")
+        # TODO: not sure if should be parsing/syntax/runtime error.
+        raise ParsingError(f"Invalid variable declaration at line {name.line}")

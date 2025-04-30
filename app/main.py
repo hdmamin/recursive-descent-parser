@@ -105,7 +105,7 @@ def main():
             print(parsed)
             exit(65)
 
-        for statement in parsed["statements"]:
+        for statement in parsed["declarations"]:
             try:
                 statement.evaluate()
             except RuntimeError as e:
