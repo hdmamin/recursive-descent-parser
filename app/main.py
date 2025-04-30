@@ -101,7 +101,7 @@ def main():
         # past test suite on my own.
         if not parsed["success"]:
             print("todo 65")
-            print(lexed)
+            # print(lexed)
             print(parsed)
             exit(65)
 

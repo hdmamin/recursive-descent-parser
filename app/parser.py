@@ -289,8 +289,23 @@ def truthy(val: Any) -> bool:
     return val not in (False, None)
 
 
+class Environment:
+
+    # Maps name to VariableDeclaration object. We still need to evaluate that object to get its
+    # value.
+    variables = {}
+
+    @classmethod
+    def set(cls, var: VariableDeclaration):
+        cls.variables[var.name] = var
+
+    @classmethod
+    def get(cls, name: str) -> VariableDeclaration:
+        return cls.variables[name]
+
+
 # TODO: rm decorator once done debugging. For now leave it so can easily comment it on/off.
-# from app.debugging import decorate_methods, verbose
+from app.debugging import decorate_methods, verbose
 # @decorate_methods(verbose)
 class Parser:
     """
@@ -397,6 +412,8 @@ class Parser:
         # equality is the highest precedence (last to be evaluated) operation.
         return self.equality()
 
+    # TODO: need to update return typehint if we continue to allow returning VariableDeclaration
+    # here. But also seems kinda funky, not sure if should change.
     def primary(self) -> Union[Literal, Grouping]:
         """
         Example:
@@ -408,9 +425,6 @@ class Parser:
                | IDENTIFIER ;
         """
         token = self.current_token()
-        # Reserved types
-        reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
-        other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
         
         # TODO: can see that parsing 'var a = "foo"' works, but subsequent "print a" does not.
         if self.match(ReservedTokenTypes.VAR):
@@ -419,13 +433,17 @@ class Parser:
                 # TODO: handle case where user does "var x;" with no assigned value.
                 if self.match(TokenTypes.EQUAL):
                     expr = self.expression()
-                    return VariableDeclaration(name.lexeme, expr)
+                    declaration = VariableDeclaration(name.lexeme, expr)
+                    Environment.set(declaration)
+                    return declaration
             # TODO: make sure this error handling is ok, I want all the else cases above to
             # end up here but need to check if they do.
             else:
                 # TODO: not sure if should be parsing/syntax/runtime error.
                 raise ParsingError(f"Invalid variable declaration at line {token.line}")
 
+        reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
+        other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
         if self.match(*reserved_types, *other_types):
             return Literal(token)
         
@@ -437,6 +455,18 @@ class Parser:
                     f"{self.current_token().token_type}."
                 )
             return Grouping(expr)
+
+        if self.match(TokenTypes.IDENTIFIER):
+            # TODO: managed to grab and evaluate this, but have to think about what we actually
+            # want to return at this stage. Real answer may be that we should refactor the
+            # VariableDeclaration logic out of this method and into a new declaration() method,
+            # like the book does, and let primary stick to returning Expressions. Though I guess
+            # that may only move the logic above parsing the assignment step and we may still need
+            # to handle this situation here when encountering identifiers.
+            x = Environment.get(token.lexeme)
+            x.evaluate()
+            print(f'identifier {token.lexeme} value:', x.value)
+            pass
 
         raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
