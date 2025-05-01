@@ -1,5 +1,6 @@
 from typing import Any, Union
 
+from app.environment import Environment
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
 
@@ -289,21 +290,6 @@ def truthy(val: Any) -> bool:
     return val not in (False, None)
 
 
-class Environment:
-
-    # Maps name to VariableDeclaration object. We still need to evaluate that object to get its
-    # value.
-    variables = {}
-
-    @classmethod
-    def set(cls, var: VariableDeclaration):
-        cls.variables[var.name] = var
-
-    @classmethod
-    def get(cls, name: str) -> VariableDeclaration:
-        return cls.variables[name]
-
-
 # TODO: rm decorator once done debugging. For now leave it so can easily comment it on/off.
 from app.debugging import decorate_methods, verbose
 # @decorate_methods(verbose)
@@ -412,8 +398,6 @@ class Parser:
         # equality is the highest precedence (last to be evaluated) operation.
         return self.equality()
 
-    # TODO: need to update return typehint if we continue to allow returning VariableDeclaration
-    # here. But also seems kinda funky, not sure if should change.
     def primary(self) -> Union[Literal, Grouping]:
         """
         Example:
@@ -457,16 +441,7 @@ class Parser:
             return Grouping(expr)
 
         if self.match(TokenTypes.IDENTIFIER):
-            # TODO: managed to grab and evaluate this, but have to think about what we actually
-            # want to return at this stage. Real answer may be that we should refactor the
-            # VariableDeclaration logic out of this method and into a new declaration() method,
-            # like the book does, and let primary stick to returning Expressions. Though I guess
-            # that may only move the logic above parsing the assignment step and we may still need
-            # to handle this situation here when encountering identifiers.
-            x = Environment.get(token.lexeme)
-            x.evaluate()
-            print(f'identifier {token.lexeme} value:', x.value)
-            pass
+            return Literal(token)
 
         raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
@@ -572,11 +547,12 @@ class Parser:
         # At this point we know the statement needs a semicolon next to finish it.
         if not self.match(TokenTypes.SEMICOLON):
             raise SyntaxError("Expect ';' after expression.")
-
         return PrintStatement(expr)
         
     def synchronize(self):
         """TODO: error handling for when we hit a parsing error."""
+        # TODO rm incr, just trying to avoid inf loop in else clause in declaration() for now
+        self.curr_idx += 1
 
     def declaration(self):
         """Kind of analogous to `expression` and `statement` methods.
@@ -585,12 +561,6 @@ class Parser:
             if self.match(ReservedTokenTypes.VAR):
                 return self.variable_declaration()
             else:
-                # TODO: we get stuck in an inf loop here when hitting the ending semicolon in
-                # "print a;". I think issue is maybe partly that I haven't defined how to return
-                # a statement containing an existing variable yet. Maybe also something about
-                # index never progressing past the max idx bc of some kind of error so we get stuck
-                # forever?
-                print("else", self.current_token())
                 return self.statement()
         except ParsingError:
             self.synchronize()
@@ -606,7 +576,6 @@ class Parser:
                 expr = self.expression()
                 declaration = VariableDeclaration(name.lexeme, expr)
                 Environment.set(declaration)
-                print('set var', vars(declaration)) # TODO rm
                 if self.match(TokenTypes.SEMICOLON):
                     return declaration
                 else:

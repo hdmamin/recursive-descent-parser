@@ -6,6 +6,7 @@ from string import ascii_letters
 from typing import Any, Union, Callable, Optional
 import logging
 from app.data_structures import Trie
+from app.environment import Environment
 
 
 logger = logging.getLogger(__name__)
@@ -414,6 +415,13 @@ class Token:
 
         if self.token_type == ReservedTokenTypes.NIL:
             return None
+
+        if self.token_type == TokenTypes.IDENTIFIER:
+            lox_var = Environment.get(self.lexeme)
+            # TODO: maybe only evaluate if hasn't already been evaluated? Could consider baking that
+            # into env cls.
+            lox_var.evaluate()
+            return lox_var.value
 
         # Not sure if this will be a problem.
         raise RuntimeError(f"Token.evaluate not implemented for {self.token_type}.")

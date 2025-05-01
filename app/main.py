@@ -105,6 +105,10 @@ def main():
             print(parsed)
             exit(65)
 
+        # TODO: "print;" errors bc our only statement is None which has no evaluate() method.
+        # Think we need to check in Parser.parse to see what's happening there, probably better than
+        # checking here if statement is None.
+        print(parsed)
         for statement in parsed["declarations"]:
             try:
                 statement.evaluate()
