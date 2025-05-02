@@ -417,9 +417,11 @@ class Token:
             return None
 
         if self.token_type == TokenTypes.IDENTIFIER:
-            lox_var = Environment.get(self.lexeme)
-            # TODO: maybe only evaluate if hasn't already been evaluated? Could consider baking that
-            # into env cls.
+            try:
+                lox_var = Environment.get(self.lexeme)
+            except KeyError:
+                raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
+            
             lox_var.evaluate()
             return lox_var.value
 
