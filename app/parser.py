@@ -368,6 +368,8 @@ class Parser:
             additional errors when we do.
         """
         method_name = {"run": "declaration", "evaluate": "expression", "parse": "expression"}[mode]
+        # TODO rm
+        # method_name = {"run": "statement", "evaluate": "expression", "parse": "expression"}[mode]
         method = getattr(self, method_name)
         res = {
             f"{method_name}s": [],
@@ -553,6 +555,12 @@ class Parser:
         """TODO: error handling for when we hit a parsing error."""
         # TODO rm incr, just trying to avoid inf loop in else clause in declaration() for now
         self.curr_idx += 1
+        # TODO: raising an error for now bc tests do want this for parsing errors, e.g. for `print;`
+        # but eventually may need to recover and keep going. Remember parse() has try/except error
+        # handling, as does declaration(), but expression() does not - so need to figure out a
+        # consistent solution.
+        token = self.current_token()
+        raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
     def declaration(self):
         """Kind of analogous to `expression` and `statement` methods.
