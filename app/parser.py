@@ -411,23 +411,6 @@ class Parser:
                | IDENTIFIER ;
         """
         token = self.current_token()
-        
-        # TODO: delete
-        # if self.match(ReservedTokenTypes.VAR):
-        #     name = self.current_token()
-        #     if self.match(TokenTypes.IDENTIFIER):
-        #         # TODO: handle case where user does "var x;" with no assigned value.
-        #         if self.match(TokenTypes.EQUAL):
-        #             expr = self.expression()
-        #             declaration = VariableDeclaration(name.lexeme, expr)
-        #             Environment.set(declaration)
-        #             return declaration
-        #     # TODO: make sure this error handling is ok, I want all the else cases above to
-        #     # end up here but need to check if they do.
-        #     else:
-        #         # TODO: not sure if should be parsing/syntax/runtime error.
-        #         raise ParsingError(f"Invalid variable declaration at line {token.line}")
-
         reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
         other_types = (TokenTypes.NUMBER, TokenTypes.STRING)
         if self.match(*reserved_types, *other_types):
