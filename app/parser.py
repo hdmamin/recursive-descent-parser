@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from app.environment import Environment
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
@@ -224,12 +224,18 @@ class PrintStatement(Statement):
 
     
 class VariableDeclaration(Statement):
+    """Create a global variable.
+    """
     
-    def __init__(self, name: str, expr: Expression) -> None:
+    def __init__(self, name: str, expr: Expression, env: Optional[type] = None) -> None:
         self.name = name
         self.expr = expr
         # We will set this in evaluate. Don't use default=None because evaluate could return None.
         self.value = SENTINEL
+
+        # Currently we register it as a global variable by default.
+        env = env or Environment
+        env.set(self)
 
     # TODO: getting displayed like "((a = foo);)", guessing that may not be correct.
     def __str__(self) -> str:
@@ -566,11 +572,16 @@ class Parser:
             if self.match(TokenTypes.EQUAL):
                 expr = self.expression()
                 declaration = VariableDeclaration(name.lexeme, expr)
-                Environment.set(declaration)
                 if self.match(TokenTypes.SEMICOLON):
                     return declaration
                 else:
                     raise SyntaxError("Expect ';' after variable declaration.")
+            elif self.match(TokenTypes.SEMICOLON):
+                # Assign default value of nil.
+                return VariableDeclaration(
+                    name.lexeme,
+                    Literal(Token("nil", name.line, token_type=ReservedTokenTypes.NIL))
+                )
             else:
                 raise NotImplementedError("TODO: handle case where user does 'var x;' with no assigned value.")
         # TODO: not sure if should be parsing/syntax/runtime error.
