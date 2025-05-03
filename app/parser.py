@@ -223,6 +223,11 @@ class PrintStatement(Statement):
         print(to_lox_dtype(self.expr.evaluate()))
 
     
+# TODO: realized this always results in evaluating to the latest defined value, want to evaluate
+# to whatever the var equals at the point in the program we run it. But also don't want to evaluate
+# when in parse mode (vs run or evaluate).
+# (If want to work on something else, go to last method in this module and see a refactoring todo -
+# should run old tests first to make sure everything passes.)
 class VariableDeclaration(Statement):
     """Create a global variable.
     """
@@ -374,8 +379,6 @@ class Parser:
             additional errors when we do.
         """
         method_name = {"run": "declaration", "evaluate": "expression", "parse": "expression"}[mode]
-        # TODO rm
-        # method_name = {"run": "statement", "evaluate": "expression", "parse": "expression"}[mode]
         method = getattr(self, method_name)
         res = {
             f"{method_name}s": [],
@@ -562,6 +565,9 @@ class Parser:
         except ParsingError:
             self.synchronize()
         
+    # TODO: looks like book creates a new `assignment` rule in our grammar (presumably need a new
+    # method) and an Assign class (like Binary). Consider refactoring to match (or consider if it's
+    # really necessary?)
     def variable_declaration(self):
         """Called *after* we've already confirmed there was a preceding VAR token and current_token
         now points to the token after that.
