@@ -516,7 +516,7 @@ class Parser:
         # to different statement methods whereas expression fully offloads that to the methods it
         # calls.
         token = self.current_token()
-        if self.match(token, ReservedTokenTypes.PRINT):
+        if self.match(ReservedTokenTypes.PRINT):
             return self.print_statement()
         return self.expression_statement()
 
