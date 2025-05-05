@@ -418,12 +418,11 @@ class Token:
 
         if self.token_type == TokenTypes.IDENTIFIER:
             try:
-                lox_var = Environment.get(self.lexeme)
+                value = Environment.read_state(self.lexeme)
             except KeyError:
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
             
-            lox_var.evaluate()
-            return lox_var.value
+            return value
 
         # Not sure if this will be a problem.
         raise RuntimeError(f"Token.evaluate not implemented for {self.token_type}.")

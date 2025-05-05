@@ -228,8 +228,12 @@ class PrintStatement(Statement):
 # when in parse mode (vs run or evaluate).
 # (If want to work on something else, go to last method in this module and see a refactoring todo -
 # should run old tests first to make sure everything passes.)
+# Thinking maybe VarDecl.eval() should update Env itself? Bc when we call that, we are updating
+# env state. And this does NOT happen during parsing which is good.
+# And then when Token.eval() tries to evaluate a var, it can just pull from the Environment's current
+# state.
 class VariableDeclaration(Statement):
-    """Create a global variable.
+    """Creates a variable (global by default).
     """
     
     def __init__(self, name: str, expr: Expression, env: Optional[type] = None) -> None:
@@ -239,15 +243,19 @@ class VariableDeclaration(Statement):
         self.value = SENTINEL
 
         # Currently we register it as a global variable by default.
-        env = env or Environment
-        env.set(self)
+        self.env = env or Environment
+        # The i'th declaration of this particular var name in the current environment.
+        self.i = self.env.set(self)
 
     # TODO: getting displayed like "((a = foo);)", guessing that may not be correct.
     def __str__(self) -> str:
         return f"({self.name} = {self.expr})"
 
     def evaluate(self) -> None:
-        self.value = self.expr.evaluate()
+        # Only want to evaluate once, not every time we reference a variable.
+        if self.value == SENTINEL:
+            self.value = self.expr.evaluate()
+            self.env.update_state(self.name, self.value)
 
 
 class ParsingError(Exception):
