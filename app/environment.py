@@ -56,3 +56,6 @@ class Environment:
         Just a convenience method to avoid making the user reference nested attrs.
         """
         return cls.state[name]
+
+    def __contains__(self, name: str) -> bool:
+        return name in self.variables

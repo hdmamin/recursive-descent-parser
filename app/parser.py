@@ -180,6 +180,39 @@ class Grouping(Expression):
         return self.val.evaluate()
 
 
+# TODO: need to update Parser to parse assignment pattern.
+# And update Environment too probably.
+class Assign(Expression):
+    """
+    x = "bar"
+    """
+
+    def __init__(self, name: Token, expr: Expression, env: Environment):
+        self.name = name
+        self.expr = expr
+        self.env = env
+        # This gets updated when evaluate() is called.
+        self.val = SENTINEL
+
+        # TODO: will this work? Not sure. At very least would need to update env type hints.
+        self.env.set(self)
+
+    def __str__(self) -> str:
+        return f"({self.name.non_null_literal} = {self.expr})"
+
+    def evaluate(self):
+        if self.val == SENTINEL:
+            if self.name not in self.env:
+                # TODO: is this the right error type? Also maybe raising it too early, this is at
+                # parsing time IIRC?
+                raise RuntimeError(
+                    f"Cannot assign a value to var {self.name!r} because it does not exist."
+                )
+
+            self.val = self.expr.evaluate()
+            self.env.update_state(self.name, self.val)
+
+
 class Statement:
     """Statements 'do things' that have side effects, but do not return a value.
     This is in contrast to expressions, which compute and return a value.
@@ -320,7 +353,9 @@ class Parser:
 
     Grammar
     -------
-    expression     → equality ;
+    expression     → assignment ;
+    assignment     → IDENTIFIER "=" assignment
+                | equality ;
     equality       → comparison ( ( "!=" | "==" ) comparison )* ;
     comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     term           → factor ( ( "-" | "+" ) factor )* ;
