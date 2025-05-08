@@ -505,7 +505,7 @@ class Parser:
             return Grouping(expr)
 
         if self.match(TokenTypes.IDENTIFIER):
-            return Literal(token)
+            return Variable(token)
 
         raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
