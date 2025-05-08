@@ -2,7 +2,7 @@
 can reference it in both parser.py and lexer.py without circular imports.
 """
 from collections import defaultdict
-from typing import Any
+from typing import Any, Union
 
 
 class Environment:
@@ -14,7 +14,7 @@ class Environment:
 
     # VariableDeclaration is defined in parser.py and importing it here would cause circular import.
     @classmethod
-    def set(cls, var: "VariableDeclaration") -> int:
+    def set(cls, var: Union["VariableDeclaration", "Assign"]) -> int:
         """Process a new variable declaration.
         
         Returns
@@ -28,7 +28,7 @@ class Environment:
 
     # TODO: do we still need this?
     @classmethod
-    def get(cls, name: str) -> "VariableDeclaration":
+    def get(cls, name: str) -> Union["VariableDeclaration", "Assign"]:
         """Retrieve a variable declaration statement.
         """
         if name not in cls.variables:

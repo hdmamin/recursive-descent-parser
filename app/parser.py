@@ -19,7 +19,7 @@ class Expression:
 class Literal(Expression):
     """
     Example
-    foo
+    'foo'
     """
 
     def __init__(self, val: Token):
@@ -33,6 +33,26 @@ class Literal(Expression):
         ReservedTokenTypes.NIL.
         """
         return self.val.evaluate()
+
+
+class Variable(Expression):
+    """
+    Example
+    foo
+    """
+
+    def __init__(self, identifier: Token):
+        self.identifier = identifier
+
+    def __str__(self) -> str:
+        return self.identifier.non_null_literal
+
+    # TODO: not sure if this will work.
+    def evaluate(self):
+        """This returns the relevant python value, not the lox value. E.g. None rather than
+        ReservedTokenTypes.NIL.
+        """
+        return self.identifier.evaluate()
 
 
 class Unary(Expression):
@@ -181,7 +201,6 @@ class Grouping(Expression):
 
 
 # TODO: need to update Parser to parse assignment pattern.
-# And update Environment too probably.
 class Assign(Expression):
     """
     x = "bar"
@@ -194,8 +213,8 @@ class Assign(Expression):
         # This gets updated when evaluate() is called.
         self.val = SENTINEL
 
-        # TODO: will this work? Not sure. At very least would need to update env type hints.
-        self.env.set(self)
+        # TODO: will this work? Not sure.
+        self.i = self.env.set(self)
 
     def __str__(self) -> str:
         return f"({self.name.non_null_literal} = {self.expr})"
@@ -256,15 +275,6 @@ class PrintStatement(Statement):
         print(to_lox_dtype(self.expr.evaluate()))
 
     
-# TODO: realized this always results in evaluating to the latest defined value, want to evaluate
-# to whatever the var equals at the point in the program we run it. But also don't want to evaluate
-# when in parse mode (vs run or evaluate).
-# (If want to work on something else, go to last method in this module and see a refactoring todo -
-# should run old tests first to make sure everything passes.)
-# Thinking maybe VarDecl.eval() should update Env itself? Bc when we call that, we are updating
-# env state. And this does NOT happen during parsing which is good.
-# And then when Token.eval() tries to evaluate a var, it can just pull from the Environment's current
-# state.
 class VariableDeclaration(Statement):
     """Creates a variable (global by default).
     """
@@ -443,6 +453,23 @@ class Parser:
         # TODO: or update res key name to use mode if we end up needing to keep this.
         # res["expressions"] = [statement.expr for statement in res["statements"]]
         return res
+
+    def assignment(self) -> Assign:
+        """
+        Example
+        bar = "bar"
+
+        Rule:
+        assignment     → IDENTIFIER "=" assignment
+               | equality ;
+        """
+        expr = self.expression()
+        if self.match(TokenTypes.EQUAL):
+            value = self.assignment()
+            # TODO: filling out this logic.
+            return Assign(name="TODO", expr="TODO")
+
+        return self.equality()
 
     def expression(self) -> Expression:
         """
