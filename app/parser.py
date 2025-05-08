@@ -466,8 +466,11 @@ class Parser:
         expr = self.expression()
         if self.match(TokenTypes.EQUAL):
             value = self.assignment()
-            # TODO: filling out this logic.
-            return Assign(name="TODO", expr="TODO")
+            if isinstance(value, Variable):
+                return Assign(name=value.identifier.lexeme, expr=value)
+            # TODO: add expr/value/etc into error msg to make more informative?
+            # TODO: is parsing error the right type?
+            raise ParsingError("Invalid assignment target.")
 
         return self.equality()
 
@@ -479,7 +482,7 @@ class Parser:
         # equality is the highest precedence (last to be evaluated) operation.
         return self.equality()
 
-    def primary(self) -> Union[Literal, Grouping]:
+    def primary(self) -> Union[Literal, Grouping, Variable]:
         """
         Example:
         "foo"
@@ -504,6 +507,7 @@ class Parser:
                 )
             return Grouping(expr)
 
+        # TODO: just changed this to return a Variable, will need to see what's broken now and fix.
         if self.match(TokenTypes.IDENTIFIER):
             return Variable(token)
 
