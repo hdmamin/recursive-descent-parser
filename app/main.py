@@ -54,6 +54,7 @@ def main():
         # TODO: running into unterminated str errors when the closing quotes are on a different line
         # than the opening quotes.
         parsed = {"success": False}
+    print("parsed:", parsed) # TODO rm
 
     # Print results for codecrafters.
     if command == "tokenize":

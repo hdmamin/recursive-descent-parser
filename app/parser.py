@@ -42,6 +42,7 @@ class Variable(Expression):
     """
 
     def __init__(self, identifier: Token):
+        print("TODO: in Variable.init", identifier)
         self.identifier = identifier
 
     def __str__(self) -> str:
@@ -431,7 +432,11 @@ class Parser:
             Note that we do NOT try to evalute the expressions yet. We may still encounter
             additional errors when we do.
         """
-        method_name = {"run": "declaration", "evaluate": "expression", "parse": "expression"}[mode]
+        method_name = {
+            "run": "declaration",
+            "evaluate": "expression",
+            "parse": "expression"
+        }[mode]
         method = getattr(self, method_name)
         res = {
             f"{method_name}s": [],
