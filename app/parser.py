@@ -42,7 +42,6 @@ class Variable(Expression):
     """
 
     def __init__(self, identifier: Token):
-        print("TODO: in Variable.init", identifier)
         self.identifier = identifier
 
     def __str__(self) -> str:
@@ -207,10 +206,16 @@ class Assign(Expression):
     x = "bar"
     """
 
-    def __init__(self, name: Token, expr: Expression, env: Environment):
+    # TODO: name arg currently expects a token, but we only have access to an expr when I create
+    # Assign and that's what I'm passing in. Looks like current Assign functionality WOULD be fine
+    # if we passed in a string, but everything else takes in tokens and expressions so a little
+    # worried that breaking that pattern might be a problem at some point. Need to see if we can get
+    # a token out of an expression, or maybe if we can pass in the full expression and extract the
+    # name in Assign.
+    def __init__(self, name: Token, expr: Expression, env: Optional[type] = None):
         self.name = name
         self.expr = expr
-        self.env = env
+        self.env = env or Environment
         # This gets updated when evaluate() is called.
         self.val = SENTINEL
 
@@ -222,7 +227,7 @@ class Assign(Expression):
 
     def evaluate(self):
         if self.val == SENTINEL:
-            if self.name not in self.env:
+            if not self.env.contains(self.name.non_null_literal):
                 # TODO: is this the right error type? Also maybe raising it too early, this is at
                 # parsing time IIRC?
                 raise RuntimeError(
@@ -230,7 +235,7 @@ class Assign(Expression):
                 )
 
             self.val = self.expr.evaluate()
-            self.env.update_state(self.name, self.val)
+            self.env.update_state(self.name.non_null_literal, self.val)
 
 
 class Statement:
@@ -434,7 +439,8 @@ class Parser:
         """
         method_name = {
             "run": "declaration",
-            "evaluate": "expression",
+            # TODO testing: previously was expression
+            "evaluate": "declaration",
             "parse": "expression"
         }[mode]
         method = getattr(self, method_name)
@@ -459,33 +465,13 @@ class Parser:
         # res["expressions"] = [statement.expr for statement in res["statements"]]
         return res
 
-    def assignment(self) -> Assign:
-        """
-        Example
-        bar = "bar"
-
-        Rule:
-        assignment     → IDENTIFIER "=" assignment
-               | equality ;
-        """
-        expr = self.expression()
-        if self.match(TokenTypes.EQUAL):
-            value = self.assignment()
-            if isinstance(value, Variable):
-                return Assign(name=value.identifier.lexeme, expr=value)
-            # TODO: add expr/value/etc into error msg to make more informative?
-            # TODO: is parsing error the right type?
-            raise ParsingError("Invalid assignment target.")
-
-        return self.equality()
-
     def expression(self) -> Expression:
         """
         Rule:
         expression → equality ;
         """
-        # equality is the highest precedence (last to be evaluated) operation.
-        return self.equality()
+        # Call the highest precedence (last to be evaluated) operation.
+        return self.assignment()
 
     def primary(self) -> Union[Literal, Grouping, Variable]:
         """
@@ -512,10 +498,10 @@ class Parser:
                 )
             return Grouping(expr)
 
-        # TODO: just changed this to return a Variable, will need to see what's broken now and fix.
         if self.match(TokenTypes.IDENTIFIER):
             return Variable(token)
 
+        # TODO: evaluate mode is hitting this condition when trying to define a var.
         raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
     def unary(self) -> Unary:
@@ -590,11 +576,41 @@ class Parser:
             left = Binary(left, self.previous_token(), self.comparison())
         return left
 
+    # TODO: figure out where this should get called. Currently not using it at all.
+    def assignment(self) -> Assign:
+        """
+        Example
+        bar = "bar"
+
+        Rule:
+        assignment     → IDENTIFIER "=" assignment
+               | equality ;
+        """
+        expr = self.equality()
+        # TODO: parse method is hitting indexerror after trying to process "a=6" (line 2 after var a;) (mode=evaluate).
+        # raised by current_token()
+        # Notes: the outer call correctly retrieves Var(a). But the nested call processing token 6
+        # hits parsingerror in the if block below, need to check that logic in the book.
+        print('todo PRE assignment if: expr=', expr, type(expr))
+        if self.match(TokenTypes.EQUAL):
+            print('todo in assignment if 1, expr=', expr)
+            value = self.assignment()
+            # TODO: book actually checks if expr, not value, is a Variable. But how could it be?
+            print('todo in assignment if 2: value=', value)
+            if isinstance(expr, Variable):
+                print('todo in assignment if 3: value=', value)
+                return Assign(name=expr.identifier, expr=value)
+            # TODO: add expr/value/etc into error msg to make more informative?
+            # TODO: is parsing error the right type?
+            raise ParsingError("Invalid assignment target.")
+        print('todo NOT assignment if: expr=', expr)
+
+        return expr
+
     def statement(self) -> Statement:
         # Kind of analogous to `expression` method. However, this handles more of the delegation
         # to different statement methods whereas expression fully offloads that to the methods it
         # calls.
-        token = self.current_token()
         if self.match(ReservedTokenTypes.PRINT):
             return self.print_statement()
         return self.expression_statement()
@@ -624,13 +640,14 @@ class Parser:
         
     def synchronize(self):
         """TODO: error handling for when we hit a parsing error."""
-        # TODO rm incr, just trying to avoid inf loop in else clause in declaration() for now
-        self.curr_idx += 1
         # TODO: raising an error for now bc tests do want this for parsing errors, e.g. for `print;`
         # but eventually may need to recover and keep going. Remember parse() has try/except error
         # handling, as does declaration(), but expression() does not - so need to figure out a
         # consistent solution.
         token = self.current_token()
+        # TODO rm incr? Added this to avoid inf loop in else clause in declaration() but kind of
+        # hazy now on why this is necessary.
+        self.curr_idx += 1
         raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
     def declaration(self):
@@ -660,6 +677,7 @@ class Parser:
                 if self.match(TokenTypes.SEMICOLON):
                     return declaration
                 else:
+                    # TODO: current test case is hitting this error when defining "var a = b = 1"
                     raise SyntaxError("Expect ';' after variable declaration.")
             elif self.match(TokenTypes.SEMICOLON):
                 # Assign default value of nil.

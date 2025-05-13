@@ -57,5 +57,6 @@ class Environment:
         """
         return cls.state[name]
 
-    def __contains__(self, name: str) -> bool:
-        return name in self.variables
+    @classmethod
+    def contains(cls, name: str) -> bool:
+        return name in cls.variables

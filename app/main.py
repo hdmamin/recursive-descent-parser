@@ -54,7 +54,8 @@ def main():
         # TODO: running into unterminated str errors when the closing quotes are on a different line
         # than the opening quotes.
         parsed = {"success": False}
-    print("parsed:", parsed) # TODO rm
+    # TODO rm
+    print(parsed)
 
     # Print results for codecrafters.
     if command == "tokenize":
@@ -87,9 +88,11 @@ def main():
             exit(65)
 
         # if parsed["success"]:
-        for expr in parsed["expressions"]:
+        for expr in parsed["declarations"]:
             try:
-                print(to_lox_dtype(expr.evaluate()))
+                # TODO rm
+                # print(to_lox_dtype(expr.evaluate()))
+                expr.evaluate()
             except RuntimeError as e:
                 print(e, file=sys.stderr)
                 exit(70)
@@ -123,3 +126,5 @@ def main():
 if __name__ == "__main__":
     # TODO: for easier debugging
     kwargs = main()
+    from app.environment import Environment
+    kwargs["env"] = Environment
