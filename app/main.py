@@ -67,10 +67,6 @@ def main():
         # Think codecrafters will eventually check error messages but for now we just exit.
         if not lexed["success"]:
             exit(65)
-            # for row in lexed["lexed"]:
-            #     if row.lower().startswith("[line "):
-                    # print(row)
-                    # exit(65)
 
         # At this point we know `parsed` exists.
         if parsed["success"]:
