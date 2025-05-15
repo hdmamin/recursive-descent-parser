@@ -587,23 +587,14 @@ class Parser:
                | equality ;
         """
         expr = self.equality()
-        # TODO: parse method is hitting indexerror after trying to process "a=6" (line 2 after var a;) (mode=evaluate).
-        # raised by current_token()
-        # Notes: the outer call correctly retrieves Var(a). But the nested call processing token 6
-        # hits parsingerror in the if block below, need to check that logic in the book.
-        print('todo PRE assignment if: expr=', expr, type(expr))
         if self.match(TokenTypes.EQUAL):
-            print('todo in assignment if 1, expr=', expr)
             value = self.assignment()
-            # TODO: book actually checks if expr, not value, is a Variable. But how could it be?
-            print('todo in assignment if 2: value=', value)
             if isinstance(expr, Variable):
-                print('todo in assignment if 3: value=', value)
+                print(f'todo returning var expr: {expr}, {value}')
                 return Assign(name=expr.identifier, expr=value)
             # TODO: add expr/value/etc into error msg to make more informative?
             # TODO: is parsing error the right type?
             raise ParsingError("Invalid assignment target.")
-        print('todo NOT assignment if: expr=', expr)
 
         return expr
 
@@ -675,6 +666,10 @@ class Parser:
                 expr = self.expression()
                 declaration = VariableDeclaration(name.lexeme, expr)
                 if self.match(TokenTypes.SEMICOLON):
+                    # TODO: this is where we return the declaration processing "var a = b = 1"
+                    # which isn't working. I think what's happening is b=1 evaluates to None
+                    # so a does as well.
+                    print(f'todo return declr: {declaration}')
                     return declaration
                 else:
                     # TODO: current test case is hitting this error when defining "var a = b = 1"

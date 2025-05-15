@@ -54,8 +54,6 @@ def main():
         # TODO: running into unterminated str errors when the closing quotes are on a different line
         # than the opening quotes.
         parsed = {"success": False}
-    # TODO rm
-    print(parsed)
 
     # Print results for codecrafters.
     if command == "tokenize":
@@ -128,3 +126,4 @@ if __name__ == "__main__":
     kwargs = main()
     from app.environment import Environment
     kwargs["env"] = Environment
+    print(kwargs['parsed'])
