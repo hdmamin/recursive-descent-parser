@@ -219,13 +219,14 @@ class Assign(Expression):
         # This gets updated when evaluate() is called.
         self.val = SENTINEL
 
-        # TODO: will this work? Not sure.
+        # TODO: might not need this anymore I think?
         self.i = self.env.set(self)
 
     def __str__(self) -> str:
         return f"({self.name.non_null_literal} = {self.expr})"
 
     def evaluate(self):
+        """Evaluates the value of the variable and returns the corresponding python object."""
         if self.val == SENTINEL:
             if not self.env.contains(self.name.non_null_literal):
                 # TODO: is this the right error type? Also maybe raising it too early, this is at
@@ -236,6 +237,7 @@ class Assign(Expression):
 
             self.val = self.expr.evaluate()
             self.env.update_state(self.name.non_null_literal, self.val)
+        return self.val
 
 
 class Statement:
@@ -590,7 +592,6 @@ class Parser:
         if self.match(TokenTypes.EQUAL):
             value = self.assignment()
             if isinstance(expr, Variable):
-                print(f'todo returning var expr: {expr}, {value}')
                 return Assign(name=expr.identifier, expr=value)
             # TODO: add expr/value/etc into error msg to make more informative?
             # TODO: is parsing error the right type?
@@ -614,6 +615,8 @@ class Parser:
         expr = self.expression()
         # At this point we know the statement needs a semicolon next to finish it.
         if not self.match(TokenTypes.SEMICOLON):
+            # TODO: both evaluate and run mode hit this error whe parsing exprs like '3+4'
+            print('todo expr stmt')
             raise SyntaxError("Expect ';' after expression.")
 
         return ExpressionStatement(expr)
@@ -669,7 +672,6 @@ class Parser:
                     # TODO: this is where we return the declaration processing "var a = b = 1"
                     # which isn't working. I think what's happening is b=1 evaluates to None
                     # so a does as well.
-                    print(f'todo return declr: {declaration}')
                     return declaration
                 else:
                     # TODO: current test case is hitting this error when defining "var a = b = 1"
