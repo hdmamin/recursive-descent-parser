@@ -82,11 +82,12 @@ def main():
             exit(65)
 
         # if parsed["success"]:
-        for expr in parsed["declarations"]:
+        # TODO: may need to change key back to declarations, depending
+        for expr in parsed["expressions"]:
             try:
-                # TODO rm
-                # print(to_lox_dtype(expr.evaluate()))
-                expr.evaluate()
+                # TODO rm one of these?
+                print(to_lox_dtype(expr.evaluate()))
+                # expr.evaluate()
             except RuntimeError as e:
                 print(e, file=sys.stderr)
                 exit(70)
@@ -123,4 +124,4 @@ if __name__ == "__main__":
     kwargs = main()
     from app.environment import Environment
     kwargs["env"] = Environment
-    print(kwargs['parsed'])
+    # print(kwargs['parsed'])

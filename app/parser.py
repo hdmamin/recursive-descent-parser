@@ -441,8 +441,10 @@ class Parser:
         """
         method_name = {
             "run": "declaration",
-            # TODO testing: previously was expression
-            "evaluate": "declaration",
+            # TODO testing: previously was expression, tried switching to declaration 
+            # but I think that broke our ability to handle expressions without trailing semicolons.
+            # "evaluate": "declaration",
+            "evaluate": "expression",
             "parse": "expression"
         }[mode]
         method = getattr(self, method_name)
