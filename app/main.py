@@ -99,12 +99,8 @@ def main():
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
         if not parsed["success"]:
-            # TODO: exprs like `3+4` now trigger this bc of SyntaxError for no trailing semicolon.
             exit(65)
 
-        # TODO: "print;" errors bc our only statement is None which has no evaluate() method.
-        # Think we need to check in Parser.parse to see what's happening there, probably better than
-        # checking here if statement is None.
         for statement in parsed["declarations"]:
             try:
                 statement.evaluate()

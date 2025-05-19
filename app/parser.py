@@ -253,7 +253,9 @@ class Statement:
                 | statement ;
 
     statement      → exprStmt
-                | printStmt ;
+                | printStmt 
+                | block;
+    block          → "{" declaration* "}" ;
     printStmt      → "print" expression ";" ;
     varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
     """
@@ -307,6 +309,23 @@ class VariableDeclaration(Statement):
         if self.value == SENTINEL:
             self.value = self.expr.evaluate()
             self.env.update_state(self.name, self.value)
+
+
+class Block(Statement):
+    """Section of code enclosed in curly braces that defines a new temporary scope.
+    """
+    
+    # TODO: update input args
+    def __init__(self) -> None:
+        pass
+
+    # TODO
+    def __str__(self) -> str:
+        pass
+
+    # TODO
+    def evaluate(self) -> None:
+        pass
 
 
 class ParsingError(Exception):
@@ -607,6 +626,9 @@ class Parser:
         # calls.
         if self.match(ReservedTokenTypes.PRINT):
             return self.print_statement()
+        if self.match(TokenTypes.LEFT_BRACE):
+            # TODO update args once I figure out what must be passed in.
+            return Block()
         return self.expression_statement()
 
     def expression_statement(self) -> ExpressionStatement:
