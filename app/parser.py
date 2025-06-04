@@ -315,17 +315,17 @@ class Block(Statement):
     """Section of code enclosed in curly braces that defines a new temporary scope.
     """
     
-    # TODO: update input args
-    def __init__(self) -> None:
-        pass
+    def __init__(self, statements: list[Statement]) -> None:
+        self.statements = statements
 
-    # TODO
+    # TODO not sure what desired format actually is
     def __str__(self) -> str:
-        pass
+        return f"({self.statements})"
 
     # TODO
     def evaluate(self) -> None:
-        pass
+        for statement in self.statements:
+            statement.evaluate()
 
 
 class ParsingError(Exception):
@@ -627,9 +627,21 @@ class Parser:
         if self.match(ReservedTokenTypes.PRINT):
             return self.print_statement()
         if self.match(TokenTypes.LEFT_BRACE):
-            # TODO update args once I figure out what must be passed in.
-            return Block()
+            return Block(self.block())
         return self.expression_statement()
+
+    def block(self) -> list[Statement]:
+        statements = []
+        while self.curr_idx < self.max_idx and \
+                self.current_token().token_type != TokenTypes.RIGHT_BRACE:
+            statements.append(self.declaration())
+        if not self.match(TokenTypes.RIGHT_BRACE):
+            # TODO: when parsing back to back blocks, by the end of the first one idx seems to be
+            # 1 too high and we hit this error (we've already moved past right_brace). Interestingly
+            # this didn't happen when including just one block. Maybe some nuance around declaration()
+            # incrementing 1 too many times in certain instances? Need to investigate more.
+            raise ParsingError("Expect '}' after block.")
+        return statements
 
     def expression_statement(self) -> ExpressionStatement:
         """
@@ -640,7 +652,6 @@ class Parser:
         # At this point we know the statement needs a semicolon next to finish it.
         if not self.match(TokenTypes.SEMICOLON):
             # TODO: both evaluate and run mode hit this error whe parsing exprs like '3+4'
-            print('todo expr stmt')
             raise SyntaxError("Expect ';' after expression.")
 
         return ExpressionStatement(expr)
@@ -676,13 +687,13 @@ class Parser:
                 return self.variable_declaration()
             else:
                 return self.statement()
-        except ParsingError:
+        except ParsingError as e:
             self.synchronize()
         
     # TODO: looks like book creates a new `assignment` rule in our grammar (presumably need a new
     # method) and an Assign class (like Binary). Consider refactoring to match (or consider if it's
     # really necessary?)
-    def variable_declaration(self):
+    def variable_declaration(self) -> VariableDeclaration:
         """Called *after* we've already confirmed there was a preceding VAR token and current_token
         now points to the token after that.
         """
