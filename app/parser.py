@@ -200,7 +200,6 @@ class Grouping(Expression):
         return self.val.evaluate()
 
 
-# TODO: need to update Parser to parse assignment pattern.
 class Assign(Expression):
     """
     x = "bar"
@@ -599,7 +598,6 @@ class Parser:
             left = Binary(left, self.previous_token(), self.comparison())
         return left
 
-    # TODO: figure out where this should get called. Currently not using it at all.
     def assignment(self) -> Assign:
         """
         Example
@@ -687,7 +685,7 @@ class Parser:
                 return self.variable_declaration()
             else:
                 return self.statement()
-        except ParsingError as e:
+        except ParsingError:
             self.synchronize()
         
     # TODO: looks like book creates a new `assignment` rule in our grammar (presumably need a new
