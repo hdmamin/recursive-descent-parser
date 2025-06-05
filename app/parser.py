@@ -1,6 +1,6 @@
 from typing import Any, Optional, Union
 
-from app.environment import Environment
+from app.environment import Environment, GLOBAL_ENV
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
 
@@ -211,10 +211,10 @@ class Assign(Expression):
     # worried that breaking that pattern might be a problem at some point. Need to see if we can get
     # a token out of an expression, or maybe if we can pass in the full expression and extract the
     # name in Assign.
-    def __init__(self, name: Token, expr: Expression, env: Optional[type] = None):
+    def __init__(self, name: Token, expr: Expression, env: Optional[Environment] = None):
         self.name = name
         self.expr = expr
-        self.env = env or Environment
+        self.env = env or GLOBAL_ENV
         # This gets updated when evaluate() is called.
         self.val = SENTINEL
 
@@ -288,14 +288,14 @@ class VariableDeclaration(Statement):
     """Creates a variable (global by default).
     """
     
-    def __init__(self, name: str, expr: Expression, env: Optional[type] = None) -> None:
+    def __init__(self, name: str, expr: Expression, env: Optional[Environment] = None) -> None:
         self.name = name
         self.expr = expr
         # We will set this in evaluate. Don't use default=None because evaluate could return None.
         self.value = SENTINEL
 
         # Currently we register it as a global variable by default.
-        self.env = env or Environment
+        self.env = env or GLOBAL_ENV
         # The i'th declaration of this particular var name in the current environment.
         self.i = self.env.set(self)
 
