@@ -32,6 +32,8 @@ class Environment:
         """Retrieve a variable declaration statement.
         """
         if name not in self.variables:
+            if self.parent:
+                return self.parent.get(name)
             raise KeyError(f"Variable {name!r} not found.")
         # TODO: currently returning deque, need to grab single var. Need to think about when to
         # popleft vs index in with [0].
@@ -41,6 +43,9 @@ class Environment:
         # maybe need a separate data structure storing the latest evaluated value?
         return self.variables[name]
 
+    # TODO: may need to update update_state (and maybe set?) to set vals in parents? Lox book
+    # seems to say we should do this, though I thought we wouldn't want to set a var value in a
+    # parent env.
     def update_state(self, name: str, val: Any) -> None:
         """Update the *current* state with a resolved python value (vs set/get, which work with
         unresolved VariableDeclarations).
@@ -53,10 +58,17 @@ class Environment:
         resolved python value (vs set/get, which work with unresolved VariableDeclarations).
         Just a convenience method to avoid making the user reference nested attrs.
         """
-        return self.state[name]
+        try:
+            return self.state[name]
+        except KeyError as e:
+            if self.parent:
+                return self.parent.read_state(name)
+            raise e
 
     def contains(self, name: str) -> bool:
         return name in self.variables
 
 
 GLOBAL_ENV = Environment()
+# TODO: think Block() in parser.py will need to create a new env when creating Assign or
+# VariableDeclaration objects.
