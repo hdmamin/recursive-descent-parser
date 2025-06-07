@@ -8,6 +8,8 @@ from typing import Any, Union, Optional
 class Environment:
 
     def __init__(self, parent: Optional["Environment"] = None):
+        # TODO: am I still using this queue? doesn't seem like it but then how did I solve the issue
+        # of later definitions clobbering earlier ones? I forget.
         # Maps name to queue of VariableDeclaration objects. We still need to evaluate each object
         # to get its value.
         self.variables = defaultdict(list)

@@ -205,12 +205,8 @@ class Assign(Expression):
     x = "bar"
     """
 
-    # TODO: name arg currently expects a token, but we only have access to an expr when I create
-    # Assign and that's what I'm passing in. Looks like current Assign functionality WOULD be fine
-    # if we passed in a string, but everything else takes in tokens and expressions so a little
-    # worried that breaking that pattern might be a problem at some point. Need to see if we can get
-    # a token out of an expression, or maybe if we can pass in the full expression and extract the
-    # name in Assign.
+    # TODO: seems like I need to rm env from init, but if we don't call env.set there then
+    # evaluate cannot use env.contains. Maybe can redefine contains to work differently?
     def __init__(self, name: Token, expr: Expression, env: Optional[Environment] = None):
         self.name = name
         self.expr = expr
@@ -310,6 +306,15 @@ class VariableDeclaration(Statement):
             self.env.update_state(self.name, self.value)
 
 
+class Interpreter:
+
+    def __init__(self):
+        self.env = GLOBAL_ENV
+
+
+INTERPRETER = Interpreter()
+
+
 class Block(Statement):
     """Section of code enclosed in curly braces that defines a new temporary scope.
     """
@@ -323,8 +328,12 @@ class Block(Statement):
 
     # TODO
     def evaluate(self) -> None:
+        # TODO: implement func or maybe store this elsewhere, e.g. in parser?
+        prev_env = INTERPRETER.env
+        INTERPRETER.env = Environment(parent=prev_env)
         for statement in self.statements:
-            statement.evaluate()
+            statement.evaluate(env=INTERPRETER.env)
+        INTERPRETER.env = prev_env
 
 
 class ParsingError(Exception):
