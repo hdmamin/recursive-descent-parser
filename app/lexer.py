@@ -5,8 +5,10 @@ from functools import lru_cache
 from string import ascii_letters
 from typing import Any, Union, Callable, Optional
 import logging
+
 from app.data_structures import Trie
 from app.environment import Environment, GLOBAL_ENV
+from app.interpreter import INTERPRETER
 
 
 logger = logging.getLogger(__name__)
@@ -418,9 +420,7 @@ class Token:
 
         if self.token_type == TokenTypes.IDENTIFIER:
             try:
-                # TODO: may need to either store an env associated with current token or provide
-                # some kind of get_current_env() func?
-                value = GLOBAL_ENV.read_state(self.lexeme)
+                value = INTERPRETER.env.read_state(self.lexeme)
             except KeyError:
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
             

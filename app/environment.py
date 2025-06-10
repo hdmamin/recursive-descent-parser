@@ -48,12 +48,27 @@ class Environment:
     # TODO: may need to update update_state (and maybe set?) to set vals in parents? Lox book
     # seems to say we should do this, though I thought we wouldn't want to set a var value in a
     # parent env.
-    def update_state(self, name: str, val: Any) -> None:
+    def update_state(self, name: str, val: Any, update_parents: bool = False) -> None:
         """Update the *current* state with a resolved python value (vs set/get, which work with
         unresolved VariableDeclarations).
         Just a convenience method to avoid making the user reference nested attrs.
         """
+        env = self
+        # TODO: deal with null parent case
+        while True:
+            if name in env.state:
+                env.state[name] = val
+                break
+            else:
+                env = env.parent
+
+
         self.state[name] = val
+        if update_parents and self.parent:
+            # TODO: need some kind of check to see if the var already exists in parents.
+            # Previously used env.set() for this but removed that since env is not present at init
+            # time, need to consider alternatives.
+            self.parent.update_state(name, val, update_parents=True)
 
     def read_state(self, name: str) -> None:
         """Read the *current* value of a variable given current environment state. This is a

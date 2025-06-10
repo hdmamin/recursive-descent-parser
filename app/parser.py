@@ -1,6 +1,7 @@
 from typing import Any, Optional, Union
 
-from app.environment import Environment, GLOBAL_ENV
+from app.environment import Environment
+from app.interpreter import INTERPRETER
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
 
@@ -207,31 +208,31 @@ class Assign(Expression):
 
     # TODO: seems like I need to rm env from init, but if we don't call env.set there then
     # evaluate cannot use env.contains. Maybe can redefine contains to work differently?
-    def __init__(self, name: Token, expr: Expression, env: Optional[Environment] = None):
+    def __init__(self, name: Token, expr: Expression):
         self.name = name
         self.expr = expr
-        self.env = env or GLOBAL_ENV
         # This gets updated when evaluate() is called.
         self.val = SENTINEL
-
-        # TODO: might not need this anymore I think?
-        self.i = self.env.set(self)
 
     def __str__(self) -> str:
         return f"({self.name.non_null_literal} = {self.expr})"
 
-    def evaluate(self):
+    def evaluate(self, env: Optional[Environment] = None):
         """Evaluates the value of the variable and returns the corresponding python object."""
+        env = env or INTERPRETER.env
         if self.val == SENTINEL:
-            if not self.env.contains(self.name.non_null_literal):
-                # TODO: is this the right error type? Also maybe raising it too early, this is at
-                # parsing time IIRC?
-                raise RuntimeError(
-                    f"Cannot assign a value to var {self.name!r} because it does not exist."
-                )
+            # TODO rm? Having trouble reproducing conditions that trigger this.
+            # if not self.env.contains(self.name.non_null_literal):
+            #     # TODO: is this the right error type? Also maybe raising it too early, this is at
+            #     # parsing time IIRC?
+            #     raise RuntimeError(
+            #         f"Cannot assign a value to var {self.name!r} because it does not exist."
+            #     )
 
             self.val = self.expr.evaluate()
-            self.env.update_state(self.name.non_null_literal, self.val)
+            print('>>> in Assign.eval', self.val, self.name.non_null_literal in env.state, 
+                  self.name.non_null_literal in env.parent.state)
+            env.update_state(self.name.non_null_literal, self.val, update_parents=True)
         return self.val
 
 
@@ -264,7 +265,7 @@ class ExpressionStatement(Statement):
     def __str__(self) -> str:
         return f"({self.expr};)"
     
-    def evaluate(self) -> None:
+    def evaluate(self, *arg, **kwargs) -> None:
         self.expr.evaluate()
 
 
@@ -276,7 +277,7 @@ class PrintStatement(Statement):
     def __str__(self) -> str:
         return f"(print {self.expr})"
 
-    def evaluate(self) -> None:
+    def evaluate(self, *args, **kwargs) -> None:
         print(to_lox_dtype(self.expr.evaluate()))
 
     
@@ -284,35 +285,22 @@ class VariableDeclaration(Statement):
     """Creates a variable (global by default).
     """
     
-    def __init__(self, name: str, expr: Expression, env: Optional[Environment] = None) -> None:
+    def __init__(self, name: str, expr: Expression) -> None:
         self.name = name
         self.expr = expr
         # We will set this in evaluate. Don't use default=None because evaluate could return None.
         self.value = SENTINEL
 
-        # Currently we register it as a global variable by default.
-        self.env = env or GLOBAL_ENV
-        # The i'th declaration of this particular var name in the current environment.
-        self.i = self.env.set(self)
-
     # TODO: getting displayed like "((a = foo);)", guessing that may not be correct.
     def __str__(self) -> str:
         return f"({self.name} = {self.expr})"
 
-    def evaluate(self) -> None:
+    def evaluate(self, env: Optional[Environment] = None) -> None:
+        env = env or INTERPRETER.env
         # Only want to evaluate once, not every time we reference a variable.
         if self.value == SENTINEL:
             self.value = self.expr.evaluate()
-            self.env.update_state(self.name, self.value)
-
-
-class Interpreter:
-
-    def __init__(self):
-        self.env = GLOBAL_ENV
-
-
-INTERPRETER = Interpreter()
+            env.update_state(self.name, self.value, update_parents=False)
 
 
 class Block(Statement):
@@ -326,14 +314,15 @@ class Block(Statement):
     def __str__(self) -> str:
         return f"({self.statements})"
 
-    # TODO
-    def evaluate(self) -> None:
-        # TODO: implement func or maybe store this elsewhere, e.g. in parser?
-        prev_env = INTERPRETER.env
-        INTERPRETER.env = Environment(parent=prev_env)
-        for statement in self.statements:
-            statement.evaluate(env=INTERPRETER.env)
-        INTERPRETER.env = prev_env
+    # TODO: fix test case open in vim. Issue seems to be that if we DEFINE a var in inner block,
+    # it disappears on block exit, but if we ASSIGN a new val to an existing var in inner block,
+    # that val persists after block exits.
+    def evaluate(self, *args, **kwargs) -> None:
+        # args, kwargs is needed because statement.evaluate is always passed an env arg.
+        # But block always creates a new one anyway so doesn't need to use that.
+        with INTERPRETER.new_env() as env:
+            for statement in self.statements:
+                statement.evaluate(env=env)
 
 
 class ParsingError(Exception):
@@ -641,6 +630,7 @@ class Parser:
         statements = []
         while self.curr_idx < self.max_idx and \
                 self.current_token().token_type != TokenTypes.RIGHT_BRACE:
+            # TODO: seems like we're hitting a parsing error in here.
             statements.append(self.declaration())
         if not self.match(TokenTypes.RIGHT_BRACE):
             # TODO: when parsing back to back blocks, by the end of the first one idx seems to be
@@ -694,7 +684,7 @@ class Parser:
                 return self.variable_declaration()
             else:
                 return self.statement()
-        except ParsingError:
+        except ParsingError as e:
             self.synchronize()
         
     # TODO: looks like book creates a new `assignment` rule in our grammar (presumably need a new
