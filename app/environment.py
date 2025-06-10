@@ -45,30 +45,27 @@ class Environment:
         # maybe need a separate data structure storing the latest evaluated value?
         return self.variables[name]
 
-    # TODO: may need to update update_state (and maybe set?) to set vals in parents? Lox book
-    # seems to say we should do this, though I thought we wouldn't want to set a var value in a
-    # parent env.
-    def update_state(self, name: str, val: Any, update_parents: bool = False) -> None:
+    def update_state(self, name: str, val: Any, is_declaration: bool) -> None:
         """Update the *current* state with a resolved python value (vs set/get, which work with
         unresolved VariableDeclarations).
         Just a convenience method to avoid making the user reference nested attrs.
         """
+        if is_declaration:
+            self.state[name] = val
+            return
+
         env = self
-        # TODO: deal with null parent case
         while True:
             if name in env.state:
                 env.state[name] = val
-                break
-            else:
+                return
+            elif env.parent:
                 env = env.parent
-
-
-        self.state[name] = val
-        if update_parents and self.parent:
-            # TODO: need some kind of check to see if the var already exists in parents.
-            # Previously used env.set() for this but removed that since env is not present at init
-            # time, need to consider alternatives.
-            self.parent.update_state(name, val, update_parents=True)
+            else:
+                # TODO: is this the right error type?
+                raise RuntimeError(
+                    f"Cannot assign a value to var {name!r} because it does not exist."
+                )
 
     def read_state(self, name: str) -> None:
         """Read the *current* value of a variable given current environment state. This is a
@@ -87,5 +84,3 @@ class Environment:
 
 
 GLOBAL_ENV = Environment()
-# TODO: think Block() in parser.py will need to create a new env when creating Assign or
-# VariableDeclaration objects.

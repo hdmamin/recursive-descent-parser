@@ -230,9 +230,7 @@ class Assign(Expression):
             #     )
 
             self.val = self.expr.evaluate()
-            print('>>> in Assign.eval', self.val, self.name.non_null_literal in env.state, 
-                  self.name.non_null_literal in env.parent.state)
-            env.update_state(self.name.non_null_literal, self.val, update_parents=True)
+            env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
         return self.val
 
 
@@ -300,7 +298,7 @@ class VariableDeclaration(Statement):
         # Only want to evaluate once, not every time we reference a variable.
         if self.value == SENTINEL:
             self.value = self.expr.evaluate()
-            env.update_state(self.name, self.value, update_parents=False)
+            env.update_state(self.name, self.value, is_declaration=True)
 
 
 class Block(Statement):
