@@ -247,6 +247,7 @@ class Statement:
                 | statement ;
 
     statement      → exprStmt
+                | ifStmt
                 | printStmt 
                 | block;
     block          → "{" declaration* "}" ;
@@ -321,6 +322,28 @@ class Block(Statement):
         with INTERPRETER.new_env() as env:
             for statement in self.statements:
                 statement.evaluate(env=env)
+
+
+class IfStatement(Statement):
+
+    def __init__(self, condition: Expression, value: Statement,
+                 other_value: Optional[Statement] = None):
+        self.condition = condition
+        self.value = value
+        self.other_value = other_value
+
+    def evaluate(self, *args, **kwargs):
+        condition = self.condition.evaluate()
+        if truthy(condition):
+            return self.value.evaluate()
+        elif self.other_value:
+            return self.other_value.evaluate()
+
+    def __str__(self) -> str:
+        res = f"(if {self.condition} {self.value}"
+        if self.other_value:
+            res += " " + self.other_value
+        return res + ")"
 
 
 class ParsingError(Exception):
@@ -622,7 +645,21 @@ class Parser:
             return self.print_statement()
         if self.match(TokenTypes.LEFT_BRACE):
             return Block(self.block())
+        if self.match(ReservedTokenTypes.IF):
+            return self.if_statement()
         return self.expression_statement()
+
+    def if_statement(self):
+        if not self.match(TokenTypes.LEFT_PAREN):
+            raise SyntaxError("Expect '(' after 'if'.")
+        condition = self.expression()
+        if not self.match(TokenTypes.RIGHT_PAREN):
+            raise SyntaxError("Expect ')' after if condition.")
+        val = self.statement()
+        other = None
+        if self.match(ReservedTokenTypes.ELSE):
+            other = self.statement()
+        return IfStatement(condition, val, other)
 
     def block(self) -> list[Statement]:
         statements = []
