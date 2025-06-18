@@ -48,7 +48,6 @@ class Variable(Expression):
     def __str__(self) -> str:
         return self.identifier.non_null_literal
 
-    # TODO: not sure if this will work.
     def evaluate(self):
         """This returns the relevant python value, not the lox value. E.g. None rather than
         ReservedTokenTypes.NIL.
@@ -111,7 +110,6 @@ class Binary(Expression):
     def __str__(self) -> str:
         # TODO: not sure why but book seems to want order (lexeme, left, right). Trying it out
         # but don't really understand why.
-        # return "(" + str(self.left) + self.val.lexeme + str(self.right) + ")"
         return "(" + self.val.non_null_literal + " " + str(self.left) + " " + str(self.right) + ")"
 
     def evaluate(self):
@@ -179,6 +177,24 @@ class Binary(Expression):
 
         raise ParsingError(f"Unexpected operator in Binary: {self.val.token_type}")
 
+
+class Logical(Expression):
+
+    def __init__(self, left: Expression, op: Token, right: Expression):
+        self.left = left
+        self.op = op
+        self.right = right
+
+    def evaluate(self):
+        left = self.left.evaluate()
+        left_is_truthy = truthy(left)
+        if self.op == ReservedTokenTypes.AND:
+            return self.right.evaluate() if left_is_truthy else left
+        return self.right.evaluate() if not left_is_truthy else left
+
+    def __str__(self) -> str:
+        # TODO check if this is format book wants
+        return f"(or {self.left} {self.right})"
 
 class Grouping(Expression):
     """
@@ -313,9 +329,6 @@ class Block(Statement):
     def __str__(self) -> str:
         return f"({self.statements})"
 
-    # TODO: fix test case open in vim. Issue seems to be that if we DEFINE a var in inner block,
-    # it disappears on block exit, but if we ASSIGN a new val to an existing var in inner block,
-    # that val persists after block exits.
     def evaluate(self, *args, **kwargs) -> None:
         # args, kwargs is needed because statement.evaluate is always passed an env arg.
         # But block always creates a new one anyway so doesn't need to use that.
@@ -410,7 +423,9 @@ class Parser:
     -------
     expression     → assignment ;
     assignment     → IDENTIFIER "=" assignment
-                | equality ;
+                | logic_or ;
+    logic_or       → logic_and ( "or" logic_and )* ;
+    logic_and      → equality ( "and" equality )* ;
     equality       → comparison ( ( "!=" | "==" ) comparison )* ;
     comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     term           → factor ( ( "-" | "+" ) factor )* ;
@@ -530,19 +545,30 @@ class Parser:
         if self.match(*reserved_types, *other_types):
             return Literal(token)
         
+        print('primary pre left', token, self.curr_idx) # TODO rm
         if self.match(TokenTypes.LEFT_PAREN):
+            print('primary in match 1')
             expr = self.expression()
+            print('primary in match 2')
             if not self.match(TokenTypes.RIGHT_PAREN):
+                # TODO: this is getting raised by the third line in current test case open in vim.
+                # Expects a ), getting an equal sign.
+                # Clue: seems like we finish processing (a=false) but then we end up trying to
+                # process the right parents again which is obviously invalid. Vaguely recall
+                # decrementing an index somewhere, maybe that's to blame.
                 raise TypeError(
                     f"Expected type {TokenTypes.RIGHT_PAREN}, found "
                     f"{self.current_token().token_type}."
                 )
+            print('primary return grouping', token, self.previous_token(), self.curr_idx) # TODO rm
+            print('>>>', expr)
             return Grouping(expr)
+        print('primary post left', token) # TODO rm
 
         if self.match(TokenTypes.IDENTIFIER):
             return Variable(token)
 
-        # TODO: evaluate mode is hitting this condition when trying to define a var.
+        print('primary', token, self.current_token()) # TODO rm
         raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
     def unary(self) -> Unary:
@@ -624,9 +650,11 @@ class Parser:
 
         Rule:
         assignment     → IDENTIFIER "=" assignment
-               | equality ;
+               | logic_or ;
         """
         expr = self.equality()
+        # TODO: left off trying to pinpoint what line triggers the primary() failure we're seeing
+        # (first parsing error is reaised by primary, only the second one is raised by synchronize)
         if self.match(TokenTypes.EQUAL):
             value = self.assignment()
             if isinstance(expr, Variable):
@@ -634,8 +662,53 @@ class Parser:
             # TODO: add expr/value/etc into error msg to make more informative?
             # TODO: is parsing error the right type?
             raise ParsingError("Invalid assignment target.")
+        # TODO: this works in some cases, but seems to fail when we have an or clause where the
+        # first value is truthy (it still returns the second value without creating a Logical obj).
+        # Actually maybe it just always returns the secnod value?
+        # Think the issue, or at least part of it, is that curr_idx gets incremented too far, by the
+        # tiem we hit logic_or, we've already passed the or token.
+        # if self.match(ReservedTokenTypes.OR):
+        # TODO: If we do it this way, logic_and's equality call raises an error in primary()
+        # because primary tries to parse the Or token but isn't equipped to.
+        if self.current_token().token_type == ReservedTokenTypes.OR:
+            # TODO: kinda sketchy but testing it out.
+            # This fixes one issue, the fact that we progressed too far past the OR, but I think
+            # it's introducing a new one - I'm guessing this is causing the bug described in primary
+            # bc we seem to be returning to an already processed index.
+            # But maybe not, this isn't getting printed out by the problematic test case.
+            print('decrementing curr idx (pre decr value):', self.curr_idx)
+            # self.curr_idx -= 1 # TODO
+            return self.logic_or()
+        print('after all', expr)
 
         return expr
+
+        # TODO: testing if we can just jump straight to or without match, after all grammar
+        # does imply this.
+        # This still seems to be leaving us in logic_or where current_token is OR whereas we need
+        # the one preceding that. This is hitting the end of primary() and raising an error.
+        # return self.logic_or()
+
+    def logic_or(self) -> Logical:
+        """
+        logic_or       → logic_and ( "or" logic_and )* ;
+        """
+        print('>>> logic_or', self.curr_idx, self.current_token())
+        left = self.logic_and()
+        print('>>> logic_or, after and', self.curr_idx)
+        while self.match(ReservedTokenTypes.OR):
+            left = Logical(left, self.previous_token(), self.logic_and())
+        return left
+
+    def logic_and(self) -> Logical:
+        """
+        logic_and      → equality ( "and" equality )* ;
+        """
+        left = self.equality()
+        while self.match(ReservedTokenTypes.AND):
+            left = Logical(left, self.previous_token(), self.equality())
+        print('logic and', left, type(left))
+        return left
 
     def statement(self) -> Statement:
         # Kind of analogous to `expression` method. However, this handles more of the delegation
@@ -683,7 +756,11 @@ class Parser:
         expr = self.expression()
         # At this point we know the statement needs a semicolon next to finish it.
         if not self.match(TokenTypes.SEMICOLON):
-            # TODO: both evaluate and run mode hit this error whe parsing exprs like '3+4'
+            # TODO: hitting this error now when assigning val to existing var. Think maybe tied to
+            # my recent change to always call logic_or at end of assignment()?
+            # Update: tried changing it back and still hit this, but maybe slightly different than
+            # before in that I call equality again at the end?
+            print('expr stmt', expr, self.current_token())
             raise SyntaxError("Expect ';' after expression.")
 
         return ExpressionStatement(expr)
@@ -700,7 +777,7 @@ class Parser:
         return PrintStatement(expr)
         
     def synchronize(self):
-        """TODO: error handling for when we hit a parsing error."""
+        """Error handling for when we hit a parsing error."""
         # TODO: raising an error for now bc tests do want this for parsing errors, e.g. for `print;`
         # but eventually may need to recover and keep going. Remember parse() has try/except error
         # handling, as does declaration(), but expression() does not - so need to figure out a
@@ -709,6 +786,10 @@ class Parser:
         # TODO rm incr? Added this to avoid inf loop in else clause in declaration() but kind of
         # hazy now on why this is necessary.
         self.curr_idx += 1
+        # TODO: we're hitting this error when defining line like `(a=false) or (b=true);`
+        # Notably, this does NOT occur for just `(a=false)` and I notice a's value is not updated in
+        # that case, which I *believe* is not what we want.
+        print('>>> sync', print(self.tokens[:self.curr_idx]))
         raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
 
     def declaration(self):
@@ -720,6 +801,7 @@ class Parser:
             else:
                 return self.statement()
         except ParsingError as e:
+            print(e, type(e))
             self.synchronize()
         
     # TODO: looks like book creates a new `assignment` rule in our grammar (presumably need a new
