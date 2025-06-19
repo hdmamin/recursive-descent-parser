@@ -188,13 +188,13 @@ class Logical(Expression):
     def evaluate(self):
         left = self.left.evaluate()
         left_is_truthy = truthy(left)
-        if self.op == ReservedTokenTypes.AND:
+        if self.op.token_type == ReservedTokenTypes.AND:
             return self.right.evaluate() if left_is_truthy else left
         return self.right.evaluate() if not left_is_truthy else left
 
     def __str__(self) -> str:
         # TODO check if this is format book wants
-        return f"(or {self.left} {self.right})"
+        return f"({self.op.non_null_literal} {self.left} {self.right})"
 
 class Grouping(Expression):
     """
