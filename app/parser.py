@@ -236,23 +236,8 @@ class Assign(Expression):
     def evaluate(self, env: Optional[Environment] = None):
         """Evaluates the value of the variable and returns the corresponding python object."""
         env = env or INTERPRETER.env
-        # TODO: assign in while loop is hitting cache so only executing once. Need to figure out how
-        # to change that without breaking old code (IIRC we cached results so we wouldn't re-eval
-        # code every time a var was referenced or something? But actually, Assign statement should
-        # not happen when a var is referenced, only when it's value is set (right?)). So maybe can
-        # rm this entirely? Should also consider whether the same is true of VarDeclar and update if
-        # appropriate. Make sure to run historical tests too if I go this route.
-        if self.val == SENTINEL:
-            # TODO rm? Having trouble reproducing conditions that trigger this.
-            # if not self.env.contains(self.name.non_null_literal):
-            #     # TODO: is this the right error type? Also maybe raising it too early, this is at
-            #     # parsing time IIRC?
-            #     raise RuntimeError(
-            #         f"Cannot assign a value to var {self.name!r} because it does not exist."
-            #     )
-
-            self.val = self.expr.evaluate()
-            env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
+        self.val = self.expr.evaluate()
+        env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
         return self.val
 
 
@@ -319,9 +304,8 @@ class VariableDeclaration(Statement):
     def evaluate(self, env: Optional[Environment] = None) -> None:
         env = env or INTERPRETER.env
         # Only want to evaluate once, not every time we reference a variable.
-        if self.value == SENTINEL:
-            self.value = self.expr.evaluate()
-            env.update_state(self.name, self.value, is_declaration=True)
+        self.value = self.expr.evaluate()
+        env.update_state(self.name, self.value, is_declaration=True)
 
 
 class Block(Statement):
@@ -360,7 +344,6 @@ class While(Statement):
             # TODO: looks like current test case is incrementing foo once but not on subsequent
             # iterations, so we end up in inf loop. Need to debug why this is happening.
             self.statement.evaluate()
-            breakpoint() # TODO rm
 
 
 class IfStatement(Statement):

@@ -79,6 +79,7 @@ class Environment:
                 return self.parent.read_state(name)
             raise e
 
+    # TODO: maybe need to update to use state attr now? Not sure if variables attr still being used.
     def contains(self, name: str) -> bool:
         return name in self.variables
 
