@@ -236,6 +236,12 @@ class Assign(Expression):
     def evaluate(self, env: Optional[Environment] = None):
         """Evaluates the value of the variable and returns the corresponding python object."""
         env = env or INTERPRETER.env
+        # TODO: assign in while loop is hitting cache so only executing once. Need to figure out how
+        # to change that without breaking old code (IIRC we cached results so we wouldn't re-eval
+        # code every time a var was referenced or something? But actually, Assign statement should
+        # not happen when a var is referenced, only when it's value is set (right?)). So maybe can
+        # rm this entirely? Should also consider whether the same is true of VarDeclar and update if
+        # appropriate. Make sure to run historical tests too if I go this route.
         if self.val == SENTINEL:
             # TODO rm? Having trouble reproducing conditions that trigger this.
             # if not self.env.contains(self.name.non_null_literal):
@@ -336,6 +342,26 @@ class Block(Statement):
             for statement in self.statements:
                 statement.evaluate(env=env)
 
+    
+class While(Statement):
+
+    def __init__(self, condition: Expression, statement: Statement):
+        self.condition = condition
+        self.statement = statement
+
+    def __str__(self) -> str:
+        # TODO not sure if this is book's desired format
+        return f"(while {self.condition} {self.statement}"
+
+    def evaluate(self, *args, **kwargs):
+        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no but good to
+        # confirm.
+        while truthy(self.condition.evaluate()):
+            # TODO: looks like current test case is incrementing foo once but not on subsequent
+            # iterations, so we end up in inf loop. Need to debug why this is happening.
+            self.statement.evaluate()
+            breakpoint() # TODO rm
+
 
 class IfStatement(Statement):
 
@@ -346,6 +372,8 @@ class IfStatement(Statement):
         self.other_value = other_value
 
     def evaluate(self, *args, **kwargs):
+        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no but good to
+        # confirm.
         condition = self.condition.evaluate()
         if truthy(condition):
             return self.value.evaluate()
@@ -677,16 +705,38 @@ class Parser:
         return left
 
     def statement(self) -> Statement:
-        # Kind of analogous to `expression` method. However, this handles more of the delegation
-        # to different statement methods whereas expression fully offloads that to the methods it
-        # calls.
+        """
+        statement      → exprStmt
+               | ifStmt
+               | printStmt
+               | whileStmt
+               | block ;
+
+        Kind of analogous to `expression` method. However, this handles more of the delegation
+        to different statement methods whereas expression fully offloads that to the methods it
+        calls.
+        """
         if self.match(ReservedTokenTypes.PRINT):
             return self.print_statement()
         if self.match(TokenTypes.LEFT_BRACE):
             return Block(self.block())
+        if self.match(ReservedTokenTypes.WHILE):
+            return self.while_statement()
         if self.match(ReservedTokenTypes.IF):
             return self.if_statement()
         return self.expression_statement()
+    
+    def while_statement(self):
+        """
+        whileStmt      → "while" "(" expression ")" statement ;
+        """
+        if not self.match(TokenTypes.LEFT_PAREN):
+            raise SyntaxError("Expect '(' after 'while'.")
+        expr = self.expression()
+        if not self.match(TokenTypes.RIGHT_PAREN):
+            raise SyntaxError("Expect '(' after 'while'.")
+        stmt = self.statement()
+        return While(expr, stmt)
 
     def if_statement(self):
         if not self.match(TokenTypes.LEFT_PAREN):
