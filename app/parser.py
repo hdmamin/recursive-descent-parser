@@ -337,14 +337,44 @@ class While(Statement):
         # TODO not sure if this is book's desired format
         return f"(while {self.condition} {self.statement}"
 
-    def evaluate(self, *args, **kwargs):
-        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no but good to
-        # confirm.
+    def evaluate(self, *args, **kwargs) -> None:
+        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no (and tests
+        # pass without doing this) but good to confirm.
         while truthy(self.condition.evaluate()):
-            # TODO: looks like current test case is incrementing foo once but not on subsequent
-            # iterations, so we end up in inf loop. Need to debug why this is happening.
             self.statement.evaluate()
 
+
+class For(Statement):
+    
+    def __init__(
+            self,
+            initializer: Optional[VariableDeclaration],
+            condition: ExpressionStatement,
+            incrementer: Optional[Expression],
+            statement: Statement,
+        ):
+        self.initializer = initializer
+        self.condition = condition
+        self.incrementer = incrementer
+        self.statement = statement
+
+    def __str__(self) -> str:
+        # TODO check if this matches what book expects
+        return f"(for {self.initializer} {self.condition} {self.incrementer})"
+
+    def evaluate(self, *args, **kwargs) -> None:
+        if self.initializer is not None:
+            self.initializer.evaluate()
+        # TODO book says condition can be null which seems weird. Could make that change here or
+        # could use its desugaring route and use while loop. I think to do that we'd basically:
+        # - create a Block with [statement, incrementer]
+        # - pass (condition, block) to While constructor
+        # - create another Block by passing in [initializer, while]
+        # but can check book to confirm.
+        while truthy(self.condition.evaluate()):
+            self.statement.evaluate()
+            if self.incrementer is not None:
+                self.incrementer.evaluate()
 
 class IfStatement(Statement):
 
@@ -690,6 +720,7 @@ class Parser:
     def statement(self) -> Statement:
         """
         statement      → exprStmt
+               | forStmt
                | ifStmt
                | printStmt
                | whileStmt
@@ -699,6 +730,7 @@ class Parser:
         to different statement methods whereas expression fully offloads that to the methods it
         calls.
         """
+        # TODO: print statement does not match order in docstring, maybe need to move down?
         if self.match(ReservedTokenTypes.PRINT):
             return self.print_statement()
         if self.match(TokenTypes.LEFT_BRACE):
@@ -707,6 +739,8 @@ class Parser:
             return self.while_statement()
         if self.match(ReservedTokenTypes.IF):
             return self.if_statement()
+        if self.match(ReservedTokenTypes.FOR):
+            return self.for_statement()
         return self.expression_statement()
     
     def while_statement(self):
@@ -732,6 +766,44 @@ class Parser:
         if self.match(ReservedTokenTypes.ELSE):
             other = self.statement()
         return IfStatement(condition, val, other)
+
+    def for_statement(self):
+        """
+        forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
+                 expression? ";"
+                 expression? ")" statement ;
+        """
+        if not self.match(TokenTypes.LEFT_PAREN):
+            raise SyntaxError("Expect '(' after 'for'.")
+
+        # Parse the initializer
+        if self.match(TokenTypes.SEMICOLON):
+            initializer = None
+        elif self.match(ReservedTokenTypes.VAR):
+            initializer = self.variable_declaration()
+        else:
+            initializer = self.expression_statement()
+
+        # Parse the condition
+        if self.current_token().token_type != TokenTypes.SEMICOLON:
+            condition = self.expression()
+        else:
+            print('condition is none')
+            condition = None
+        if not self.match(TokenTypes.SEMICOLON):
+            raise SyntaxError(f"Expect ';' after loop condition.")
+
+        # Parse the incrementer
+        if self.current_token().token_type != TokenTypes.RIGHT_PAREN:
+            incrementer = self.expression()
+        else:
+            incrementer = None
+        if not self.match(TokenTypes.RIGHT_PAREN):
+            raise SyntaxError(f"Expect ';' after loop condition.")
+
+        body = self.statement()
+        # TODO: consider desugaring like in book -> while loop. Should be optional though.
+        return For(initializer, condition, incrementer, body)
 
     def block(self) -> list[Statement]:
         statements = []
