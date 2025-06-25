@@ -370,7 +370,8 @@ class For(Statement):
         # - create a Block with [statement, incrementer]
         # - pass (condition, block) to While constructor
         # - create another Block by passing in [initializer, while]
-        # but can check book to confirm.
+        # but can check book to confirm. ALTERNATIVELY, can leave this for later and proceed to next
+        # stage, just depends on what mood you're in to do next.
         while truthy(self.condition.evaluate()):
             self.statement.evaluate()
             if self.incrementer is not None:
@@ -788,7 +789,6 @@ class Parser:
         if self.current_token().token_type != TokenTypes.SEMICOLON:
             condition = self.expression()
         else:
-            print('condition is none')
             condition = None
         if not self.match(TokenTypes.SEMICOLON):
             raise SyntaxError(f"Expect ';' after loop condition.")
