@@ -73,7 +73,8 @@ def main():
             for expr in parsed["expressions"]:
                 print(expr)
         else:
-            print(parsed["error"], file=sys.stderr)
+            for row in parsed["errors"]:
+                print(row, file=sys.stderr)
             exit(65)
     elif command == "evaluate":
         # TODO: again, would like to consolidate and raise this only once instead of in each
@@ -99,7 +100,9 @@ def main():
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
         if not parsed["success"]:
-            print(65, parsed)
+            # print(parsed['errors']) # TODO
+            for row in parsed["errors"]:
+                print(row, file=sys.stderr)
             exit(65)
 
         for statement in parsed["declarations"]:

@@ -531,6 +531,8 @@ def lex(source: str) -> dict:
             if token:
                 tokens.append(token)
         
+    # TODO: should this be appended to tokens list as well? gpt seems to think so but I don't think
+    # the book did that?
     res.append("EOF  null")
     return {
         "lexed": res,

@@ -545,7 +545,7 @@ class Parser:
         res = {
             f"{method_name}s": [],
             "success": True,
-            "error": None,
+            "errors": [],
         }
         while self.curr_idx <= self.max_idx:
             try:
@@ -554,9 +554,13 @@ class Parser:
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
                 res["success"] = False
-                res["error"] = e
+                res["errors"].append(e)
                 # TODO: may eventually want to keep parsing but for now we return early.
-                break
+                # TRied disabling with no other changes and current test case is now throwing 5
+                # errors (was 1 with break enabled) instead of the expected 2.
+                # Need to figure out some logic to skip ahead to the next valid expr/decl etc,
+                # right now we keep trying to parse the next token and this results in ghost errors.
+                # break
 
         # TODO: will need to change this logic once we implement more complex statement types.
         # TODO: or update res key name to use mode if we end up needing to keep this.
@@ -604,7 +608,7 @@ class Parser:
         if self.match(TokenTypes.IDENTIFIER):
             return Variable(token)
 
-        raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
+        raise ParsingError(f"[line {token.line}] Error at {token.lexeme}.")
 
     def unary(self) -> Unary:
         """
@@ -783,7 +787,9 @@ class Parser:
         elif self.match(ReservedTokenTypes.VAR):
             initializer = self.variable_declaration()
         else:
+            print('elif 2')
             initializer = self.expression_statement()
+            print('elif 3')
 
         # Parse the condition
         if self.current_token().token_type != TokenTypes.SEMICOLON:
@@ -799,7 +805,7 @@ class Parser:
         else:
             incrementer = None
         if not self.match(TokenTypes.RIGHT_PAREN):
-            raise SyntaxError(f"Expect ';' after loop condition.")
+            raise SyntaxError(f"Expect ')' after for clauses.")
 
         body = self.statement()
         # TODO: consider desugaring like in book -> while loop. Should be optional though.
@@ -826,6 +832,16 @@ class Parser:
         """
         expr = self.expression()
         # At this point we know the statement needs a semicolon next to finish it.
+        # TODO: error messages are looking better now except tests expect this to be raised in same
+        # line as "Error at )" type errors. Need to figure out why/how (could be that the
+        # original method that is raising the first part should be raising both?)
+        # UPDATE: actually I think maybe we shouldn't be hitting this at all and the test case
+        # output is slightly wrong re the post-colon part?
+        # Can confirm that by running larger test suite, but first need to
+        # understand why this is getting raised and why it shouldn't be.
+        # If we use valid FOR syntax, we never hit this method, I guess we're processing in the
+        # FOR method. But when the initializer is {}, I guess we can't parse the for statement and
+        # instead end up parsing separate expressions? And so we call this method.
         if not self.match(TokenTypes.SEMICOLON):
             raise SyntaxError("Expect ';' after expression.")
 
@@ -849,10 +865,43 @@ class Parser:
         # handling, as does declaration(), but expression() does not - so need to figure out a
         # consistent solution.
         token = self.current_token()
+        print('sync', token)
         # TODO rm incr? Added this to avoid inf loop in else clause in declaration() but kind of
-        # hazy now on why this is necessary.
+        # hazy now on why this is necessary. (Update: I assume bc this is called when we hit an
+        # error and so if we don't incr, we will just keep hitting that same error forever?)
         self.curr_idx += 1
-        raise ParsingError(f"Failed to parse token {token.lexeme} at line {token.line}.")
+        # Can't use set because these aren't hashable.
+        start_types = [
+            ReservedTokenTypes.CLASS,
+            ReservedTokenTypes.FUN,
+            ReservedTokenTypes.VAR,
+            ReservedTokenTypes.FOR,
+            ReservedTokenTypes.IF,
+            ReservedTokenTypes.WHILE,
+            ReservedTokenTypes.PRINT,
+            ReservedTokenTypes.RETURN,
+        ]
+        # We actually want to exit the loop with curr_idx GREATER than max_idx if we don't hit any
+        # of the start_types. This will ensure the `parse` method doesn't just try to parse the
+        # final token again.
+        # TODO: sounds like the issue is once we encounter an error in the for loop, we want to
+        # proceed to the next *statement* entirely, so maybe increment 1 statement at a time vs
+        # 1 token? Book seems to do the latter though... It's possible we need to implement that
+        # elsewhere rather than modifying this while logic though?
+        # gpt really doesn't like this idea though, it doesn't really like modifying the forstatement
+        # method either with additional error handling logic (and the book doesn't do this) but it
+        # seems to like it more than modifying synchronize. I don't love it, seems like lots of
+        # duplicate logic, but we could try it next.
+        # So basically: modify for_statement method to raise error early if we fail to parse any
+        # of the 3 components.
+        while self.curr_idx <= self.max_idx:
+            curr = self.current_token()
+            if self.previous_token().token_type == TokenTypes.SEMICOLON:
+                break
+            if curr.token_type in start_types:
+                break
+            self.curr_idx += 1
+        raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: Expect expression.")
 
     def declaration(self):
         """Kind of analogous to `expression` and `statement` methods.
