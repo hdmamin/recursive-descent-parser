@@ -692,8 +692,6 @@ class Parser:
                | logic_or ;
         """
         expr = self.logic_or()
-        # TODO: left off trying to pinpoint what line triggers the primary() failure we're seeing
-        # (first parsing error is reaised by primary, only the second one is raised by synchronize)
         if self.match(TokenTypes.EQUAL):
             value = self.assignment()
             if isinstance(expr, Variable):
@@ -787,9 +785,7 @@ class Parser:
         elif self.match(ReservedTokenTypes.VAR):
             initializer = self.variable_declaration()
         else:
-            print('elif 2')
             initializer = self.expression_statement()
-            print('elif 3')
 
         # Parse the condition
         if self.current_token().token_type != TokenTypes.SEMICOLON:
@@ -865,7 +861,6 @@ class Parser:
         # handling, as does declaration(), but expression() does not - so need to figure out a
         # consistent solution.
         token = self.current_token()
-        print('sync', token)
         # TODO rm incr? Added this to avoid inf loop in else clause in declaration() but kind of
         # hazy now on why this is necessary. (Update: I assume bc this is called when we hit an
         # error and so if we don't incr, we will just keep hitting that same error forever?)
@@ -894,6 +889,15 @@ class Parser:
         # duplicate logic, but we could try it next.
         # So basically: modify for_statement method to raise error early if we fail to parse any
         # of the 3 components.
+        # UPDATE: tried this but we're still left with the question of "how do we know when the 
+        # (broken syntax) for loop def is done?" My idea was to try to parse expr and then rewind
+        # idx when we found one that worked, but gpt/claude both recommended against this -
+        # apparently kind of violates the recursive descent parser ethos and makes it very slow.
+        # Fiddled around a bit in forStatement but that really doesn't seem like the way. One option
+        # is to basically implement "balanced parentheses" leetcode q inside synchronize, but that
+        # hardly seems ideal either.
+        # Unrelated: also need to decide what to do about codecrafters now that trial ended, could
+        # try to see how to use that public repo to run tests?
         while self.curr_idx <= self.max_idx:
             curr = self.current_token()
             if self.previous_token().token_type == TokenTypes.SEMICOLON:

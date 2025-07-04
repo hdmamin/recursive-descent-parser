@@ -1,4 +1,5 @@
 #!/bin/sh
+
 #
 # Use this script to run your program LOCALLY.
 #
@@ -12,6 +13,6 @@ set -e # Exit early if any commands fail
 #
 # - Edit this to change how your program runs locally
 # - Edit .codecrafters/run.sh to change how your program runs remotely
-# TODO reenable original version at some point, want to run in interactive mode for now
 exec pipenv run python3 -m app.main "$@"
+# TODO reenable original version at some point, want to run in interactive mode for now
 # exec pipenv run ipython3 -i -m app.main "$@"

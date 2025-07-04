@@ -1,0 +1,38 @@
+7/1/25 tues
+-----------
+[just wrote some quick notes to myself today, can switch to my more standard todo format going forward]
+-got test repo cloned and `make test_control_flow_w_jlox` passes but 99% sure it's testing the codecrafters repo code (functions test also passes even though I haven't started that section yet). I think I either need to:
+    -update makefile commands so CODECRAFTERS_REPOSITORY_DIR points to my repo (though I don't have different chapter subdirs), OR
+    -figure out how to run without makefile? test repo readme doesn't make any mention of those so maybe that's not the intended path
+
+7/2/25 wed
+----------
+X -set up new remote repo
+    X -confirm why currently set to so many (see ls-remote output in pane below)
+    X -create new repo
+    X -update remote pointer
+    X -fix remote for test repo (accidentally changed this instead of my repo)
+-get tests running using my source code vs book's. Either
+    ~ -update makefile commands so CODECRAFTERS_REPOSITORY_DIR points to my repo (though I don't have different chapter subdirs), OR
+        > updates: managed to access env var in makefile after export. Tests still seem to run against REPOSITORY_DIR (vs SUBMISSION_DIR) though, and if REPOSITORY_DIR is not provided, tester errors out even though submission_dir is provided. Next step seem s to be to try setting REPOSITORY_DIR as my path, perhaps SUBMISSION_DIR is not actually required?
+    ! -figure out how to run without makefile? test repo readme doesn't make any mention of those so maybe that's not the intended path
+
+7/3/25 thurs
+------------
+-get tests running using my source code
+    -try updating REPOSITORY_DIR to point to my repo
+        > if this isn't the fix, kinda stumped. Will need to re-assess based on error messages, not sure what next tact would be.
+        X -update repo dir in makefile
+        ~ -try running a level I have implemented (this should pass)
+            > findings: your_program.sh is being executed from test repo root, so it can't find app module. Need to either chdir inside it or update the python path or something.
+        -try running a level I have NOT implemented (this should fail)
+
+7/4/25 fri
+----------
+-get tests running using my source code
+    -try updating REPOSITORY_DIR to point to my repo
+        > findings: your_program.sh is being executed from test repo root, so it can't find app module. Need to either chdir inside it or update the python path or something.
+        -maybe create config/shell script setting env vars somewhere? (Realized they're not persisting past the current sesion with my current method so everything is a bit fragile atm)
+        -try updating python path in your_program.sh to always include the right path (maybe hardcode?)
+        -try running a level I have implemented (this should pass)
+        -try running a level I have NOT implemented (this should fail)
