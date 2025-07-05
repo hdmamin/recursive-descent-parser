@@ -29,10 +29,25 @@ X -set up new remote repo
 
 7/4/25 fri
 ----------
--get tests running using my source code
-    -try updating REPOSITORY_DIR to point to my repo
+X -get tests running using my source code
+    X -try updating REPOSITORY_DIR to point to my repo
         > findings: your_program.sh is being executed from test repo root, so it can't find app module. Need to either chdir inside it or update the python path or something.
-        -maybe create config/shell script setting env vars somewhere? (Realized they're not persisting past the current sesion with my current method so everything is a bit fragile atm)
-        -try updating python path in your_program.sh to always include the right path (maybe hardcode?)
-        -try running a level I have implemented (this should pass)
-        -try running a level I have NOT implemented (this should fail)
+        X -maybe create config/shell script setting env vars somewhere? (Realized they're not persisting past the current sesion with my current method so everything is a bit fragile atm)
+            > only need to set one actually, just do this once at start of makefile.
+        X -try updating python path in your_program.sh to always include the right path (maybe hardcode?)
+        ~ -try running a level I have implemented (this should pass)
+            > technically failed but I think that's revealing a new bug 🫣, it actually is running my code!
+        X -try running a level I have NOT implemented (this should fail)
+
+7/5/25 sat
+----------
+-move tests into my main repo
+    -decide desired structure (test repo seems to want to copy interpreter implementation into it, but I think it probably makes more sense to copy test repo into main repo (in new tests subdir))
+    -copy files over
+    -update make commands if necessary
+    -update readme to remind me how to run tests
+-check that I can still run your_program.sh directly
+-fix all broken stage(s)
+    -fix parsing stage
+    -check if other stages pass
+-return to work on syntactic errors substage
