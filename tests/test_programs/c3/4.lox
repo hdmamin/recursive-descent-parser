@@ -1,0 +1,19 @@
+---
+expected_error_type: none
+---
+// This program uses multiple if statements to
+// determine eligibility for
+// voting, driving, and drinking based on a random
+// integer age
+var age = <<RANDOM_INTEGER>>;
+
+var isAdult = age >= 18;
+if (isAdult) { print "eligible for voting: true"; }
+else { print "eligible for voting: false"; }
+
+if (age < 16) { print "not eligible for driving"; }
+else if (age < 18) { print "learner's permit"; }
+else { print "eligible for driving"; }
+
+if (age >= 21) { print "eligible for drinking"; }
+else { print "not eligible for drinking"; }

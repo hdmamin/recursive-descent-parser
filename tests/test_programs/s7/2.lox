@@ -1,0 +1,9 @@
+---
+expected_error_type: none
+---
+var <<RANDOM_STRING_4>> = "after";
+var <<RANDOM_STRING_4>> = "before";
+// Using a previously declared variable's value to
+// initialize a new variable should work
+var <<RANDOM_STRING_4>> = <<RANDOM_STRING_4>>;
+print <<RANDOM_STRING_4>>;

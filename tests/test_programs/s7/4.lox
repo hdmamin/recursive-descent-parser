@@ -1,0 +1,5 @@
+---
+expected_error_type: runtime
+---
+// As <<RANDOM_STRING_4>> is not declared before
+var <<RANDOM_STRING_2>> = <<RANDOM_STRING_4>>; // expect runtime error

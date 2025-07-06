@@ -1,0 +1,24 @@
+---
+expected_error_type: none
+---
+fun square(x) {
+  return x * x;
+}
+
+// This higher-order function applies a
+// function N times to a starting value x.
+fun applyTimesN(N, f, x) {
+  var i = 0;
+  while (i < N) {
+    x = f(x);
+    i = i + 1;
+  }
+  return x;
+}
+
+// <<RANDOM_DIGIT>> is squared once
+print applyTimesN(1, square, <<RANDOM_DIGIT>>);
+// <<RANDOM_DIGIT>> is squared twice
+print applyTimesN(2, square, <<RANDOM_DIGIT>>);
+// <<RANDOM_DIGIT>> is squared thrice
+print applyTimesN(3, square, <<RANDOM_DIGIT>>);

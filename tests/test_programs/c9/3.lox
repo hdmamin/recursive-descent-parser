@@ -1,0 +1,6 @@
+---
+expected_error_type: compile
+---
+// This program would give a compile error
+// because the increment clause is not valid
+for (var a = 1; a < 2; {}) {}

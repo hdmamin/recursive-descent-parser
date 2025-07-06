@@ -1,0 +1,11 @@
+---
+expected_error_type: compile
+---
+{
+    var <<RANDOM_STRING_2>> = <<RANDOM_INTEGER>>;
+    var <<RANDOM_STRING_3>> = <<RANDOM_INTEGER>>;
+    {
+        print <<RANDOM_STRING_2>> + <<RANDOM_STRING_3>>;
+    // Missing closing curly brace
+    // Expect compile error
+}

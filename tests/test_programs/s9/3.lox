@@ -1,0 +1,12 @@
+---
+expected_error_type: none
+---
+// This program tests that scopes can be nested
+{
+    var <<RANDOM_STRING_4>> = <<RANDOM_INTEGER>>;
+    {
+        var <<RANDOM_STRING_3>> = <<RANDOM_INTEGER>>;
+        print <<RANDOM_STRING_3>>;
+    }
+    print <<RANDOM_STRING_4>>;
+}

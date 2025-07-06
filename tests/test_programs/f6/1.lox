@@ -1,0 +1,19 @@
+---
+expected_error_type: none
+---
+// This program creates a function that returns
+// another function
+// and uses it to greet two different people with
+// two different greetings
+fun makeGreeter() {
+  fun greet(name) {
+    print "Hello " + name;
+  }
+  return greet;
+}
+
+var sayHello = makeGreeter();
+
+sayHello("Bob");
+sayHello("Alice");
+sayHello("Eve");

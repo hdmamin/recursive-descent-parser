@@ -1,0 +1,5 @@
+---
+expected_error_type: compile
+---
+// Print statements expect an expression
+print; // expect compile error

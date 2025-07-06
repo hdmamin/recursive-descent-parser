@@ -1,0 +1,11 @@
+dist
+.history/
+.idea/
+.vscode/
+
+*.class
+craftinginterpreters/
+
+tmp.lox
+main.go
+tests.lox

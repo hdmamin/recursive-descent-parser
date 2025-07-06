@@ -42,12 +42,24 @@ X -get tests running using my source code
 7/5/25 sat
 ----------
 -move tests into my main repo
-    -decide desired structure (test repo seems to want to copy interpreter implementation into it, but I think it probably makes more sense to copy test repo into main repo (in new tests subdir))
-    -copy files over
-    -update make commands if necessary
+    X -decide desired structure (test repo seems to want to copy interpreter implementation into it, but I think it probably makes more sense to copy test repo into main repo (in new tests subdir))
+    X -copy files over
+    X -update make commands if necessary
     -update readme to remind me how to run tests
 -check that I can still run your_program.sh directly
 -fix all broken stage(s)
     -fix parsing stage
     -check if other stages pass
 -return to work on syntactic errors substage
+
+7/6/25 sun
+----------
+-move tests into my main repo
+    -update readme to remind me how to run tests
+-check that I can still run your_program.sh directly
+-fix all broken stage(s)
+    -fix parsing stage ("(23 +)" now times out; check activity monitor for python3.10 memory leaks)
+    -check if other stages pass
+-return to work on syntactic errors substage
+
+
