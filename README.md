@@ -1,4 +1,5 @@
-Harrison's notes
+## Testing with codecrafters
+
 - to test locally, first activate an env where pipenv is installed:
 
 ```
@@ -11,16 +12,19 @@ Then run this command, where the last arg is a path containing some snippet of l
 ./your_program.sh parse /tmp/tmp.txt 
 ```
 
+to run the next codecrafters test suite, I initially used `codecrafters test` and eventually `codecrafters submit` (the latter checks off the stage on the website when passed). In practice, I started running `codecrafters submit 2>&1 | tee logs/{section_name}-{section_step_number}.txt` to also stash test logs for later in case I wanted to try to convert these to tests. (I later found a better way to do this, however.)
+
 To test if a refactor broke functionality from previous rounds, run:
 ```
 codecrafters test --previous
 ```
 (This tests both previous rounds and the current round.)
 
-Other options I was looking into previously, may want to get one of these working eventually:
-- Found what I believe is the repo used to run tests, may be able to get this running locally or at least extract test cases.
-    https://github.com/codecrafters-io/interpreter-tester 
-- running `codecrafters submit 2>&1 | tee logs/{section_name}-{section_step_number}.txt` to save all output from running tests, should be able to parse this later into runnable tests.
+### Local Testing
+
+Codecrafters published all test cases in https://github.com/codecrafters-io/interpreter-tester so we can also run tests without a subscription. I pulled this repo and copied files into `tests`, pulling the Makefile into my project root and modifying it slightly. I can now run test cases like `make test_scanning_w_jlox`.
+
+## Codecrafters Instructions
 
 [![progress-banner](https://backend.codecrafters.io/progress/interpreter/f565001c-a282-4eb3-afc4-3c00f9645763)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
