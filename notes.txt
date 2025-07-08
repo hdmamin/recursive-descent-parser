@@ -64,8 +64,16 @@ X -move tests into my main repo
 
 7/7/25 mon
 ----------
--check that I can still run your_program.sh directly
+X -check that I can still run your_program.sh directly
+    > Also updated makefile with wrappers for run etc. Tested all and they work for a simple test case, though the parsing bug for "(23 +)" is of course still unresolved.
 -fix all broken stage(s)
+    -fix parsing stage ("(23 +)" now times out; check activity monitor for python3.10 memory leaks)
+    -check if other stages pass
+-return to work on syntactic errors substage
+
+7/8/25 tues
+-----------
+-fix broken stage(s)
     -fix parsing stage ("(23 +)" now times out; check activity monitor for python3.10 memory leaks)
     -check if other stages pass
 -return to work on syntactic errors substage

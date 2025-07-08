@@ -18,6 +18,19 @@ build:
 test:
 	TESTER_DIR=$(shell pwd) go test -v ./tests/internal/
 
+# Slightly ridiculous convenience wrappers around your_program.sh to let us run/evaluate/parse commands without specifying path.
+tokenize:
+	./your_program.sh tokenize ./tests/test_case.lox
+
+parse:
+	./your_program.sh parse ./tests/test_case.lox
+
+evaluate:
+	./your_program.sh evaluate ./tests/test_case.lox
+
+run:
+	./your_program.sh run ./tests/test_case.lox
+
 test_and_watch:
 	onchange '**/*' -- go test -v ./tests/internal/
 
