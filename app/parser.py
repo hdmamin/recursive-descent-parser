@@ -555,9 +555,8 @@ class Parser:
             except (ParsingError, SyntaxError) as e:
                 res["success"] = False
                 res["errors"].append(e)
-                # TODO: may eventually want to keep parsing but for now we return early.
-                # TRied disabling with no other changes and current test case is now throwing 5
-                # errors (was 1 with break enabled) instead of the expected 2.
+                # TODO: Previously had this working with break enabled, but was getting wrong number
+                # of errors in latest stage.
                 # Need to figure out some logic to skip ahead to the next valid expr/decl etc,
                 # right now we keep trying to parse the next token and this results in ghost errors.
                 # break
@@ -608,6 +607,7 @@ class Parser:
         if self.match(TokenTypes.IDENTIFIER):
             return Variable(token)
 
+        print(">>> PRIMARY ERROR")
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme}.")
 
     def unary(self) -> Unary:
