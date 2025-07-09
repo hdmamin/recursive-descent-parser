@@ -31,6 +31,8 @@ func getRandBoolean() string {
 // To make it easier to work with and track changes, all the test programs are stored in the test_programs directory.
 // Every stage has its own directory. (For example, stage_s1.go has a test_programs/s1 directory.)
 // This function reads all the files in the test_programs/<<stage_id>> directory and returns their contents as a slice of strings.
+// TODO: this works for first few commands but fails for test_statements. Use chat sess instructions
+// to debug.
 func GetTestCasesForCurrentStage(stageIdentifier string) []testcases.RunTestCase {
 	var testCases []testcases.RunTestCase
 
