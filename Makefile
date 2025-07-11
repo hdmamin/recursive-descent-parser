@@ -3,6 +3,9 @@
 current_version_number := $(shell git tag --list "v*" | sort -V | tail -n 1 | cut -c 2-)
 next_version_number := $(shell echo $$(($(current_version_number)+1)))
 export CODECRAFTERS_REPOSITORY_DIR := /Users/hmamin/codecrafters-interpreter-python
+# Need to add this because I moved the test repo code into a tests/subdir and this breaks test runner
+# unless we set this.
+export TESTER_DIR := $(shell pwd)/tests
 
 debug:
 	echo $$CODECRAFTERS_REPOSITORY_DIR

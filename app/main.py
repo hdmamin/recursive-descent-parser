@@ -62,12 +62,13 @@ def main():
         if not lexed["success"]:
             exit(65)
     elif command == "parse":
-        # TODO: can probably find a cleaner solution here but my tokenizer is catching some errors
-        # before we reach the parsing stage and Codecrafters wants us to exit in that case.
-        # Think codecrafters will eventually check error messages but for now we just exit.
+        # print(">>> lexed", lexed) # TODO rm
+        # When tokenizer catches some errors before we reach the parsing stage, Codecrafters
+        # wants us to exit early.
         if not lexed["success"]:
             exit(65)
 
+        # print('>>> parsed', parsed) # TODO rm
         # At this point we know `parsed` exists.
         if parsed["success"]:
             for expr in parsed["expressions"]:

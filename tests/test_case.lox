@@ -1,1 +1,3 @@
-(23+)
+print "hello" + "quz" + "baz";
+print 30 - 45;
+print "baz" == "bar";

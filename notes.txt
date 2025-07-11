@@ -87,10 +87,23 @@ X -check that I can still run your_program.sh directly
 -fix broken stage(s)
     -fix stage: test_statements
         > Seems to be tied to paths (recall I moved everything into tests subdir so I could use one repo) but not sure why this is only impacting one command?
-        -try testing GetTestCasesForCurrentStage using cursor chat instructions
-        -and/or try setting TESTER_DIR env var in makefile?
-        -test_statements runs
+        X -try testing GetTestCasesForCurrentStage using cursor chat instructions
+        X -and/or try setting TESTER_DIR env var in makefile?
+        X -test_statements runs
         -test_statements passes
+    X -confirm scanning/parsing/evaluation commands still pass
 -return to work on syntactic errors substage
 
-
+7/10/25 thurs
+-------------
+-fix broken stage(s)
+    > current test case produces errors in parse mode. Weirdly evaluate still works, but run only seems to execute the first of 3 prints.
+    -get current test case working in:
+        -parse mode
+        -run mode
+    -"make test_statements_w_jlox" passes
+    -confirm others still pass still pass afterwards:
+        -scan
+        -parse
+        -evaluate 
+-return to work on syntactic errors substage

@@ -454,7 +454,7 @@ def truthy(val: Any) -> bool:
 
 # TODO: rm decorator once done debugging. For now leave it so can easily comment it on/off.
 from app.debugging import decorate_methods, verbose
-# @decorate_methods(verbose)
+@decorate_methods(verbose)
 class Parser:
     """
     Each precedence level in our order of operations requires its own method.
