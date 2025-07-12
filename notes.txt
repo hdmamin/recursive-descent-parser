@@ -98,12 +98,23 @@ X -check that I can still run your_program.sh directly
 -------------
 -fix broken stage(s)
     > current test case produces errors in parse mode. Weirdly evaluate still works, but run only seems to execute the first of 3 prints.
-    -get current test case working in:
-        -parse mode
-        -run mode
-    -"make test_statements_w_jlox" passes
-    -confirm others still pass still pass afterwards:
-        -scan
-        -parse
-        -evaluate 
--return to work on syntactic errors substage
+    X -get current test case working in:
+        X -parse mode
+        X -evaluate mode
+        X -run mode
+    X -"make test_statements_w_jlox" passes
+    X -confirm others still pass still pass afterwards:
+        X -scanning
+        X -parsing
+        X -evaluation
+~ -return to work on syntactic errors substage
+    X -"make test_control_flow_w_jlox" passes
+    > weird, this somehow passes now...I guess I did make some other changes in getting other changes to pass so it's plausible those fixed something? Also possible codecrafters sample test cases in UI were wrong/broken and maybe I never got around to testing the whole test suite bc I thought I was stuck when I wasn't?
+
+7/11/25 fri
+-----------
+X -return to work on syntactic errors substage
+    > recall control flow test suite passed, to my surprise. Curious if the test cases on the site give the expected outputs.
+    X -check if test cases in codecrafters UI pass
+        > still slightly different error phrasing but the behavior seems correct and the actual test suite passes so /shrug.
+-start "native functions" stage

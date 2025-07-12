@@ -196,6 +196,22 @@ class Logical(Expression):
         # TODO check if this is format book wants
         return f"({self.op.non_null_literal} {self.left} {self.right})"
 
+
+class Call(Expression):
+
+    def __init__(self, callee: Expression, parens: Token, args: list[Expression]):
+        self.callee = callee
+        self.parens = parens
+        self.args = args
+
+    def __str__(self) -> str:
+        # TODO check if this is format book wants
+        return f"({self.callee} {self.parens.non_null_literal} {self.args})"
+
+    def evaluate(self):
+        # TODO
+        self.callee.evaluate()
+
 class Grouping(Expression):
     """
     Example
@@ -454,7 +470,7 @@ def truthy(val: Any) -> bool:
 
 # TODO: rm decorator once done debugging. For now leave it so can easily comment it on/off.
 from app.debugging import decorate_methods, verbose
-@decorate_methods(verbose)
+# @decorate_methods(verbose)
 class Parser:
     """
     Each precedence level in our order of operations requires its own method.
@@ -485,6 +501,7 @@ class Parser:
         self.tokens = [token for token in tokens if token.token_type != TokenTypes.SPACE]
         self.max_idx = len(self.tokens) - 1
         self.curr_idx = 0
+        self.mode = None
 
     def match(self, *token_types: TokenType) -> bool:
         """Check if the current token has one fo the expected token_types. If so, increment the
@@ -533,8 +550,9 @@ class Parser:
             Note that we do NOT try to evalute the expressions yet. We may still encounter
             additional errors when we do.
         """
+        self.mode = mode
         method_name = {
-            "parse": "expression",
+            "parse": "declaration",
             # TODO testing: previously was expression, tried switching to declaration 
             # but I think that broke our ability to handle expressions without trailing semicolons.
             # "evaluate": "declaration",
@@ -543,32 +561,32 @@ class Parser:
         }[mode]
         method = getattr(self, method_name)
         res = {
-            f"{method_name}s": [],
+            "parsed": [],
             "success": True,
             "errors": [],
         }
-        prev_idx = -1
         while self.curr_idx <= self.max_idx:
-            # Avoid getting stuck in infinite loop on parsing errors that don't hit synchrnoize().
-            if self.curr_idx == prev_idx:
-                self.curr_idx += 1
-                continue
+            prev_idx = self.curr_idx 
 
             try:
-                res[f"{method_name}s"].append(method())
+                res["parsed"].append(method())
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
                 res["success"] = False
                 res["errors"].append(e)
+                # Avoid getting stuck in infinite loop on parsing errors that don't hit
+                # synchronize().
+                if self.curr_idx == prev_idx:
+                    self.curr_idx += 1
+
                 # TODO: Previously had this working with break enabled, but was getting wrong number
                 # of errors in latest stage.
                 # Need to figure out some logic to skip ahead to the next valid expr/decl etc,
                 # right now we keep trying to parse the next token and this results in ghost errors.
                 # break
 
-            prev_idx = self.curr_idx
-
+        self.mode = None
         # TODO: will need to change this logic once we implement more complex statement types.
         # TODO: or update res key name to use mode if we end up needing to keep this.
         # res["expressions"] = [statement.expr for statement in res["statements"]]
@@ -828,12 +846,21 @@ class Parser:
             raise ParsingError("Expect '}' after block.")
         return statements
 
-    def expression_statement(self) -> ExpressionStatement:
+    def expression_statement(self) -> Union[ExpressionStatement, Expression]:
         """
         Example:
         foo();
+
+        Returns
+        -------
+        ExpressionStatement if mode is "run" or "evaluate"
+        Expression if mode is "parse"
         """
         expr = self.expression()
+        # In these modes, we don't want to enforce the trailing semicolon.
+        if self.mode in ("parse", "evaluate"):
+            return expr
+
         # At this point we know the statement needs a semicolon next to finish it.
         # TODO: error messages are looking better now except tests expect this to be raised in same
         # line as "Error at )" type errors. Need to figure out why/how (could be that the

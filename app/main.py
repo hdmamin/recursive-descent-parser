@@ -62,16 +62,14 @@ def main():
         if not lexed["success"]:
             exit(65)
     elif command == "parse":
-        # print(">>> lexed", lexed) # TODO rm
         # When tokenizer catches some errors before we reach the parsing stage, Codecrafters
         # wants us to exit early.
         if not lexed["success"]:
             exit(65)
 
-        # print('>>> parsed', parsed) # TODO rm
         # At this point we know `parsed` exists.
         if parsed["success"]:
-            for expr in parsed["expressions"]:
+            for expr in parsed["parsed"]:
                 print(expr)
         else:
             for row in parsed["errors"]:
@@ -85,7 +83,7 @@ def main():
 
         # if parsed["success"]:
         # TODO: may need to change key back to declarations, depending
-        for expr in parsed["expressions"]:
+        for expr in parsed["parsed"]:
             try:
                 # TODO rm one of these?
                 print(to_lox_dtype(expr.evaluate()))
@@ -101,12 +99,11 @@ def main():
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
         if not parsed["success"]:
-            # print(parsed['errors']) # TODO
             for row in parsed["errors"]:
                 print(row, file=sys.stderr)
             exit(65)
 
-        for statement in parsed["declarations"]:
+        for statement in parsed["parsed"]:
             try:
                 statement.evaluate()
             except RuntimeError as e:
