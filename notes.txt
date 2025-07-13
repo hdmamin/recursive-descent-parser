@@ -118,3 +118,34 @@ X -return to work on syntactic errors substage
     X -check if test cases in codecrafters UI pass
         > still slightly different error phrasing but the behavior seems correct and the actual test suite passes so /shrug.
 -start "native functions" stage
+    ~ -new call cls
+        > still need to flesh out evaluate a bit
+    X -new call method + integrate into existing methods
+    -new python clock function
+    -set clock as a var in the global env upfront
+    -first test case passes
+    -other UI test cases pass
+    -makefile test suite passes
+
+7/12/25 sat
+-----------
+-start "native functions" stage
+    X -refactoring to avoid circular imports
+    ~ -new python clock function
+    ~ -set clock as a var in the global env upfront
+        > some progress but still need to figure out how func execution is evaluated. Understanding is a little muddled atm, see comments in interpreter.py.
+    -finish call.evaluate
+    -first test case passes
+    -other UI test cases pass
+    -makefile test suite passes
+
+7/13/25 sun
+-----------
+-"native functions" stage
+    > Need to figure out how func execution should be evaluated. Understanding is a little muddled atm, see comments in interpreter.py.
+    -confirm (via book/chat) distinction between Callable and Call, what should each's evaluate return?
+    -finish Callable expr (if necessary?)
+    -finish call.evaluate
+    -first test case passes
+    -other UI test cases pass
+    -makefile test suite passes
