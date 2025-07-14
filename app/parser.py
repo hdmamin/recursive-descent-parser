@@ -219,7 +219,7 @@ class Parser:
     """
 
     def __init__(self, tokens: list[Token]):
-        # TODO: book doesn't really address what to do with spaces here so just skipping them for
+        # Book doesn't really address what to do with spaces here so just skipping them for
         # now, otherwise our grammar breaks down.
         self.tokens = [token for token in tokens if token.token_type != TokenTypes.SPACE]
         self.max_idx = len(self.tokens) - 1
@@ -342,11 +342,6 @@ class Parser:
         if self.match(TokenTypes.LEFT_PAREN):
             expr = self.expression()
             if not self.match(TokenTypes.RIGHT_PAREN):
-                # TODO: this is getting raised by the third line in current test case open in vim.
-                # Expects a ), getting an equal sign.
-                # Clue: seems like we finish processing (a=false) but then we end up trying to
-                # process the right parents again which is obviously invalid. Vaguely recall
-                # decrementing an index somewhere, maybe that's to blame.
                 raise TypeError(
                     f"Expected type {TokenTypes.RIGHT_PAREN}, found "
                     f"{self.current_token().token_type}."
@@ -479,7 +474,8 @@ class Parser:
             value = self.assignment()
             if isinstance(expr, Variable):
                 return Assign(name=expr.identifier, expr=value)
-            # TODO: add expr/value/etc into error msg to make more informative?
+            # TODO: add expr/value/etc into error msg to make more informative? Might break tests
+            # since they check for specific wording?
             # And is parsing error the right type?
             raise ParsingError("Invalid assignment target.")
 
@@ -594,13 +590,8 @@ class Parser:
         statements = []
         while self.curr_idx < self.max_idx and \
                 self.current_token().token_type != TokenTypes.RIGHT_BRACE:
-            # TODO: seems like we're hitting a parsing error in here.
             statements.append(self.declaration())
         if not self.match(TokenTypes.RIGHT_BRACE):
-            # TODO: when parsing back to back blocks, by the end of the first one idx seems to be
-            # 1 too high and we hit this error (we've already moved past right_brace). Interestingly
-            # this didn't happen when including just one block. Maybe some nuance around declaration()
-            # incrementing 1 too many times in certain instances? Need to investigate more.
             raise ParsingError("Expect '}' after block.")
         return statements
 
@@ -620,16 +611,6 @@ class Parser:
             return expr
 
         # At this point we know the statement needs a semicolon next to finish it.
-        # TODO: error messages are looking better now except tests expect this to be raised in same
-        # line as "Error at )" type errors. Need to figure out why/how (could be that the
-        # original method that is raising the first part should be raising both?)
-        # UPDATE: actually I think maybe we shouldn't be hitting this at all and the test case
-        # output is slightly wrong re the post-colon part?
-        # Can confirm that by running larger test suite, but first need to
-        # understand why this is getting raised and why it shouldn't be.
-        # If we use valid FOR syntax, we never hit this method, I guess we're processing in the
-        # FOR method. But when the initializer is {}, I guess we can't parse the for statement and
-        # instead end up parsing separate expressions? And so we call this method.
         if not self.match(TokenTypes.SEMICOLON):
             raise SyntaxError("Expect ';' after expression.")
 
@@ -653,9 +634,9 @@ class Parser:
         # handling, as does declaration(), but expression() does not - so need to figure out a
         # consistent solution.
         token = self.current_token()
-        # TODO rm incr? Added this to avoid inf loop in else clause in declaration() but kind of
-        # hazy now on why this is necessary. (Update: I assume bc this is called when we hit an
-        # error and so if we don't incr, we will just keep hitting that same error forever?)
+        # Added this to avoid inf loop in else clause in declaration(), I think because
+        # otherwise there's no way to increment curr_idx and we'd just keep hitting the same error
+        # again and again.
         self.curr_idx += 1
         # Can't use set because these aren't hashable.
         start_types = [
@@ -671,25 +652,6 @@ class Parser:
         # We actually want to exit the loop with curr_idx GREATER than max_idx if we don't hit any
         # of the start_types. This will ensure the `parse` method doesn't just try to parse the
         # final token again.
-        # TODO: sounds like the issue is once we encounter an error in the for loop, we want to
-        # proceed to the next *statement* entirely, so maybe increment 1 statement at a time vs
-        # 1 token? Book seems to do the latter though... It's possible we need to implement that
-        # elsewhere rather than modifying this while logic though?
-        # gpt really doesn't like this idea though, it doesn't really like modifying the forstatement
-        # method either with additional error handling logic (and the book doesn't do this) but it
-        # seems to like it more than modifying synchronize. I don't love it, seems like lots of
-        # duplicate logic, but we could try it next.
-        # So basically: modify for_statement method to raise error early if we fail to parse any
-        # of the 3 components.
-        # UPDATE: tried this but we're still left with the question of "how do we know when the 
-        # (broken syntax) for loop def is done?" My idea was to try to parse expr and then rewind
-        # idx when we found one that worked, but gpt/claude both recommended against this -
-        # apparently kind of violates the recursive descent parser ethos and makes it very slow.
-        # Fiddled around a bit in forStatement but that really doesn't seem like the way. One option
-        # is to basically implement "balanced parentheses" leetcode q inside synchronize, but that
-        # hardly seems ideal either.
-        # Unrelated: also need to decide what to do about codecrafters now that trial ended, could
-        # try to see how to use that public repo to run tests?
         while self.curr_idx <= self.max_idx:
             curr = self.current_token()
             if self.previous_token().token_type == TokenTypes.SEMICOLON:
@@ -710,26 +672,18 @@ class Parser:
         except ParsingError as e:
             self.synchronize()
         
-    # TODO: looks like book creates a new `assignment` rule in our grammar (presumably need a new
-    # method) and an Assign class (like Binary). Consider refactoring to match (or consider if it's
-    # really necessary?)
     def variable_declaration(self) -> VariableDeclaration:
         """Called *after* we've already confirmed there was a preceding VAR token and current_token
         now points to the token after that.
         """
         name = self.current_token()
-        # TODO: can probably refactor so all the else clauses/error handling is cleaner.
         if self.match(TokenTypes.IDENTIFIER):
             if self.match(TokenTypes.EQUAL):
                 expr = self.expression()
                 declaration = VariableDeclaration(name.lexeme, expr)
                 if self.match(TokenTypes.SEMICOLON):
-                    # TODO: this is where we return the declaration processing "var a = b = 1"
-                    # which isn't working. I think what's happening is b=1 evaluates to None
-                    # so a does as well.
                     return declaration
                 else:
-                    # TODO: current test case is hitting this error when defining "var a = b = 1"
                     raise SyntaxError("Expect ';' after variable declaration.")
             elif self.match(TokenTypes.SEMICOLON):
                 # Assign default value of nil.

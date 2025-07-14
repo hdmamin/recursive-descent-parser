@@ -38,9 +38,6 @@ class Expression:
         return f"{type(self)}()"
 
 
-# TODO: seems like evaluate() needs to use token lexemes, not literals. Will need to strip
-# quotes from strings.
-# TODO: include docstring examples of each expr type, keep forgetting what each is.
 class Literal(Expression):
     """
     Example
@@ -98,16 +95,6 @@ class Unary(Expression):
         """
         right = self.right.evaluate()
         if self.val.token_type == TokenTypes.BANG:
-            # Horribly hacky but we can't just return `not truthy(right)` because that will return a
-            # python bool rather than the string codecrafters expects.
-            # TODO: problem is that now Token.evaluate() returns a python dtype but this returns a
-            # str bc tests require that. But Binary.evaluate() calls unary.evaluate() so it expects
-            # evaluate() to return a python var, not a str.
-            # gpt suggests making evaluate() ALWAYS return a python val and then handling formatting
-            # totally separately. So I think we want to remove all the boolean_lexeme usages from
-            # inside eval methods and handle that at the end. Could do one big general purpose
-            # python_val_to_lox_val() func OR use __str__ or __repr__ or to_lox() method in each
-            # expr class.
             return not truthy(right)
         if self.val.token_type == TokenTypes.MINUS:
             # Careful, python considers bools as ints. We operate on the evaluated right vs the
@@ -132,8 +119,7 @@ class Binary(Expression):
         self.right = right
 
     def __str__(self) -> str:
-        # TODO: not sure why but book seems to want order (lexeme, left, right). Trying it out
-        # but don't really understand why.
+        # Book seems to want order (lexeme, left, right).
         return "(" + self.val.non_null_literal + " " + str(self.left) + " " + str(self.right) + ")"
 
     def evaluate(self):
@@ -143,8 +129,6 @@ class Binary(Expression):
         left = self.left.evaluate()
         right = self.right.evaluate()
 
-        # TODO: maybe can give Token/TokenType an optional "op" field so we can just call
-        # self.val.op(left, right)?
         try:
             if self.val.token_type == TokenTypes.SLASH:
                 if not (is_number(left) and is_number(right)):
@@ -274,8 +258,7 @@ class Grouping(Expression):
         self.val = val
 
     def __str__(self) -> str:
-        # TODO: don't really understand why book wants us to include word "group" here, format
-        # doesn't really seem to match rest of expressions. But let's see how this looks.
+        # Book-specified format.
         return "(group " + str(self.val) + ")"
 
     def evaluate(self):

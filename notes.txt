@@ -141,6 +141,22 @@ X -return to work on syntactic errors substage
 
 7/13/25 sun
 -----------
+-low effort tasks:
+    X -cleanup some todos
+    -add more low effort task bullets
+-"native functions" stage
+    > Need to figure out how func execution should be evaluated. Understanding is a little muddled atm, see comments in interpreter.py.
+    -confirm (via book/chat) distinction between Callable and Call, what should each's evaluate return?
+    -finish Callable expr (if necessary?)
+    -finish call.evaluate
+    -first test case passes
+    -other UI test cases pass
+    -makefile test suite passes
+
+7/14/25 mon
+-----------
+-low effort tasks:
+    -add more low effort task bullets
 -"native functions" stage
     > Need to figure out how func execution should be evaluated. Understanding is a little muddled atm, see comments in interpreter.py.
     -confirm (via book/chat) distinction between Callable and Call, what should each's evaluate return?

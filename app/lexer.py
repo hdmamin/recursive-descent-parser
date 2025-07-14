@@ -8,6 +8,7 @@ import logging
 
 from app.data_structures import Trie
 from app.environment import Environment, GLOBAL_ENV
+from app.exceptions import UnterminatedLexeme
 from app.interpreter import INTERPRETER
 
 
@@ -75,13 +76,6 @@ class TokenType:
         if text.startswith(self.lexeme):
             return self.lexeme
         return None
-            
-
-class UnterminatedLexeme(Exception):
-    """For when we encounter a lexeme that starts with a valid character but does not end with one.
-    This lets us raise a single error for the whole sequence rather than a separate one for each
-    character.
-    """
 
 
 def _string_longest_leading_substring(text: str) -> Optional[str]:
