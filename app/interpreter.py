@@ -8,30 +8,6 @@ from app.lexer import TokenTypes, ReservedTokenTypes, Token
 from app.utils import truthy, is_number, SENTINEL
 
 
-BUILTIN_FUNCTIONS = {
-    # "clock": clock, # TODO need to define a clock expression I think
-}
-
-class Interpreter:
-
-    def __init__(self):
-        self.env = GLOBAL_ENV
-        for name, func in BUILTIN_FUNCTIONS.items():
-            self.env.update_state(name, func, is_declaration=True)
-
-    @contextmanager
-    def new_env(self):
-        prev_env = self.env
-        try:
-            self.env = Environment(parent=prev_env)
-            yield self.env
-        finally:
-            self.env = prev_env
-
-
-INTERPRETER = Interpreter()
-
-
 class Expression:
     
     def __str__(self) -> str:
@@ -210,24 +186,27 @@ def clock() -> float:
     return time.perf_counter() / 1_000
 
 
-class Callable(Expression):
-    """
+class LoxCallable(Expression):
+    """LoxCallable().evaluate() returns a python object.
+
     Example
     foo()
     """
+    # TODO: may need to flesh this out later, at this point not really clear what purpose it serves
+    # beyond a function. Maybe will become clear once we implement user-defined funcs and/or support
+    # arity method (len(args)).
 
-    def __init__(self, name: Token):
-        self.name = name
+
+class NativeClock(LoxCallable):
+
+    def evaluate(self, *args) -> float:
+        """Returns a python object (current time in seconds)."""
+        # Technically takes 0 args but maybe makes sense to include this for interface consistency.
+        return clock()
 
     def __str__(self) -> str:
-        return self.name.non_null_literal
-    
-    def evaluate(self):
-        pass
-        # TODO: problem  is that currently Call's callee.evaluate() returns a python function which
-        # we will then call there. But book allso says its LoxCallable obj should return the result
-        # of the called func, not the func itself. So need to better understand the intended
-        # distinction between Callable and Call.
+        # TODO: idk if this is book's desired format.
+        return "<NativeClock>"
 
 
 class Call(Expression):
@@ -244,8 +223,8 @@ class Call(Expression):
     def evaluate(self):
         # TODO: check if working (also unsure if lox supports keyword args?)
         py_args = [arg.evaluate() for arg in self.args]
-        py_func = self.callee.evaluate()
-        return py_func(*py_args)
+        lox_callable = self.callee.evaluate()
+        return lox_callable.evaluate(*py_args)
 
 
 class Grouping(Expression):
@@ -291,3 +270,27 @@ class Assign(Expression):
         env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
         return self.val
 
+
+BUILTIN_FUNCTIONS = {
+    "clock": NativeClock(), # TODO need to define a clock expression I think
+}
+
+
+class Interpreter:
+
+    def __init__(self):
+        self.env = GLOBAL_ENV
+        for name, func in BUILTIN_FUNCTIONS.items():
+            self.env.update_state(name, func, is_declaration=True)
+
+    @contextmanager
+    def new_env(self):
+        prev_env = self.env
+        try:
+            self.env = Environment(parent=prev_env)
+            yield self.env
+        finally:
+            self.env = prev_env
+
+
+INTERPRETER = Interpreter()

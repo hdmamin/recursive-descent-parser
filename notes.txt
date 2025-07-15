@@ -159,9 +159,23 @@ X -return to work on syntactic errors substage
     -add more low effort task bullets
 -"native functions" stage
     > Need to figure out how func execution should be evaluated. Understanding is a little muddled atm, see comments in interpreter.py.
-    -confirm (via book/chat) distinction between Callable and Call, what should each's evaluate return?
-    -finish Callable expr (if necessary?)
-    -finish call.evaluate
+    > update: some good progress, tried running a simple test case but circular import is the first issue to resolve.
+    ! -confirm (via book/chat) distinction between Callable and Call, what should each's evaluate return?
+    X -finish Callable expr (if necessary?)
+    X -finish call.evaluate
+    -first test case passes
+    -other UI test cases pass
+    -makefile test suite passes
+
+7/15/25 tues
+------------
+-low effort tasks:
+    -add more low effort task bullets
+-"native functions" stage
+    > tried running a simple test case but circular import is the first issue to resolve.
+    -resolve circular imports issue
+        -diagnose
+        -refactor
     -first test case passes
     -other UI test cases pass
     -makefile test suite passes
