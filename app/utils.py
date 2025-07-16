@@ -1,3 +1,4 @@
+import sys
 from typing import Any
 
 
@@ -27,3 +28,13 @@ def truthy(val: Any) -> bool:
         ReservedTokenTypes.FALSE.
     """
     return val not in (False, None)
+
+
+def get_interpreter() -> "Interpreter":
+    """Pretty hacky workaround to grab the global INTERPRETER var defined in interpreter module.
+    Otherwise would need a larger and kind of tricky refactor to avoid circular imports.
+    """
+    try:
+        return sys.modules["app.interpreter"].INTERPRETER
+    except (KeyError, AttributeError):
+        raise RuntimeError("Interpreter object is not available.")

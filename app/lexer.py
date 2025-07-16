@@ -7,9 +7,8 @@ from typing import Any, Union, Callable, Optional
 import logging
 
 from app.data_structures import Trie
-from app.environment import Environment, GLOBAL_ENV
 from app.exceptions import UnterminatedLexeme
-from app.interpreter import INTERPRETER
+from app.utils import get_interpreter
 
 
 logger = logging.getLogger(__name__)
@@ -413,8 +412,9 @@ class Token:
             return None
 
         if self.token_type == TokenTypes.IDENTIFIER:
+            interpreter = get_interpreter()
             try:
-                value = INTERPRETER.env.read_state(self.lexeme)
+                value = interpreter.env.read_state(self.lexeme)
             except KeyError:
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
             

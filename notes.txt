@@ -173,9 +173,24 @@ X -return to work on syntactic errors substage
     -add more low effort task bullets
 -"native functions" stage
     > tried running a simple test case but circular import is the first issue to resolve.
-    -resolve circular imports issue
-        -diagnose
-        -refactor
+    X -resolve circular imports issue
+        X -diagnose
+            > lexer module imports interpreter to make Token.evaluate work. interpreter module imports Token (and TokenTypes etc). TokenTypes is used extensively, Token is only for type hints.
+        X -refactor
+            > non-trivial, ended up using a sys.modules hack instead.
+    ~ -first test case passes
+        > executes but noticing now that UI shows ints and mine are floats. Also need to confirm if magnitudes are correct, like are we counting from the right datetime.
+    -other UI test cases pass
+    -makefile test suite passes
+
+7/16/25 wed
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-"native functions" stage
     -first test case passes
+        > executes but noticing now that UI shows ints and mine are floats. Also need to confirm if magnitudes are correct, like are we counting from the right datetime.
+        -convert clock to return int (check book for guidance on what exactly this should do, do we just need to round or am I computing wrong units or something?)
+        -value is correct (idk how to confirm that though? Since it should be a function of when we run it)
     -other UI test cases pass
     -makefile test suite passes
