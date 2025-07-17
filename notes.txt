@@ -187,11 +187,21 @@ X -return to work on syntactic errors substage
 -----------
 -low effort tasks:
     -add more low effort task bullets
--"native functions" stage
-    -first test case passes
+X -"native functions" stage
+    X -first test case passes
         > executes but noticing now that UI shows ints and mine are floats. Also need to confirm if magnitudes are correct, like are we counting from the right datetime.
         X -convert clock to return int (check book for guidance on what exactly this should do, do we just need to round or am I computing wrong units or something?)
         X -value is correct (idk how to confirm that though? Since it should be a function of when we run it)
             > did some napkin math and changed clock implementation, perf_counter is not actually what we wanted.
     X -other UI test cases pass
-    -makefile test suite passes
+    X -makefile test suite passes (just stage 1 of functions)
+
+
+7/17/25 thurs
+-------------
+-low effort tasks:
+    -add more low effort task bullets
+-new stage: functions without arguments
+	-skim book section 10.3
+	-UI test cases pass
+	-makefile test suite passes (stages 1-2 of functions)
