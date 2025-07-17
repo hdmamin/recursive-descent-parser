@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-import time
+from datetime import datetime
 from typing import Optional
 
 from app.environment import GLOBAL_ENV, Environment
@@ -181,9 +181,9 @@ class Logical(Expression):
         return f"({self.op.non_null_literal} {self.left} {self.right})"
 
 
-def clock() -> float:
-    """Return the current time in seconds."""
-    return time.perf_counter() / 1_000
+def clock() -> int:
+    """Return the current time in seconds since January 1, 1970 UTC."""
+    return int(datetime.now().timestamp())
 
 
 class LoxCallable(Expression):

@@ -190,7 +190,8 @@ X -return to work on syntactic errors substage
 -"native functions" stage
     -first test case passes
         > executes but noticing now that UI shows ints and mine are floats. Also need to confirm if magnitudes are correct, like are we counting from the right datetime.
-        -convert clock to return int (check book for guidance on what exactly this should do, do we just need to round or am I computing wrong units or something?)
-        -value is correct (idk how to confirm that though? Since it should be a function of when we run it)
-    -other UI test cases pass
+        X -convert clock to return int (check book for guidance on what exactly this should do, do we just need to round or am I computing wrong units or something?)
+        X -value is correct (idk how to confirm that though? Since it should be a function of when we run it)
+            > did some napkin math and changed clock implementation, perf_counter is not actually what we wanted.
+    X -other UI test cases pass
     -makefile test suite passes
