@@ -4,7 +4,8 @@ from typing import Any, Optional, Union
 from app.environment import Environment
 from app.exceptions import ParsingError
 from app.interpreter import (
-    INTERPRETER, Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping
+    INTERPRETER, Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping,
+    Function
 )
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 from app.utils import truthy, is_number, SENTINEL
@@ -15,13 +16,15 @@ class Statement:
     This is in contrast to expressions, which compute and return a value.
 
 
+    TODO: maybe should move this to Parser or Interprete docstring at some point?
     Grammar:
 
     program        → declaration* EOF ;
-
-    declaration    → varDecl
+    declaration    → funDecl
+                | varDecl
                 | statement ;
-
+    funDecl        → "fun" function ;
+    function       → IDENTIFIER "(" parameters? ")" block ;
     statement      → exprStmt
                 | ifStmt
                 | printStmt 
@@ -75,6 +78,10 @@ class VariableDeclaration(Statement):
         # Only want to evaluate once, not every time we reference a variable.
         self.value = self.expr.evaluate()
         env.update_state(self.name, self.value, is_declaration=True)
+
+
+class FunctionDeclaration(Statement):
+    pass
 
 
 class Block(Statement):
@@ -666,11 +673,13 @@ class Parser:
         """Kind of analogous to `expression` and `statement` methods.
         """
         try:
-            if self.match(ReservedTokenTypes.VAR):
+            if self.match(ReservedTokenTypes.FUN):
+                return self.function_declaration()
+            elif self.match(ReservedTokenTypes.VAR):
                 return self.variable_declaration()
             else:
                 return self.statement()
-        except ParsingError as e:
+        except ParsingError:
             self.synchronize()
         
     def variable_declaration(self) -> VariableDeclaration:
@@ -696,3 +705,17 @@ class Parser:
                 raise NotImplementedError("TODO: handle case where user does 'var x;' with no assigned value.")
         # TODO: not sure if should be parsing/syntax/runtime error.
         raise ParsingError(f"Invalid variable declaration at line {name.line}")
+
+    def function_declaration(self) -> FunctionDeclaration:
+        """
+        funDecl → "fun" function ;
+
+        Example
+        fun foo(bar, baz) {
+            print bar;
+            print baz;
+        }
+        """
+        name = self.current_token()
+        # TODO: do I actually need separate FunctionDeclaration and Function classes?
+        # FunctionDeclaration(name)

@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from app.environment import GLOBAL_ENV, Environment
 from app.exceptions import ParsingError
@@ -195,6 +195,20 @@ class LoxCallable(Expression):
     # TODO: may need to flesh this out later, at this point not really clear what purpose it serves
     # beyond a function. Maybe will become clear once we implement user-defined funcs and/or support
     # arity method (len(args)).
+
+
+class Function(Expression):
+
+    # TODO: statements are defined in parser.py. Could see if we can move them to a separate module
+    # or leave type hint as str.
+    def __init__(self, name: Token, params: list[Token], body: list["Statement"]):
+        self.name = name
+        self.params = params
+        self.body = body
+
+    def evaluate(self, *args) -> Any:
+        pass
+        # TODO
 
 
 class NativeClock(LoxCallable):
