@@ -197,7 +197,7 @@ class LoxCallable(Expression):
     # arity method (len(args)).
 
 
-class Function(Expression):
+class Function(LoxCallable):
 
     # TODO: statements are defined in parser.py. Could see if we can move them to a separate module
     # or leave type hint as str.

@@ -8,7 +8,7 @@ from app.interpreter import (
     Function
 )
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
-from app.utils import truthy, is_number, SENTINEL
+from app.utils import truthy, SENTINEL
 
 
 class Statement:

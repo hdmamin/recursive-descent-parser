@@ -203,6 +203,7 @@ X -"native functions" stage
     -add more low effort task bullets
 -new stage: functions without arguments
 	~ -skim book section 10.3
+	~ -implement
 	-UI test cases pass
 	-makefile test suite passes (stages 1-2 of functions)
 
