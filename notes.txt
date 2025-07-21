@@ -212,7 +212,43 @@ X -"native functions" stage
 -low effort tasks:
     -add more low effort task bullets
 -new stage: functions without arguments
+	X -refactor: mv statements -> interp module
+		> needed statements and expressions in the same module for some inheritance stuff I think
 	-flesh out parsing logic in function_declaration
+	-flesh out Function.evaluate
+	-is FunctionDeclaration actually needed? Maybe just Function is sufficient?
+	-UI test cases pass
+	-makefile test suite passes (stages 1-2 of functions)
+
+7/19/25 sat
+-----------
+-low effort tasks:
+	X -little bit of todo cleanup
+    -add more low effort task bullets
+-new stage: functions without arguments
+	-flesh out parsing logic in function_declaration
+	-flesh out Function.evaluate
+	-is FunctionDeclaration actually needed? Maybe just Function is sufficient?
+	-UI test cases pass
+	-makefile test suite passes (stages 1-2 of functions)
+
+7/20/25 sun
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-new stage: functions without arguments
+	~ -flesh out parsing logic in Parser.function_declaration
+	-flesh out Function.evaluate
+	-is FunctionDeclaration actually needed? Maybe just Function is sufficient?
+	-UI test cases pass
+	-makefile test suite passes (stages 1-2 of functions)
+
+7/21/25 mon
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-new stage: functions without arguments
+	-flesh out parsing logic in Parser.function_declaration: flesh out FunctionDeclaration or switch to Function
 	-flesh out Function.evaluate
 	-is FunctionDeclaration actually needed? Maybe just Function is sufficient?
 	-UI test cases pass

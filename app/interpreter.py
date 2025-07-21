@@ -8,193 +8,6 @@ from app.lexer import TokenTypes, ReservedTokenTypes, Token
 from app.utils import truthy, is_number, SENTINEL
 
 
-class Statement:
-    """Statements 'do things' that have side effects, but do not return a value.
-    This is in contrast to expressions, which compute and return a value.
-
-
-    TODO: maybe should move this to Parser or Interprete docstring at some point?
-    Grammar:
-
-    program        → declaration* EOF ;
-    declaration    → funDecl
-                | varDecl
-                | statement ;
-    funDecl        → "fun" function ;
-    function       → IDENTIFIER "(" parameters? ")" block ;
-    statement      → exprStmt
-                | ifStmt
-                | printStmt 
-                | block;
-    block          → "{" declaration* "}" ;
-    printStmt      → "print" expression ";" ;
-    varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-    """
-
-
-class ExpressionStatement(Statement):
-    
-    def __init__(self, expr: Expression):
-        self.expr = expr
-
-    def __str__(self) -> str:
-        return f"({self.expr};)"
-    
-    def evaluate(self, *arg, **kwargs) -> None:
-        self.expr.evaluate()
-
-
-class PrintStatement(Statement):
-    
-    def __init__(self, expr: Expression):
-        self.expr = expr
-
-    def __str__(self) -> str:
-        return f"(print {self.expr})"
-
-    def evaluate(self, *args, **kwargs) -> None:
-        print(to_lox_dtype(self.expr.evaluate()))
-
-    
-class VariableDeclaration(Statement):
-    """Creates a variable (global by default).
-    """
-    
-    def __init__(self, name: str, expr: Expression) -> None:
-        self.name = name
-        self.expr = expr
-        # We will set this in evaluate. Don't use default=None because evaluate could return None.
-        self.value = SENTINEL
-
-    # TODO: getting displayed like "((a = foo);)", guessing that may not be correct.
-    def __str__(self) -> str:
-        return f"({self.name} = {self.expr})"
-
-    def evaluate(self, env: Optional[Environment] = None) -> None:
-        env = env or INTERPRETER.env
-        # Only want to evaluate once, not every time we reference a variable.
-        self.value = self.expr.evaluate()
-        env.update_state(self.name, self.value, is_declaration=True)
-
-
-class FunctionDeclaration(Statement):
-    pass
-
-
-class Block(Statement):
-    """Section of code enclosed in curly braces that defines a new temporary scope.
-    """
-    
-    def __init__(self, statements: list[Statement]) -> None:
-        self.statements = statements
-
-    # TODO not sure what desired format actually is
-    def __str__(self) -> str:
-        return f"({self.statements})"
-
-    def evaluate(self, *args, **kwargs) -> None:
-        # args, kwargs is needed because statement.evaluate is always passed an env arg.
-        # But block always creates a new one anyway so doesn't need to use that.
-        with INTERPRETER.new_env() as env:
-            for statement in self.statements:
-                statement.evaluate(env=env)
-
-    
-class While(Statement):
-
-    def __init__(self, condition: Expression, statement: Statement):
-        self.condition = condition
-        self.statement = statement
-
-    def __str__(self) -> str:
-        # TODO not sure if this is book's desired format
-        return f"(while {self.condition} {self.statement}"
-
-    def evaluate(self, *args, **kwargs) -> None:
-        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no (and tests
-        # pass without doing this) but good to confirm.
-        while truthy(self.condition.evaluate()):
-            self.statement.evaluate()
-
-
-class For(Statement):
-    
-    def __init__(
-            self,
-            initializer: Optional[VariableDeclaration],
-            condition: ExpressionStatement,
-            incrementer: Optional[Expression],
-            statement: Statement,
-        ):
-        self.initializer = initializer
-        self.condition = condition
-        self.incrementer = incrementer
-        self.statement = statement
-
-    def __str__(self) -> str:
-        # TODO check if this matches what book expects
-        return f"(for {self.initializer} {self.condition} {self.incrementer})"
-
-    def evaluate(self, *args, **kwargs) -> None:
-        if self.initializer is not None:
-            self.initializer.evaluate()
-        # TODO book says condition can be null which seems weird. Could make that change here or
-        # could use its desugaring route and use while loop. I think to do that we'd basically:
-        # - create a Block with [statement, incrementer]
-        # - pass (condition, block) to While constructor
-        # - create another Block by passing in [initializer, while]
-        # but can check book to confirm. ALTERNATIVELY, can leave this for later and proceed to next
-        # stage, just depends on what mood you're in to do next.
-        while truthy(self.condition.evaluate()):
-            self.statement.evaluate()
-            if self.incrementer is not None:
-                self.incrementer.evaluate()
-
-class IfStatement(Statement):
-
-    def __init__(self, condition: Expression, value: Statement,
-                 other_value: Optional[Statement] = None):
-        self.condition = condition
-        self.value = value
-        self.other_value = other_value
-
-    def evaluate(self, *args, **kwargs):
-        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no but good to
-        # confirm.
-        condition = self.condition.evaluate()
-        if truthy(condition):
-            return self.value.evaluate()
-        elif self.other_value:
-            return self.other_value.evaluate()
-
-    def __str__(self) -> str:
-        res = f"(if {self.condition} {self.value}"
-        if self.other_value:
-            res += " " + self.other_value
-        return res + ")"
-
-
-def boolean_lexeme(val: bool) -> str:
-    """Map a python boolean to a string containing the appropriate lox lexeme. (In practice,
-    this is currently equivalent to str(val).lower(), but that felt a little riskier in case we
-    ever changed how lox represents bools.)
-    """
-    return [ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.TRUE.lexeme][val]
-
-
-def to_lox_dtype(val: Any) -> Union[str, int, float]:
-    """Convert a python object to its corresponding lox datatype.
-    Only a few types need to be converted.
-    """
-    # Have to be a little careful here - initially tried to define a dict mapping python vals to
-    # lox vals but python treats bools as ints so it's easy to get unexpected results that way.
-    if isinstance(val, bool):
-        return boolean_lexeme(val)
-    if val is None:
-        return ReservedTokenTypes.NIL.lexeme
-    return val
-
-
 class Expression:
     
     def __str__(self) -> str:
@@ -384,6 +197,7 @@ class LoxCallable(Expression):
     # arity method (len(args)).
 
 
+# TODO: maybe supposed to be Statement?
 class Function(LoxCallable):
 
     # TODO: statements are defined in parser.py. Could see if we can move them to a separate module
@@ -422,7 +236,6 @@ class Call(Expression):
         return f"({self.callee} {self.right_parens.non_null_literal} {self.args})"
 
     def evaluate(self):
-        # TODO: check if working (also unsure if lox supports keyword args?)
         py_args = [arg.evaluate() for arg in self.args]
         lox_callable = self.callee.evaluate()
         return lox_callable.evaluate(*py_args)
@@ -470,6 +283,192 @@ class Assign(Expression):
         self.val = self.expr.evaluate()
         env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
         return self.val
+
+
+class Statement:
+    """Statements 'do things' that have side effects, but do not return a value.
+    This is in contrast to expressions, which compute and return a value.
+
+    TODO: maybe should move this to Parser or Interprete docstring at some point?
+    Grammar:
+
+    program        → declaration* EOF ;
+    declaration    → funDecl
+                | varDecl
+                | statement ;
+    funDecl        → "fun" function ;
+    function       → IDENTIFIER "(" parameters? ")" block ;
+    statement      → exprStmt
+                | ifStmt
+                | printStmt 
+                | block;
+    block          → "{" declaration* "}" ;
+    printStmt      → "print" expression ";" ;
+    varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+    """
+
+
+class ExpressionStatement(Statement):
+    
+    def __init__(self, expr: Expression):
+        self.expr = expr
+
+    def __str__(self) -> str:
+        return f"({self.expr};)"
+    
+    def evaluate(self, *arg, **kwargs) -> None:
+        self.expr.evaluate()
+
+
+class PrintStatement(Statement):
+    
+    def __init__(self, expr: Expression):
+        self.expr = expr
+
+    def __str__(self) -> str:
+        return f"(print {self.expr})"
+
+    def evaluate(self, *args, **kwargs) -> None:
+        print(to_lox_dtype(self.expr.evaluate()))
+
+    
+class VariableDeclaration(Statement):
+    """Creates a variable (global by default).
+    """
+    
+    def __init__(self, name: str, expr: Expression) -> None:
+        self.name = name
+        self.expr = expr
+        # We will set this in evaluate. Don't use default=None because evaluate could return None.
+        self.value = SENTINEL
+
+    # TODO: getting displayed like "((a = foo);)", guessing that may not be correct.
+    def __str__(self) -> str:
+        return f"({self.name} = {self.expr})"
+
+    def evaluate(self, env: Optional[Environment] = None) -> None:
+        env = env or INTERPRETER.env
+        # Only want to evaluate once, not every time we reference a variable.
+        self.value = self.expr.evaluate()
+        env.update_state(self.name, self.value, is_declaration=True)
+
+
+class FunctionDeclaration(Statement):
+    pass
+
+
+class Block(Statement):
+    """Section of code enclosed in curly braces that defines a new temporary scope.
+    """
+    
+    def __init__(self, statements: list[Statement]) -> None:
+        self.statements = statements
+
+    # TODO not sure what desired format actually is
+    def __str__(self) -> str:
+        return f"({self.statements})"
+
+    def evaluate(self, *args, **kwargs) -> None:
+        # args, kwargs is needed because statement.evaluate is always passed an env arg.
+        # But block always creates a new one anyway so doesn't need to use that.
+        with INTERPRETER.new_env() as env:
+            for statement in self.statements:
+                statement.evaluate(env=env)
+
+    
+class While(Statement):
+
+    def __init__(self, condition: Expression, statement: Statement):
+        self.condition = condition
+        self.statement = statement
+
+    def __str__(self) -> str:
+        # TODO not sure if this is book's desired format
+        return f"(while {self.condition} {self.statement}"
+
+    def evaluate(self, *args, **kwargs) -> None:
+        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no (and tests
+        # pass without doing this) but good to confirm.
+        while truthy(self.condition.evaluate()):
+            self.statement.evaluate()
+
+
+class For(Statement):
+    
+    def __init__(
+            self,
+            initializer: Optional[VariableDeclaration],
+            condition: ExpressionStatement,
+            incrementer: Optional[Expression],
+            statement: Statement,
+        ):
+        self.initializer = initializer
+        self.condition = condition
+        self.incrementer = incrementer
+        self.statement = statement
+
+    def __str__(self) -> str:
+        # TODO check if this matches what book expects
+        return f"(for {self.initializer} {self.condition} {self.incrementer})"
+
+    def evaluate(self, *args, **kwargs) -> None:
+        if self.initializer is not None:
+            self.initializer.evaluate()
+        # TODO book says condition can be null which seems weird. Could make that change here or
+        # could use its desugaring route and use while loop. I think to do that we'd basically:
+        # - create a Block with [statement, incrementer]
+        # - pass (condition, block) to While constructor
+        # - create another Block by passing in [initializer, while]
+        # but can check book to confirm. ALTERNATIVELY, can leave this for later and proceed to next
+        # stage, just depends on what mood you're in to do next.
+        while truthy(self.condition.evaluate()):
+            self.statement.evaluate()
+            if self.incrementer is not None:
+                self.incrementer.evaluate()
+
+class IfStatement(Statement):
+
+    def __init__(self, condition: Expression, value: Statement,
+                 other_value: Optional[Statement] = None):
+        self.condition = condition
+        self.value = value
+        self.other_value = other_value
+
+    def evaluate(self, *args, **kwargs):
+        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no but good to
+        # confirm.
+        condition = self.condition.evaluate()
+        if truthy(condition):
+            return self.value.evaluate()
+        elif self.other_value:
+            return self.other_value.evaluate()
+
+    def __str__(self) -> str:
+        res = f"(if {self.condition} {self.value}"
+        if self.other_value:
+            res += " " + self.other_value
+        return res + ")"
+
+
+def boolean_lexeme(val: bool) -> str:
+    """Map a python boolean to a string containing the appropriate lox lexeme. (In practice,
+    this is currently equivalent to str(val).lower(), but that felt a little riskier in case we
+    ever changed how lox represents bools.)
+    """
+    return [ReservedTokenTypes.FALSE.lexeme, ReservedTokenTypes.TRUE.lexeme][val]
+
+
+def to_lox_dtype(val: Any) -> Union[str, int, float]:
+    """Convert a python object to its corresponding lox datatype.
+    Only a few types need to be converted.
+    """
+    # Have to be a little careful here - initially tried to define a dict mapping python vals to
+    # lox vals but python treats bools as ints so it's easy to get unexpected results that way.
+    if isinstance(val, bool):
+        return boolean_lexeme(val)
+    if val is None:
+        return ReservedTokenTypes.NIL.lexeme
+    return val
 
 
 BUILTIN_FUNCTIONS = {

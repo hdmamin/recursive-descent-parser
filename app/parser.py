@@ -518,8 +518,13 @@ class Parser:
         # TODO: not sure if should be parsing/syntax/runtime error.
         raise ParsingError(f"Invalid variable declaration at line {name.line}")
 
-    def function_declaration(self) -> FunctionDeclaration:
+    def function_declaration(self, kind: str) -> FunctionDeclaration:
         """
+        Parameters
+        ----------
+        kind : str
+            "function" or "class"
+
         funDecl → "fun" function ;
 
         Example
@@ -529,5 +534,29 @@ class Parser:
         }
         """
         name = self.current_token()
+        params = []
+        n_params = 0
+        if not self.match(TokenTypes.LEFT_PAREN):
+            # TODO syntax or parsing error?
+            raise ParsingError(f"Expect '(' after {kind} name.")
+        while True:
+            param = self.current_token()
+            if param.token_type == TokenTypes.IDENTIFIER:
+                params.append(param) 
+                n_params += 1
+            elif param.token_type == ReservedTokenTypes.COMMA:
+                continue
+            else:
+                break
+            if n_params > 255:
+                # TODO or syntax error? or other?
+                raise ParsingError("Can't have more than 255 parameters.")
+        if not self.match(TokenTypes.RIGHT_PAREN):
+            # TODO syntax or parsing error?
+            raise ParsingError(f"Expect ')' after parameters.")
+        if not self.match(TokenTypes.LEFT_BRACE):
+            # TODO syntax or parsing error?
+            raise ParsingError(f"Expect '{{' before {kind} body.")
+        body = Block(self.block())
         # TODO: do I actually need separate FunctionDeclaration and Function classes?
-        # FunctionDeclaration(name)
+        return FunctionDeclaration(name, params, body)
