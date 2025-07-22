@@ -197,21 +197,6 @@ class LoxCallable(Expression):
     # arity method (len(args)).
 
 
-# TODO: maybe supposed to be Statement?
-class Function(LoxCallable):
-
-    # TODO: statements are defined in parser.py. Could see if we can move them to a separate module
-    # or leave type hint as str.
-    def __init__(self, name: Token, params: list[Token], body: list["Statement"]):
-        self.name = name
-        self.params = params
-        self.body = body
-
-    def evaluate(self, *args) -> Any:
-        pass
-        # TODO
-
-
 class NativeClock(LoxCallable):
 
     def evaluate(self, *args) -> float:
@@ -353,10 +338,6 @@ class VariableDeclaration(Statement):
         env.update_state(self.name, self.value, is_declaration=True)
 
 
-class FunctionDeclaration(Statement):
-    pass
-
-
 class Block(Statement):
     """Section of code enclosed in curly braces that defines a new temporary scope.
     """
@@ -448,6 +429,36 @@ class IfStatement(Statement):
         if self.other_value:
             res += " " + self.other_value
         return res + ")"
+
+
+class LoxFunction(LoxCallable):
+
+    def __init__(self, func: "Function"):
+        self.func = func
+
+    def evaluate(self, *args, **kwargs):
+        # TODO flesh out this method
+        py_args = [arg.evaluate() for arg in args]
+        # TODO book creates env in LoxFunction.evaluate but seems like block.evaluate already does
+        # that? Unsure if still necessary. Maybe key is, I need to make py_args available in the
+        # env. Mayb I can pass in an env to Block, IIRC I did something like that elsewhere?
+        return self.func.body.evaluate()
+
+
+class Function(Statement):
+    """For parsing a user-defined function. In contrast, LoxFunction is used at runtime to execute
+    such a function.
+    """
+
+    # TODO: statements are defined in parser.py. Could see if we can move them to a separate module
+    # or leave type hint as str.
+    def __init__(self, name: Token, params: list[Token], body: list["Statement"]):
+        self.name = name
+        self.params = params
+        self.body = body
+
+    def evaluate(self, *args, **kwargs) -> LoxFunction:
+        return LoxFunction(self)
 
 
 def boolean_lexeme(val: bool) -> str:

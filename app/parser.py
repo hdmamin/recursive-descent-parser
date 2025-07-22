@@ -4,7 +4,7 @@ from app.exceptions import ParsingError
 from app.interpreter import (
     Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping,
     Statement, IfStatement, PrintStatement, ExpressionStatement, VariableDeclaration, Block, While,
-    For
+    For, Function
 )
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
@@ -518,7 +518,7 @@ class Parser:
         # TODO: not sure if should be parsing/syntax/runtime error.
         raise ParsingError(f"Invalid variable declaration at line {name.line}")
 
-    def function_declaration(self, kind: str) -> FunctionDeclaration:
+    def function_declaration(self, kind: str) -> Function:
         """
         Parameters
         ----------
@@ -559,4 +559,4 @@ class Parser:
             raise ParsingError(f"Expect '{{' before {kind} body.")
         body = Block(self.block())
         # TODO: do I actually need separate FunctionDeclaration and Function classes?
-        return FunctionDeclaration(name, params, body)
+        return Function(name, params, body)

@@ -248,8 +248,21 @@ X -"native functions" stage
 -low effort tasks:
     -add more low effort task bullets
 -new stage: functions without arguments
-	-flesh out parsing logic in Parser.function_declaration: flesh out FunctionDeclaration or switch to Function
-	-flesh out Function.evaluate
-	-is FunctionDeclaration actually needed? Maybe just Function is sufficient?
+	~ -flesh out parsing logic in Parser.function_declaration: flesh out FunctionDeclaration or switch to Function
+	~ -flesh out Function.evaluate
+		> seems like we're largely supposed to delegate to LoxFunction? Maybe I'll need to add more stuff later, idk.
+	X -is FunctionDeclaration actually needed? Maybe just Function is sufficient?
+		> still kidna fuzzy on this but seems like yes, both are needed, Function is for parsing-time definition and LoxFunction is for runtime execution.
+	-UI test cases pass
+	-makefile test suite passes (stages 1-2 of functions)
+
+7/22/25 tues
+------------
+-low effort tasks:
+    -add more low effort task bullets
+-new stage: functions without arguments
+	-flesh out FunctionDeclaration.evaluate
+		-figure out how to make args available in env
+	-flesh out Function.evaluate if necessary
 	-UI test cases pass
 	-makefile test suite passes (stages 1-2 of functions)
