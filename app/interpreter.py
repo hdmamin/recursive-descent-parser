@@ -438,10 +438,12 @@ class LoxFunction(LoxCallable):
 
     def evaluate(self, *args, **kwargs):
         # TODO flesh out this method
-        py_args = [arg.evaluate() for arg in args]
+        # py_args = [arg.evaluate() for arg in args]
+        for arg in args:
+            VariableDeclaration(arg.lexeme, arg)
         # TODO book creates env in LoxFunction.evaluate but seems like block.evaluate already does
-        # that? Unsure if still necessary. Maybe key is, I need to make py_args available in the
-        # env. Mayb I can pass in an env to Block, IIRC I did something like that elsewhere?
+        # that. Think I need to find a way to pass env into block.evaluate, similar to in expr
+        # or something.
         return self.func.body.evaluate()
 
 
@@ -495,10 +497,17 @@ class Interpreter:
             self.env.update_state(name, func, is_declaration=True)
 
     @contextmanager
-    def new_env(self):
+    def new_env(self, **kwargs):
+        # TODO: trying to allow passing in kwargs to allow LoxFunction to provide args in the new
+        # env that its body (Block) will create. Forget 1) whether I need to call evaluate
+        # manually here to register the var and 2) how to ensure these get set in the right env
+        # (seems that only happens when you call evaluate which is a little odd, I would have
+        # expected to happen at init time).
         prev_env = self.env
         try:
             self.env = Environment(parent=prev_env)
+            for name, expr in kwargs.items():
+                VariableDeclaration(name, expr)
             yield self.env
         finally:
             self.env = prev_env
