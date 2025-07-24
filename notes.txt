@@ -271,11 +271,24 @@ X -"native functions" stage
 7/23/25 wed
 -----------
 -low effort tasks:
+	X -clean up imports
+		> running revealed some imports that broke since I last ran, cleaned them up and also removed some now unused ones
     -add more low effort task bullets
 -new stage: functions without arguments
-	-flesh out FunctionDeclaration.evaluate
-		-figure out how to make args available in env
+	~ -flesh out FunctionDeclaration.evaluate
+		~ -figure out how to make args available in env
 			> left some notes in file, basically hoping to let Interpreter.new_env set kwargs and then let loxfunction pass kwargs to block. But still some details to figure out.
-	-flesh out Function.evaluate if necessary
+			> some decent progress, updated new_env method and Block and LoxFunction so that setting args *should* in theory work, minus some pending bugs. But haven't gotten far enough yet to confirm for sure that my method works.
+	X -flesh out Function.evaluate if necessary
+		> ended up putting this logic in LoxFunction.evaluate bc I think that's what the book did.
+	-UI test cases pass
+	-makefile test suite passes (stages 1-2 of functions)
+
+7/24/25 thurs
+-------------
+-low effort tasks:
+    -add more low effort task bullets
+-new stage: functions without arguments
+	-debug current test case: various parsing errors (I think start in parser module, function_declaration method)
 	-UI test cases pass
 	-makefile test suite passes (stages 1-2 of functions)

@@ -1,12 +1,11 @@
 import logging
 import sys
-from typing import Any, Union, Optional
+from typing import Optional
 
 from app.data_structures import ASTNode
-from app.lexer import (
-    Token, TokenType, TokenTypes, ReservedTokenTypes, TYPES_TRIE, RESERVED_TYPES_TRIE, lex
-)
-from app.parser import Parser, boolean_lexeme, to_lox_dtype
+from app.interpreter import to_lox_dtype
+from app.lexer import lex
+from app.parser import Parser
 
 
 logger = logging.getLogger()

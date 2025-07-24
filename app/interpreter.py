@@ -352,7 +352,9 @@ class Block(Statement):
     def evaluate(self, *args, **kwargs) -> None:
         # args, kwargs is needed because statement.evaluate is always passed an env arg.
         # But block always creates a new one anyway so doesn't need to use that.
-        with INTERPRETER.new_env() as env:
+        # TODO: confirm if above is still accurate, looks like this is the only place we call
+        # "env=" in this project...
+        with INTERPRETER.new_env(**kwargs) as env:
             for statement in self.statements:
                 statement.evaluate(env=env)
 
@@ -437,14 +439,8 @@ class LoxFunction(LoxCallable):
         self.func = func
 
     def evaluate(self, *args, **kwargs):
-        # TODO flesh out this method
-        # py_args = [arg.evaluate() for arg in args]
-        for arg in args:
-            VariableDeclaration(arg.lexeme, arg)
-        # TODO book creates env in LoxFunction.evaluate but seems like block.evaluate already does
-        # that. Think I need to find a way to pass env into block.evaluate, similar to in expr
-        # or something.
-        return self.func.body.evaluate()
+        py_kwargs = {param.lexeme: param.evaluate() for param in self.func.params}
+        return self.func.body.evaluate(**py_kwargs)
 
 
 class Function(Statement):
@@ -499,15 +495,13 @@ class Interpreter:
     @contextmanager
     def new_env(self, **kwargs):
         # TODO: trying to allow passing in kwargs to allow LoxFunction to provide args in the new
-        # env that its body (Block) will create. Forget 1) whether I need to call evaluate
-        # manually here to register the var and 2) how to ensure these get set in the right env
-        # (seems that only happens when you call evaluate which is a little odd, I would have
-        # expected to happen at init time).
+        # env that its body (Block) will create. atm we assume kwargs map name (str) to val (python
+        # obj).
         prev_env = self.env
         try:
             self.env = Environment(parent=prev_env)
-            for name, expr in kwargs.items():
-                VariableDeclaration(name, expr)
+            for name, val in kwargs.items():
+                self.env.update_state(name, val, is_declaration=True)
             yield self.env
         finally:
             self.env = prev_env

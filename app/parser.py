@@ -486,7 +486,7 @@ class Parser:
         """
         try:
             if self.match(ReservedTokenTypes.FUN):
-                return self.function_declaration()
+                return self.function_declaration(kind="function")
             elif self.match(ReservedTokenTypes.VAR):
                 return self.variable_declaration()
             else:
