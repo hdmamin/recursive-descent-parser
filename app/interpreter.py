@@ -456,7 +456,9 @@ class Function(Statement):
         self.body = body
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
-        return LoxFunction(self)
+        func = LoxFunction(self)
+        INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
+        return func
 
 
 def boolean_lexeme(val: bool) -> str:

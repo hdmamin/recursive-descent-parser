@@ -534,6 +534,7 @@ class Parser:
         }
         """
         name = self.current_token()
+        self.curr_idx += 1
         params = []
         n_params = 0
         if not self.match(TokenTypes.LEFT_PAREN):
@@ -544,7 +545,7 @@ class Parser:
             if param.token_type == TokenTypes.IDENTIFIER:
                 params.append(param) 
                 n_params += 1
-            elif param.token_type == ReservedTokenTypes.COMMA:
+            elif param.token_type == TokenTypes.COMMA:
                 continue
             else:
                 break
@@ -558,5 +559,4 @@ class Parser:
             # TODO syntax or parsing error?
             raise ParsingError(f"Expect '{{' before {kind} body.")
         body = Block(self.block())
-        # TODO: do I actually need separate FunctionDeclaration and Function classes?
         return Function(name, params, body)
