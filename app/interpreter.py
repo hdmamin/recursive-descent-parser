@@ -439,8 +439,17 @@ class LoxFunction(LoxCallable):
         self.func = func
 
     def evaluate(self, *args, **kwargs):
-        py_kwargs = {param.lexeme: param.evaluate() for param in self.func.params}
+        # TODO: currently py_kwargs line errors out bc it's trying to evaluate the param variable
+        # in the scope that contains the function and we have not defined this as anything. BUT
+        # *args is being passed the actual arg, forget how but it makes sense. And this appears to
+        # be a python val, not a lox var. So I think we need to resolve args/kwargs with the
+        # expected params rather than calling param.evaluate. Does lox suppport both positional
+        # and named args tho? gpt says positional only, let's try that for now.
+        py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
         return self.func.body.evaluate(**py_kwargs)
+
+    def __str__(self) -> str:
+        return f"<fn {self.func.name.lexeme}>"
 
 
 class Function(Statement):

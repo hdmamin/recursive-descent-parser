@@ -542,12 +542,16 @@ class Parser:
             raise ParsingError(f"Expect '(' after {kind} name.")
         while True:
             param = self.current_token()
+            self.curr_idx += 1
             if param.token_type == TokenTypes.IDENTIFIER:
                 params.append(param) 
                 n_params += 1
             elif param.token_type == TokenTypes.COMMA:
                 continue
             else:
+                # Rewind one token so that the right_parens check that follows executes against the
+                # correct token.
+                self.curr_idx -= 1
                 break
             if n_params > 255:
                 # TODO or syntax error? or other?

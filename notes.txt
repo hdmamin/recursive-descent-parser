@@ -298,7 +298,19 @@ X -new stage: functions without arguments
 -----------
 -low effort tasks:
     -add more low effort task bullets
--new stage #60: functions with args
+X -new stage #60: functions with args
+	X -skim codecrafters + book section to understand what we need to implement
+	X -ui tests pass
+	X -`make test_functions_w_jlox` stages 1-3 pass
+
+7/26/25 sat
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-new stage #61: syntax errors
 	-skim codecrafters + book section to understand what we need to implement
 	-ui tests pass
-	-`make test_functions_w_jlox` stages 1-3 pass
+	-`make test_functions_w_jlox` stages 1-4 pass
+
+
+
