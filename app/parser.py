@@ -540,9 +540,18 @@ class Parser:
         if not self.match(TokenTypes.LEFT_PAREN):
             # TODO syntax or parsing error?
             raise ParsingError(f"Expect '(' after {kind} name.")
+        
+        prev_token = None
         while True:
             param = self.current_token()
+            if prev_token and prev_token.token_type == param.token_type:
+                # We should alternate between identifier and comma. Curr_idx gets incremented
+                # afterwards so we don't have to decrement here like in the other break case.
+                print(">>> wrong prev token type") # TODO
+                break
+
             self.curr_idx += 1
+            prev_token = param
             if param.token_type == TokenTypes.IDENTIFIER:
                 params.append(param) 
                 n_params += 1
@@ -556,9 +565,11 @@ class Parser:
             if n_params > 255:
                 # TODO or syntax error? or other?
                 raise ParsingError("Can't have more than 255 parameters.")
+
         if not self.match(TokenTypes.RIGHT_PAREN):
+            print(">>> parens error") # TODO
             # TODO syntax or parsing error?
-            raise ParsingError(f"Expect ')' after parameters.")
+            raise ParsingError(f"[line {param.line}] Expect ')' after parameters.")
         if not self.match(TokenTypes.LEFT_BRACE):
             # TODO syntax or parsing error?
             raise ParsingError(f"Expect '{{' before {kind} body.")

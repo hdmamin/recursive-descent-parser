@@ -310,7 +310,21 @@ X -new stage #60: functions with args
 -new stage #61: syntax errors
 	-skim codecrafters + book section to understand what we need to implement
 	-ui tests pass
+		> 0 and 1 pass, 2 looks essentially right but exact error format/order is slightly different but in the past the actual makefile tests matched my way so maybe that's the case again? Will guess it's fine for now and return if make tests fail. 3 should raise the "expect left brace" error but currently raises generic "expect expression". 4 should catch missing comma but does not.
+		-fix 3: should hit "expect left brace"
+		-fix 4: should error on missing comma
+			> solid progress, currently we're raising an error in the right place in function_declaration but synchronize is swallowing that and replacing with a new error. Need to figure out how to handle this without breaking old behavior.
 	-`make test_functions_w_jlox` stages 1-4 pass
 
-
+7/27/25 sun
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-new stage #61: syntax errors
+	-skim codecrafters + book section to understand what we need to implement
+	-ui tests pass
+		-fix 4: should error on missing comma
+			> solid progress, currently we're raising an error in the right place in function_declaration but synchronize is swallowing that and replacing with a new error. Need to figure out how to handle this without breaking old behavior.
+		-fix 3: should hit "expect left brace"
+	-`make test_functions_w_jlox` stages 1-4 pass
 
