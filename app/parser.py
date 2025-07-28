@@ -547,7 +547,6 @@ class Parser:
             if prev_token and prev_token.token_type == param.token_type:
                 # We should alternate between identifier and comma. Curr_idx gets incremented
                 # afterwards so we don't have to decrement here like in the other break case.
-                print(">>> wrong prev token type") # TODO
                 break
 
             self.curr_idx += 1
