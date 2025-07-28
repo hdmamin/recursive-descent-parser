@@ -447,7 +447,7 @@ class Parser:
             raise SyntaxError("Expect ';' after expression.")
         return PrintStatement(expr)
         
-    def synchronize(self):
+    def synchronize(self, error_suffix: str = "Expect expression."):
         """Error handling for when we hit a parsing error."""
         # TODO: raising an error for now bc tests do want this for parsing errors, e.g. for `print;`
         # but eventually may need to recover and keep going. Remember parse() has try/except error
@@ -479,20 +479,26 @@ class Parser:
             if curr.token_type in start_types:
                 break
             self.curr_idx += 1
-        raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: Expect expression.")
+        raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: {error_suffix}")
 
     def declaration(self):
         """Kind of analogous to `expression` and `statement` methods.
         """
+        # TODO: trying to match book's expected error messages for function_declaration without
+        # breaking prev stages. Maybe can go back after confirming this works and always use custom
+        # here.
+        custom_error = False
         try:
             if self.match(ReservedTokenTypes.FUN):
+                custom_error = True
                 return self.function_declaration(kind="function")
             elif self.match(ReservedTokenTypes.VAR):
                 return self.variable_declaration()
             else:
                 return self.statement()
-        except ParsingError:
-            self.synchronize()
+        except (ParsingError, SyntaxError) as e:
+            kwargs = {"error_suffix": str(e)} if custom_error else {}
+            self.synchronize(**kwargs)
         
     def variable_declaration(self) -> VariableDeclaration:
         """Called *after* we've already confirmed there was a preceding VAR token and current_token
@@ -539,7 +545,7 @@ class Parser:
         n_params = 0
         if not self.match(TokenTypes.LEFT_PAREN):
             # TODO syntax or parsing error?
-            raise ParsingError(f"Expect '(' after {kind} name.")
+            raise SyntaxError(f"Expect '(' after {kind} name.")
         
         prev_token = None
         while True:
@@ -563,14 +569,13 @@ class Parser:
                 break
             if n_params > 255:
                 # TODO or syntax error? or other?
-                raise ParsingError("Can't have more than 255 parameters.")
+                raise SyntaxError("Can't have more than 255 parameters.")
 
         if not self.match(TokenTypes.RIGHT_PAREN):
-            print(">>> parens error") # TODO
             # TODO syntax or parsing error?
-            raise ParsingError(f"[line {param.line}] Expect ')' after parameters.")
+            raise SyntaxError(f"Expect ')' after parameters.")
         if not self.match(TokenTypes.LEFT_BRACE):
             # TODO syntax or parsing error?
-            raise ParsingError(f"Expect '{{' before {kind} body.")
+            raise SyntaxError(f"Expect '{{' before {kind} body.")
         body = Block(self.block())
         return Function(name, params, body)
