@@ -338,7 +338,26 @@ X -new stage #61: syntax errors
 -low effort tasks:
     -add more low effort task bullets
 -new stage #62: return statements
+	X -skim codecrafters + book to see what I need to implement
+	~ -ui tests pass
+		> some good progress, currently expression() call in statement is raising error. Started on a ReturnStatement class and adding new case to statement method.
+	-`make test_functions_w_jlox` stages 1-5 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+
+7/29/25 tues
+------------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #62: return statements
 	-ui tests pass
+		-flesh out parsing logic when hitting return token in statement
+		-do we need something special to handle case where no return statement?
+		-confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
 	-`make test_functions_w_jlox` stages 1-5 pass
 	-prev rounds' tests still pass
 		-scanning

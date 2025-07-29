@@ -284,9 +284,14 @@ class Statement:
     funDecl        → "fun" function ;
     function       → IDENTIFIER "(" parameters? ")" block ;
     statement      → exprStmt
-                | ifStmt
-                | printStmt 
-                | block;
+               | forStmt
+               | ifStmt
+               | printStmt
+               | returnStmt
+               | whileStmt
+               | block ;
+
+    returnStmt     → "return" expression? ";" ;
     block          → "{" declaration* "}" ;
     printStmt      → "print" expression ";" ;
     varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
@@ -433,7 +438,28 @@ class IfStatement(Statement):
         return res + ")"
 
 
+class ReturnStatement(Statement):
+    
+    def __init__(self, expr: Optional[Expression] = None):
+        self.expr = expr
+
+    def evaluate(self, *args, **kwargs):
+        # Returns the python object resulting from evaluating a function.
+        # TODO: forget what args/kwargs get passed into statement.evaluate, need to confirm whether
+        # these should be passed to expr below.
+        if self.expr:
+            return self.expr.evaluate()
+
+    def __str__(self) -> str:
+        # TODO
+        pass
+
+
 class LoxFunction(LoxCallable):
+    """Stores the actual Lox code that the function will execute. Evaluating this will evaluate the
+    function. (This is in contrast to Function (which this does wrap) which is used to parse
+    function definitions rather than calls.)
+    """
 
     def __init__(self, func: "Function"):
         self.func = func
@@ -465,6 +491,7 @@ class Function(Statement):
         self.body = body
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
+        # Returns a LoxFunction object, NOT the result of calling the function.
         func = LoxFunction(self)
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func

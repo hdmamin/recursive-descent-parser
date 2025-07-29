@@ -1,2 +1,2 @@
-fun f() 74;
-print f();
+fun f() { return 74; }
+f();

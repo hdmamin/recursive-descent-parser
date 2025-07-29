@@ -3,8 +3,8 @@ from typing import Union
 from app.exceptions import ParsingError
 from app.interpreter import (
     Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping,
-    Statement, IfStatement, PrintStatement, ExpressionStatement, VariableDeclaration, Block, While,
-    For, Function
+    Statement, IfStatement, PrintStatement, ExpressionStatement, ReturnStatement,
+    VariableDeclaration, Block, While, For, Function
 )
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
@@ -343,6 +343,15 @@ class Parser:
             return self.if_statement()
         if self.match(ReservedTokenTypes.FOR):
             return self.for_statement()
+        # TODO: presumably somewhere need to check if this is a valid place for return, i.e. are we
+        # inside a class/function. May rm this if, could be unnecessary, we may actually want
+        # expr_stmt.
+        if self.match(ReservedTokenTypes.RETURN):
+            # TODO: we're hitting an error in the expression() call. Looks like the parsing logic
+            # here is a little more complex, need to flesh it out. May also need to deal with case
+            # specifically where there is no return statement, currently that would not get caught
+            # by match(RETURN).
+            return ReturnStatement(self.expression())
         return self.expression_statement()
     
     def while_statement(self):
@@ -411,6 +420,7 @@ class Parser:
         while self.curr_idx < self.max_idx and \
                 self.current_token().token_type != TokenTypes.RIGHT_BRACE:
             statements.append(self.declaration())
+
         if not self.match(TokenTypes.RIGHT_BRACE):
             raise ParsingError("Expect '}' after block.")
         return statements
