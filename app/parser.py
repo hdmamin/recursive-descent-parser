@@ -298,7 +298,6 @@ class Parser:
             # since they check for specific wording?
             # And is parsing error the right type?
             raise ParsingError("Invalid assignment target.")
-
         return expr
 
     def logic_or(self) -> Logical:
@@ -351,7 +350,8 @@ class Parser:
             # here is a little more complex, need to flesh it out. May also need to deal with case
             # specifically where there is no return statement, currently that would not get caught
             # by match(RETURN).
-            return ReturnStatement(self.expression())
+            expr = self.expression_statement()
+            return ReturnStatement(expr.expr)
         return self.expression_statement()
     
     def while_statement(self):

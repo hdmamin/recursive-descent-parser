@@ -218,7 +218,7 @@ class Call(Expression):
 
     def __str__(self) -> str:
         # TODO check if this is format book wants
-        return f"({self.callee} {self.right_parens.non_null_literal} {self.args})"
+        return f"({self.callee} {self.args})"
 
     def evaluate(self):
         py_args = [arg.evaluate() for arg in self.args]

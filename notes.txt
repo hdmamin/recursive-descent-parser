@@ -355,7 +355,26 @@ X -new stage #61: syntax errors
     -add more low effort task bullets
 -stage #62: return statements
 	-ui tests pass
-		-flesh out parsing logic when hitting return token in statement
+		~ -flesh out parsing logic when hitting return token in statement (debug last if clause in statement())
+			> progress: now parsing the func definition correctly but execution is None. Noticed the function call is getting parsed as Call() rather than LoxFunction (maybe this is desirable? Did seem weird to me that we need both). Need to dig into what Call does and whether we can merge it with LoxFunction or make the two play nicely together in some way. MIGHT also need to update Block.evaluate to deal with returns? Currently seems to return nothing.
+		-do we need something special to handle case where no return statement?
+		-confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
+	-`make test_functions_w_jlox` stages 1-5 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+
+7/30/25 wed
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #62: return statements
+	-ui tests pass
+		-flesh out parsing logic when hitting return token in statement (debug last if clause in statement())
+			> tues progress: now parsing the func definition correctly but execution is None. Noticed the function call is getting parsed as Call() rather than LoxFunction (maybe this is desirable? Did seem weird to me that we need both). Need to dig into what Call does and whether we can merge it with LoxFunction or make the two play nicely together in some way. MIGHT also need to update Block.evaluate to deal with returns? Currently seems to return nothing.
 		-do we need something special to handle case where no return statement?
 		-confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
 	-`make test_functions_w_jlox` stages 1-5 pass

@@ -1,2 +1,2 @@
 fun f() { return 74; }
-f();
+print f();
