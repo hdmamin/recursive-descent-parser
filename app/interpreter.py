@@ -361,7 +361,9 @@ class Block(Statement):
         # "env=" in this project...
         with INTERPRETER.new_env(**kwargs) as env:
             for statement in self.statements:
-                statement.evaluate(env=env)
+                res = statement.evaluate(env=env)
+                if isinstance(statement, ReturnStatement):
+                    return res
 
     
 class While(Statement):
@@ -451,8 +453,8 @@ class ReturnStatement(Statement):
             return self.expr.evaluate()
 
     def __str__(self) -> str:
-        # TODO
-        pass
+        # TODO prob need to change this format, check what book wants here if it says
+        return f"Return({self.expr})"
 
 
 class LoxFunction(LoxCallable):

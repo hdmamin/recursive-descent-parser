@@ -102,7 +102,6 @@ def main():
                 print(row, file=sys.stderr)
             exit(65)
 
-        print(type(parsed["parsed"][-1].expr)) # TODO rm
         for statement in parsed["parsed"]:
             try:
                 statement.evaluate()
