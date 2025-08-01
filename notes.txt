@@ -405,8 +405,28 @@ X -new stage #61: syntax errors
 			> no, recursion depth exceeded.
 		-2
 			> no, returning nil instead of 'ok'.
-		-4
+		X -4
 			> no, few synax errors at end of func definition
+            > update: fixed, prev weren't handling the "return;" case.
+	-`make test_functions_w_jlox` stages 1-5 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+
+8/1/25 fri
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #62: return statements
+	-confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
+	-ui tests pass
+		-2
+			> returning nil instead of 'ok'.
+		-1
+			> recursion depth exceeded.
 	-`make test_functions_w_jlox` stages 1-5 pass
 	-prev rounds' tests still pass
 		-scanning

@@ -350,8 +350,8 @@ class Parser:
             # here is a little more complex, need to flesh it out. May also need to deal with case
             # specifically where there is no return statement, currently that would not get caught
             # by match(RETURN).
-            expr = self.expression_statement()
-            return ReturnStatement(expr.expr)
+            expr = None if self.match(TokenTypes.SEMICOLON) else self.expression_statement()
+            return ReturnStatement(getattr(expr, "expr", None))
         return self.expression_statement()
     
     def while_statement(self):

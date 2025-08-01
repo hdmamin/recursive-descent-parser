@@ -1,6 +1,4 @@
 fun f() {
-  return;
-  print "bad";
+  if (false) return "no"; else return "ok";
 }
-
 print f();
