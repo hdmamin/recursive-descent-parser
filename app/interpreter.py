@@ -8,6 +8,13 @@ from app.lexer import TokenTypes, ReservedTokenTypes, Token
 from app.utils import truthy, is_number, SENTINEL
 
 
+class Return(Exception):
+    """Exception raised when a return statement is evaluated."""
+
+    def __init__(self, value: Any):
+        self.value = value
+
+
 class Expression:
     
     def __str__(self) -> str:
@@ -361,9 +368,10 @@ class Block(Statement):
         # "env=" in this project...
         with INTERPRETER.new_env(**kwargs) as env:
             for statement in self.statements:
-                res = statement.evaluate(env=env)
-                if isinstance(statement, ReturnStatement):
-                    return res
+                try:
+                    statement.evaluate(env=env)
+                except Return as e:
+                    return e.value
 
     
 class While(Statement):
@@ -436,7 +444,7 @@ class IfStatement(Statement):
     def __str__(self) -> str:
         res = f"(if {self.condition} {self.value}"
         if self.other_value:
-            res += " " + self.other_value
+            res += f" {self.other_value}"
         return res + ")"
 
 
@@ -449,8 +457,10 @@ class ReturnStatement(Statement):
         # Returns the python object resulting from evaluating a function.
         # TODO: forget what args/kwargs get passed into statement.evaluate, need to confirm whether
         # these should be passed to expr below.
+        val = None
         if self.expr:
-            return self.expr.evaluate()
+            val = self.expr.evaluate()
+        raise Return(val)
 
     def __str__(self) -> str:
         # TODO prob need to change this format, check what book wants here if it says

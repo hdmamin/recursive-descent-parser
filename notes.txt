@@ -421,12 +421,31 @@ X -new stage #61: syntax errors
 -low effort tasks:
     -add more low effort task bullets
 -stage #62: return statements
-	-confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
+	[WAIT until tests reveal a need] -confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
 	-ui tests pass
-		-2
+		X -2
 			> returning nil instead of 'ok'.
+            > update: solution broke #4 but I fixed it, ReturnStatement.evaluate previously didn't need to do anything when return value=None but now it needs to raise error regardless.
 		-1
 			> recursion depth exceeded.
+            > update: slightly different behavior now, it just silently hangs. Maybe stuck in some infinite while loop somewhere?
+	-`make test_functions_w_jlox` stages 1-5 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+
+8/2/25 sat
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #62: return statements
+	[WAIT until tests reveal a need] -confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
+	-ui tests pass
+		-1
+            > just silently hangs. Maybe stuck in some infinite while loop somewhere?
 	-`make test_functions_w_jlox` stages 1-5 pass
 	-prev rounds' tests still pass
 		-scanning
