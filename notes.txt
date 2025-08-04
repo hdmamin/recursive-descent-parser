@@ -459,15 +459,17 @@ X -new stage #61: syntax errors
 ----------
 -low effort tasks:
     -add more low effort task bullets
--stage #62: return statements
+X -stage #62: return statements
 	[WAIT until tests reveal a need] -confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
-	-ui tests pass
+	! -ui tests pass
 		-1
             > code works but is very slow. Confirmed we are calling the base cases the correct number of times but for n>=4, we are doing too many recursive calls (see screenshot in previews for table of n_calls we expect). So we are timing out on the test case which uses a large n of 32. Need to dig deeper into these recursive calls to identify why we're getting more than expected.
-	-`make test_functions_w_jlox` stages 1-5 pass
+        > update: hmmm, more debugging and n_calls actually DOES seem to match expected. And on a whim I ran actual test cases to see how far it gets and they pass, fibonacci func is called with n=10 instead of 32, though comments hint at this being 35 at one point. idk, I guess we'll return to this if/when it reveals itself as a problem? Afaict everything's behaving as expected otherwise.
+	X -`make test_functions_w_jlox` stages 1-5 pass
 	-prev rounds' tests still pass
 		-scanning
 		-parsing
 		-evaluation
 		-statements
 		-control_flow
+

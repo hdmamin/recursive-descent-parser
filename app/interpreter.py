@@ -460,7 +460,6 @@ class ReturnStatement(Statement):
         val = None
         if self.expr:
             val = self.expr.evaluate()
-        print('>>> return', self, val) # TODO rm
         raise Return(val)
 
     def __str__(self) -> str:
