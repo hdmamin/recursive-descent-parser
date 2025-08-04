@@ -460,7 +460,8 @@ X -new stage #61: syntax errors
 -low effort tasks:
     -add more low effort task bullets
 X -stage #62: return statements
-	[WAIT until tests reveal a need] -confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
+	! [WAIT until tests reveal a need] -confirm if I need a separate Return class from ReturnStatement? Seems odd but book maybe does this?
+        > seems like no
 	! -ui tests pass
 		-1
             > code works but is very slow. Confirmed we are calling the base cases the correct number of times but for n>=4, we are doing too many recursive calls (see screenshot in previews for table of n_calls we expect). So we are timing out on the test case which uses a large n of 32. Need to dig deeper into these recursive calls to identify why we're getting more than expected.
@@ -472,4 +473,25 @@ X -stage #62: return statements
 		-evaluation
 		-statements
 		-control_flow
+-stage #63: higher order functions
+    -skim ui/book to see what I need to implement
+	-ui tests pass
+        X -1
+        -2
+            > found parsing error, function name with "return" in it is getting parsed to multiple tokens. May need to dive back into Trie logic 😬. (Looks like there are other errors too fwiw, tried removing all the trailing n's in names with return and still got a bunch of syntax/parsing errors.)
+        -3
+        -4
+	-`make test_functions_w_jlox` stages 1-6 pass
 
+8/3/25 mon
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #63: higher order functions
+    -skim ui/book to see what I need to implement
+	-ui tests pass
+        -2
+            > found parsing error, function name with "return" in it is getting parsed to multiple tokens. May need to dive back into Trie logic 😬. (Looks like there are other errors too fwiw, tried removing all the trailing n's in names with return and still got a bunch of syntax/parsing errors.)
+        -3
+        -4
+	-`make test_functions_w_jlox` stages 1-6 pass
