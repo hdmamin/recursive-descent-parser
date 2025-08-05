@@ -490,8 +490,21 @@ X -stage #62: return statements
 -stage #63: higher order functions
     -skim ui/book to see what I need to implement
 	-ui tests pass
+        ~ -2
+            > UPDATE: Realized reserved types need to be followed by a non alphanumeric char. I tried to add this logic in TokenType._default_longest_leading_substring but realized that only is used in longest_leading_substring call below I think, AFTER the token type is already inferred. So need to update infer_token_type itself OR perhaps compute both reserved and non-reserved candidates, compute substring for both, and then select the longest non-None substring.
+        -3
+        -4
+	-`make test_functions_w_jlox` stages 1-6 pass
+
+8/4/25 tues
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #63: higher order functions
+    -skim ui/book to see what I need to implement
+	-ui tests pass
         -2
-            > found parsing error, function name with "return" in it is getting parsed to multiple tokens. May need to dive back into Trie logic 😬. (Looks like there are other errors too fwiw, tried removing all the trailing n's in names with return and still got a bunch of syntax/parsing errors.)
+            > reserved types need to be followed by a non alphanumeric char. I tried to add this logic in TokenType._default_longest_leading_substring but realized that only is used in longest_leading_substring call below I think, AFTER the token type is already inferred. So need to update infer_token_type itself OR perhaps compute both reserved and non-reserved candidates, compute substring for both, and then select the longest non-None substring.
         -3
         -4
 	-`make test_functions_w_jlox` stages 1-6 pass

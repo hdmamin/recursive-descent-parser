@@ -45,6 +45,7 @@ class TokenType:
     # LEFT_PAREN or EQUAL_EQUAL, this does NOT need to be defined explicitly. It's only needed for
     # lexemes like STRING where we don't know upfront what characters the lexeme will consist of.
     longest_leading_substring: Optional[Callable] = None
+    reserved: bool = False
 
     def __post_init__(self):
         if isinstance(self.lexeme, str):
@@ -73,6 +74,12 @@ class TokenType:
         upfront, e.g. '>=' or '!'.
         """
         if text.startswith(self.lexeme):
+            # TODO maybe only apply this to reserved words?
+            remaining = text[len(self.lexeme):]
+            print('lexeme', repr(self.lexeme), 'remaining', repr(remaining), 'reserved', self.reserved) # TODO rm
+            if self.reserved and remaining and remaining[0].isalnum():
+                print('in if') # TODO rm
+                return None
             return self.lexeme
         return None
 
@@ -226,23 +233,23 @@ class ReservedTokenTypes:
     # selection logic, forget if it counts number of edges/nodes or str length.
     # TODO: think default leading_substring func *should* work but check. If not maybe can write
     # one leading_substring func or partial and use for all of them?
-    AND = TokenType(name="AND", lexeme="and")
-    CLASS = TokenType(name="CLASS", lexeme="class")
-    ELSE = TokenType(name="ELSE", lexeme="else")
-    FALSE = TokenType(name="FALSE", lexeme="false") 
-    FOR = TokenType(name="FOR", lexeme="for")
-    FUN = TokenType(name="FUN", lexeme="fun")
-    IF = TokenType(name="IF", lexeme="if")
-    NIL = TokenType(name="NIL", lexeme="nil")
-    OR = TokenType(name="OR", lexeme="or")
-    PRINT = TokenType(name="PRINT", lexeme="print")
-    RETURN = TokenType(name="RETURN", lexeme="return")
-    SUPER = TokenType(name="SUPER", lexeme="super")
-    THIS = TokenType(name="THIS", lexeme="this")
-    TRUE = TokenType(name="TRUE", lexeme="true")
-    VAR = TokenType(name="VAR", lexeme="var")
-    WHILE = TokenType(name="WHILE", lexeme="while")
-    PRINT = TokenType(name="PRINT", lexeme="print")
+    AND = TokenType(name="AND", lexeme="and", reserved=True)
+    CLASS = TokenType(name="CLASS", lexeme="class", reserved=True)
+    ELSE = TokenType(name="ELSE", lexeme="else", reserved=True)
+    FALSE = TokenType(name="FALSE", lexeme="false", reserved=True) 
+    FOR = TokenType(name="FOR", lexeme="for", reserved=True)
+    FUN = TokenType(name="FUN", lexeme="fun", reserved=True)
+    IF = TokenType(name="IF", lexeme="if", reserved=True)
+    NIL = TokenType(name="NIL", lexeme="nil", reserved=True)
+    OR = TokenType(name="OR", lexeme="or", reserved=True)
+    PRINT = TokenType(name="PRINT", lexeme="print", reserved=True)
+    RETURN = TokenType(name="RETURN", lexeme="return", reserved=True)
+    SUPER = TokenType(name="SUPER", lexeme="super", reserved=True)
+    THIS = TokenType(name="THIS", lexeme="this", reserved=True)
+    TRUE = TokenType(name="TRUE", lexeme="true", reserved=True)
+    VAR = TokenType(name="VAR", lexeme="var", reserved=True)
+    WHILE = TokenType(name="WHILE", lexeme="while", reserved=True)
+    PRINT = TokenType(name="PRINT", lexeme="print", reserved=True)
 
     @classmethod
     @lru_cache
@@ -448,6 +455,12 @@ class Token:
     @classmethod
     def from_longest_leading_substring(cls, text: str, line: int):
         token_type = infer_token_type(text, RESERVED_TYPES_TRIE) or infer_token_type(text)
+        # TODO: reserved types need to be followed by a non alphanumeric char. I tried to add this
+        # logic in TokenType._default_longest_leading_substring but realized that only is used in
+        # longest_leading_substring call below I think, AFTER the token type is already inferred.
+        # So need to update infer_token_type itself OR perhaps compute both reserved and non-reserved
+        # candidates, compute substring for both, and then select the longest non-None substring.
+        print('>>> token type', token_type.name) # TODO rm
         if not token_type:
             raise ValueError(f"Unexpected character: {text[0]}")
         # Note that the called method could still raise an error.
