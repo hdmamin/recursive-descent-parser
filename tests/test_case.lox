@@ -1,13 +1,13 @@
-fun returArg(arg) {
+fun returnArg(arg) {
   return arg;
 }
 
-fun returFunCallWithArg(func, arg) {
-  return returArg(func)(arg);
+fun returnFunCallWithArg(func, arg) {
+  return returnArg(func)(arg);
 }
 
 fun printArg(arg) {
   print arg;
 }
 
-returFunCallWithArg(printArg, "foo");
+returnFunCallWithArg(printArg, "foo");

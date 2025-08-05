@@ -213,6 +213,8 @@ class TokenTypes:
     )
 
 
+# TODO: should this inhereit from TokenTypes? Seems like it but need to check if I ever have to
+# check isinstance ReservedTokenTypes.
 class ReservedTokenTypes:
 
     # Reserved words
@@ -446,6 +448,7 @@ class Token:
     @classmethod
     def from_longest_leading_substring(cls, text: str, line: int):
         token_type = infer_token_type(text, RESERVED_TYPES_TRIE) or infer_token_type(text)
+        print('>>> lexer:', token_type.name, infer_token_type(text).name) # TODO rm
         if not token_type:
             raise ValueError(f"Unexpected character: {text[0]}")
         # Note that the called method could still raise an error.
