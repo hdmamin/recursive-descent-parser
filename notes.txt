@@ -503,8 +503,22 @@ X -stage #62: return statements
 -stage #63: higher order functions
     -skim ui/book to see what I need to implement
 	-ui tests pass
-        -2
+        X -2
             > reserved types need to be followed by a non alphanumeric char. I tried to add this logic in TokenType._default_longest_leading_substring but realized that only is used in longest_leading_substring call below I think, AFTER the token type is already inferred. So need to update infer_token_type itself OR perhaps compute both reserved and non-reserved candidates, compute substring for both, and then select the longest non-None substring.
-        -3
+			> UPDATE: lexing/tokenizing tentatively fixed now, but now surprisingly getting errors when evaluating/running. This occurs both when varnames contain keywords and when they don't.
+			> UPDATE: prev update was mostly working, just forgot to update a couple refs. Seems good now!
+        X -3
+        ~ -4
+			> undefined variable min, basically looks like outer scope params are not being exposed in inner scope.
+	-`make test_functions_w_jlox` stages 1-6 pass
+
+8/5/25 wed
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #63: higher order functions
+    -skim ui/book to see what I need to implement
+	-ui tests pass
         -4
+			> undefined variable min, basically looks like outer scope params are not being exposed in inner scope.
 	-`make test_functions_w_jlox` stages 1-6 pass

@@ -97,7 +97,6 @@ def main():
         # here specifically for syntaxerrors, but not sure if we rely on that for previous chapter's
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
-        print(lexed) # TODO
         if not parsed["success"]:
             for row in parsed["errors"]:
                 print(row, file=sys.stderr)

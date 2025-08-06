@@ -74,11 +74,8 @@ class TokenType:
         upfront, e.g. '>=' or '!'.
         """
         if text.startswith(self.lexeme):
-            # TODO maybe only apply this to reserved words?
             remaining = text[len(self.lexeme):]
-            print('lexeme', repr(self.lexeme), 'remaining', repr(remaining), 'reserved', self.reserved) # TODO rm
             if self.reserved and remaining and remaining[0].isalnum():
-                print('in if') # TODO rm
                 return None
             return self.lexeme
         return None
@@ -454,23 +451,37 @@ class Token:
 
     @classmethod
     def from_longest_leading_substring(cls, text: str, line: int):
-        token_type = infer_token_type(text, RESERVED_TYPES_TRIE) or infer_token_type(text)
+        reserved_token_type = infer_token_type(text, RESERVED_TYPES_TRIE)
+        token_type = infer_token_type(text)
         # TODO: reserved types need to be followed by a non alphanumeric char. I tried to add this
         # logic in TokenType._default_longest_leading_substring but realized that only is used in
         # longest_leading_substring call below I think, AFTER the token type is already inferred.
         # So need to update infer_token_type itself OR perhaps compute both reserved and non-reserved
         # candidates, compute substring for both, and then select the longest non-None substring.
-        print('>>> token type', token_type.name) # TODO rm
-        if not token_type:
+        if not (token_type or reserved_token_type):
             raise ValueError(f"Unexpected character: {text[0]}")
         # Note that the called method could still raise an error.
-        substring = token_type.longest_leading_substring(text)
-        if substring is None:
+        if token_type:
+            substring = token_type.longest_leading_substring(text) or ""
+        else:
+            substring = ""
+
+        if reserved_token_type:
+            reserved_substring = reserved_token_type.longest_leading_substring(text) or ""
+        else:
+            reserved_substring = ""
+        if not (substring or reserved_substring):
             raise AssertionError(
                 f"Unexpected behavior: inferred token_type={token_type} but could not find a valid "
                 f"leading substring from {text!r}."
             )
-        return cls(substring, line=line, token_type=token_type)
+        if len(reserved_substring) >= len(substring):
+            longest_substring = reserved_substring
+            resolved_token_type = reserved_token_type
+        else:
+            longest_substring = substring
+            resolved_token_type = token_type
+        return cls(longest_substring, line=line, token_type=resolved_token_type)
 
 
 def lex(source: str) -> dict:
