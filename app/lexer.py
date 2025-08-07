@@ -422,6 +422,7 @@ class Token:
             try:
                 value = interpreter.env.read_state(self.lexeme)
             except KeyError:
+                # breakpoint() # TODO rm
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
             
             return value

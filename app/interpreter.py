@@ -552,6 +552,8 @@ class Interpreter:
             self.env = Environment(parent=prev_env)
             for name, val in kwargs.items():
                 self.env.update_state(name, val, is_declaration=True)
+            print('>>> new env', kwargs) # TODO rm
+            print(id(self.env), id(prev_env))
             yield self.env
         finally:
             self.env = prev_env

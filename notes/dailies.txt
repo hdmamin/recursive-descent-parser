@@ -488,7 +488,7 @@ X -stage #62: return statements
 -low effort tasks:
     -add more low effort task bullets
 -stage #63: higher order functions
-    -skim ui/book to see what I need to implement
+    ~ -skim ui/book to see what I need to implement
 	-ui tests pass
         ~ -2
             > UPDATE: Realized reserved types need to be followed by a non alphanumeric char. I tried to add this logic in TokenType._default_longest_leading_substring but realized that only is used in longest_leading_substring call below I think, AFTER the token type is already inferred. So need to update infer_token_type itself OR perhaps compute both reserved and non-reserved candidates, compute substring for both, and then select the longest non-None substring.
@@ -501,7 +501,6 @@ X -stage #62: return statements
 -low effort tasks:
     -add more low effort task bullets
 -stage #63: higher order functions
-    -skim ui/book to see what I need to implement
 	-ui tests pass
         X -2
             > reserved types need to be followed by a non alphanumeric char. I tried to add this logic in TokenType._default_longest_leading_substring but realized that only is used in longest_leading_substring call below I think, AFTER the token type is already inferred. So need to update infer_token_type itself OR perhaps compute both reserved and non-reserved candidates, compute substring for both, and then select the longest non-None substring.
@@ -516,9 +515,22 @@ X -stage #62: return statements
 ----------
 -low effort tasks:
     -add more low effort task bullets
+	X -new notes dir
+		> renamed notes.txt -> dailies.txt, added misc.txt for debugging notes
 -stage #63: higher order functions
-    -skim ui/book to see what I need to implement
 	-ui tests pass
-        -4
+        ~ -4
 			> undefined variable min, basically looks like outer scope params are not being exposed in inner scope.
+			> UPDATE: some notes in misc.txt. Think it's time to dive back in to the book to see if they provide guidance on implementation.
+	-`make test_functions_w_jlox` stages 1-6 pass
+
+8/6/25 thurs
+------------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #63: higher order functions
+	-ui tests pass
+		-reference book section (hoping for implementation tips, closure args are proving a bit tricky)
+        -4
+			> see notes in misc.txt re undefined arg in closure.
 	-`make test_functions_w_jlox` stages 1-6 pass

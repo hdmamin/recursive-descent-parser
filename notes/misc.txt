@@ -1,0 +1,17 @@
+8/6/25 wed
+----------
+debugging higher order functions
+(start with current env, moving downwards moves into further removed parents)
+
+n
+# empty
+f, count, n
+global scope: various funcs
+# parent=None
+
+----
+Issue
+- seems like the empty env is the one attached to the closure (outer func) and SHOULD have just a 'min' var defined
+- so basically, we should be defining a var in that env when we CREATED the filter by calling the outer func. But apparently that's not happening, OR is not persisting.
+- update: I *think* the empty env is actually corresponding to a while block (though would if not create a block too? maybe not). And then current_env (top row) is for the function call f(n), i.e. greaterThanX(0). So maybe mentally I've kind of been modeling envs as a linked list but it's really more of a tree, and the env where we set min=55 is in some leaf node we're not traversing.
+	- another framing: maybe envs are kind of ephemeral and so we need to do something different/additional to bind args to funcs?

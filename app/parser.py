@@ -41,7 +41,8 @@ class Parser:
     def __init__(self, tokens: list[Token]):
         # Book doesn't really address what to do with spaces here so just skipping them for
         # now, otherwise our grammar breaks down.
-        self.tokens = [token for token in tokens if token.token_type != TokenTypes.SPACE]
+        self.tokens = [token for token in tokens
+                       if token.token_type not in (TokenTypes.SPACE, TokenTypes.TAB)]
         self.max_idx = len(self.tokens) - 1
         self.curr_idx = 0
         self.mode = None
