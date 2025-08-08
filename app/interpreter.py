@@ -369,8 +369,11 @@ class Block(Statement):
         with INTERPRETER.new_env(**kwargs) as env:
             for statement in self.statements:
                 try:
-                    statement.evaluate(env=env)
+                    # statement.evaluate(env=env)
+                    tmp = statement.evaluate(env=env) # TODO rm
+                    print('>>> tmp', tmp)
                 except Return as e:
+                    print('>>> return', e.value, id(self), self.statements) # TODO rm
                     return e.value
 
     
@@ -473,8 +476,9 @@ class LoxFunction(LoxCallable):
     function definitions rather than calls.)
     """
 
-    def __init__(self, func: "Function"):
+    def __init__(self, func: "Function", nonlocal_env: Optional[Environment] = None):
         self.func = func
+        self.nonlocal_env = nonlocal_env
 
     def evaluate(self, *args, **kwargs):
         # TODO: currently py_kwargs line errors out bc it's trying to evaluate the param variable
@@ -483,8 +487,12 @@ class LoxFunction(LoxCallable):
         # be a python val, not a lox var. So I think we need to resolve args/kwargs with the
         # expected params rather than calling param.evaluate. Does lox suppport both positional
         # and named args tho? gpt says positional only, let's try that for now.
-        py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
-        return self.func.body.evaluate(**py_kwargs)
+        with INTERPRETER.new_env(**getattr(self.nonlocal_env, "state", {})) as env:
+            py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
+            # return self.func.body.evaluate(**py_kwargs) # TODO reenable
+            tmp = self.func.body.evaluate(**py_kwargs)
+            print('>>> tmp', tmp) # TODO rm
+            return tmp
 
     def __str__(self) -> str:
         return f"<fn {self.func.name.lexeme}>"
@@ -497,15 +505,14 @@ class Function(Statement):
 
     # TODO: statements are defined in parser.py. Could see if we can move them to a separate module
     # or leave type hint as str.
-    def __init__(self, name: Token, params: list[Token], body: list["Statement"]):
+    def __init__(self, name: Token, params: list[Token], body: Block):
         self.name = name
         self.params = params
         self.body = body
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
         # Returns a LoxFunction object, NOT the result of calling the function.
-        print('>>> evaluate', getattr(kwargs.get("env", None), "state", None), id(kwargs.get("env", None))) # TODO rm
-        func = LoxFunction(self)
+        func = LoxFunction(self, kwargs.get("env", None))
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func
 
@@ -553,8 +560,6 @@ class Interpreter:
             self.env = Environment(parent=prev_env)
             for name, val in kwargs.items():
                 self.env.update_state(name, val, is_declaration=True)
-            print('>>> new env', kwargs) # TODO rm
-            print(id(self.env), id(prev_env))
             yield self.env
         finally:
             self.env = prev_env

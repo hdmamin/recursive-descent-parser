@@ -530,7 +530,19 @@ X -stage #62: return statements
     -add more low effort task bullets
 -stage #63: higher order functions
 	-ui tests pass
-		-reference book section (hoping for implementation tips, closure args are proving a bit tricky)
-        -4
+		X -reference book section (hoping for implementation tips, closure args are proving a bit tricky)
+            > as an exercise, tried to design a solution first intuitively before reading. And it turned out to be basically exactly what he did! I should do this more.
+        ~ -4
 			> see notes in misc.txt re undefined arg in closure.
+            > update: good progress, think I resolved the closure issue. But now encountering the problem that returning from a nested block does not cause us to return from the outer block. Need to figure out how to make this work for arbitrarily deep levels of nesting.
+	-`make test_functions_w_jlox` stages 1-6 pass
+
+8/7/25 fri
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #63: higher order functions
+	-ui tests pass
+        -4
+            > reminder: think I resolved the closure issue but now encountering the problem that returning from a nested block does not cause us to return from the outer block. Need to figure out how to make this work for arbitrarily deep levels of nesting.
 	-`make test_functions_w_jlox` stages 1-6 pass
