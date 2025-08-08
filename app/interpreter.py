@@ -504,6 +504,7 @@ class Function(Statement):
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
         # Returns a LoxFunction object, NOT the result of calling the function.
+        print('>>> evaluate', getattr(kwargs.get("env", None), "state", None), id(kwargs.get("env", None))) # TODO rm
         func = LoxFunction(self)
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func

@@ -20,10 +20,6 @@ fun applyToNumbers(f, count) {
 }
 
 var greaterThanX = makeFilter(55);
-var greaterThanY = makeFilter(10);
 
 print "Numbers >= 55:";
 applyToNumbers(greaterThanX, 55 + 5);
-
-print "Numbers >= 10:";
-applyToNumbers(greaterThanY, 10 + 5);
