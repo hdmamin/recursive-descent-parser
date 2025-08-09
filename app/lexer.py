@@ -422,7 +422,6 @@ class Token:
             try:
                 value = interpreter.env.read_state(self.lexeme)
             except KeyError:
-                # breakpoint() # TODO rm
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
             
             return value
@@ -461,23 +460,24 @@ class Token:
         # candidates, compute substring for both, and then select the longest non-None substring.
         if not (token_type or reserved_token_type):
             raise ValueError(f"Unexpected character: {text[0]}")
-        # Note that the called method could still raise an error.
-        if token_type:
-            substring = token_type.longest_leading_substring(text) or ""
-        else:
-            substring = ""
 
+        # Note that the called method could still raise an error.
+        # Important to use None for now, we'll convert to empty str later. None means no leading
+        # substring found, empty string could mean we matched a literal empty string in lox.
+        substring = reserved_substring = None
+        if token_type:
+            substring = token_type.longest_leading_substring(text)
         if reserved_token_type:
-            reserved_substring = reserved_token_type.longest_leading_substring(text) or ""
-        else:
-            reserved_substring = ""
-        import pdb; pdb.set_trace() # TODO rm
-        if not (substring or reserved_substring):
+            reserved_substring = reserved_token_type.longest_leading_substring(text)
+        if substring is None and reserved_substring is None:
             raise AssertionError(
                 f"Unexpected behavior: inferred token_type={token_type} but could not find a valid "
                 f"leading substring from {text!r}."
             )
-        if len(reserved_substring) >= len(substring):
+        
+        substring = substring or ""
+        reserved_substring = reserved_substring or ""
+        if reserved_token_type and len(reserved_substring) >= len(substring):
             longest_substring = reserved_substring
             resolved_token_type = reserved_token_type
         else:
