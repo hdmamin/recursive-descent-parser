@@ -369,13 +369,8 @@ class Block(Statement):
         with INTERPRETER.new_env(**kwargs) as env:
             for statement in self.statements:
                 try:
-                    # statement.evaluate(env=env)
-                    tmp = statement.evaluate(env=env) # TODO rm
-                    print('>>> tmp', tmp)
+                    statement.evaluate(env=env)
                 except Return as e:
-                    print('>>> RAISING ERROR FROM block return', e.value, self.statements, id(self), env.state) # TODO rm
-                    # TODO testing raising
-                    # return e.value
                     raise e
 
     
@@ -489,15 +484,11 @@ class LoxFunction(LoxCallable):
         # be a python val, not a lox var. So I think we need to resolve args/kwargs with the
         # expected params rather than calling param.evaluate. Does lox suppport both positional
         # and named args tho? gpt says positional only, let's try that for now.
-        print('in lox function evaluate')
         with INTERPRETER.new_env(**getattr(self.nonlocal_env, "state", {})) as env:
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
-            # return self.func.body.evaluate(**py_kwargs) # TODO reenable
             try:
-                tmp = self.func.body.evaluate(**py_kwargs)
-                return tmp
+                return self.func.body.evaluate(**py_kwargs)
             except Return as e:
-                print('>>> returning from lox function', e.value)
                 return e.value
 
     def __str__(self) -> str:

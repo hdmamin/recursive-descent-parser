@@ -542,7 +542,36 @@ X -stage #62: return statements
 -low effort tasks:
     -add more low effort task bullets
 -stage #63: higher order functions
-	-ui tests pass
-        -4
+	X -ui tests pass
+        X -4
             > reminder: think I resolved the closure issue but now encountering the problem that returning from a nested block does not cause us to return from the outer block. Need to figure out how to make this work for arbitrarily deep levels of nesting.
-	-`make test_functions_w_jlox` stages 1-6 pass
+	X -`make test_functions_w_jlox` stages 1-6 pass
+	-prev rounds' tests still pass
+		X -scanning
+		X -parsing
+		X -evaluation
+		-statements
+			> uh oh, this fails now. Lexing error, maybe tied to empty str?
+		-control_flow
+			> uh oh, this fails now. Lexing error, maybe tied to empty str?
+
+8/8/25 sat
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #63: higher order functions
+	-fix jlox tests:
+		> Both seem to be lexing error, maybe tied to empty str? Test case is loaded in test_case.lox.
+		-statements
+		-control_flow
+			> uh oh, this fails now. Lexing error, maybe tied to empty str?
+-stage #64: runtime errors
+	-skim ui/book to see what I need to implement
+	-ui tests pass
+	-`make test_functions_w_jlox` stages 1-7 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow

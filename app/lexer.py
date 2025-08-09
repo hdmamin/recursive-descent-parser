@@ -69,7 +69,7 @@ class TokenType:
                 )
             self.longest_leading_substring = self._default_longest_leading_substring
 
-    def _default_longest_leading_substring(self, text: str) -> str:
+    def _default_longest_leading_substring(self, text: str) -> Optional[str]:
         """The default way to get the longest leading substring for lexemes whose content is known
         upfront, e.g. '>=' or '!'.
         """
@@ -471,6 +471,7 @@ class Token:
             reserved_substring = reserved_token_type.longest_leading_substring(text) or ""
         else:
             reserved_substring = ""
+        import pdb; pdb.set_trace() # TODO rm
         if not (substring or reserved_substring):
             raise AssertionError(
                 f"Unexpected behavior: inferred token_type={token_type} but could not find a valid "
