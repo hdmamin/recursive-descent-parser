@@ -559,10 +559,36 @@ X -stage #63: higher order functions
 ----------
 -low effort tasks:
     -add more low effort task bullets
--stage #64: runtime errors
+X -stage #64: runtime errors
+	X -skim ui/book to see what I need to implement
+	X -ui tests pass
+		> spent a lot of time on ridiculous metaclass, but kinda fun /shrug.
+		X -0
+		X -1
+		X -2
+		X -3
+		X -4
+	X -`make test_functions_w_jlox` stages 1-7 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+
+8/9/25 sun
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #65: function scope (new stage!)
 	-skim ui/book to see what I need to implement
 	-ui tests pass
-	-`make test_functions_w_jlox` stages 1-7 pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_functions_w_jlox` stages 1-8 pass
 	-prev rounds' tests still pass
 		-scanning
 		-parsing

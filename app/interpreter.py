@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime
+from functools import wraps
 from typing import Any, Optional, Union
 
 from app.environment import GLOBAL_ENV, Environment
@@ -193,7 +194,47 @@ def clock() -> int:
     return int(datetime.now().timestamp())
 
 
-class LoxCallable(Expression):
+class DefinesInstanceAttrs(type):
+    """Metaclass that forces instances of its target classes to define one or more attributes.
+    Different from abstractmethod/property combo in that the attr value can be different for each
+    instance. Subclasses can provide additional expected attrs but not remove parents' expected
+    attrs:
+
+    class Foo(metaclass=DefinesInstanceAttrs, expected=['a', 'b']):
+        a = 1
+        def __init__(self, b):
+            self.b = b
+
+    # Note that this must now contain attrs ['a', 'b', 'c'] (the union of parent and child
+    # "expected" attrs).
+    class Bar(Foo, expected=['c'])  
+        c = 9
+    """
+
+    __attr_name__ = "__expected__"
+
+    def __new__(mcls, name, bases, namespace, expected: Optional[list[str]] = None):
+        new_cls = super().__new__(mcls, name, bases, namespace)
+        expected = list(set(sum(
+            [getattr(base, mcls.__attr_name__, []) for base in bases], expected or []
+        )))
+        new_cls.__expected__ = expected
+        standard_init = new_cls.__init__
+
+        @wraps(standard_init)
+        def custom_init(self, *args, **kwargs):
+            standard_init(self, *args, **kwargs)
+            missing_attrs = [
+                exp_name for exp_name in getattr(self, mcls.__attr_name__)
+                if not hasattr(self, exp_name)
+            ]
+            if missing_attrs:
+                raise AttributeError(f"class has metaclass={mcls.__name__} and is missing required attr(s): {missing_attrs}")
+
+        new_cls.__init__ = custom_init
+        return new_cls
+
+class LoxCallable(Expression, metaclass=DefinesInstanceAttrs, expected=["arity"]):
     """LoxCallable().evaluate() returns a python object.
 
     Example
@@ -205,6 +246,7 @@ class LoxCallable(Expression):
 
 
 class NativeClock(LoxCallable):
+    arity = 0
 
     def evaluate(self, *args) -> float:
         """Returns a python object (current time in seconds)."""
@@ -230,6 +272,15 @@ class Call(Expression):
     def evaluate(self):
         py_args = [arg.evaluate() for arg in self.args]
         lox_callable = self.callee.evaluate()
+        if not isinstance(lox_callable, LoxCallable):
+            raise RuntimeError(
+                f"Can only call functions and classes.\n[line {self.right_parens.line}]"
+            )
+        if len(py_args) != lox_callable.arity:
+            raise RuntimeError(
+                f"Expected {lox_callable.arity} arguments but got {len(py_args)}.\n"
+                f"[line {self.right_parens.line}]"
+            )
         return lox_callable.evaluate(*py_args)
 
 
@@ -476,6 +527,7 @@ class LoxFunction(LoxCallable):
     def __init__(self, func: "Function", nonlocal_env: Optional[Environment] = None):
         self.func = func
         self.nonlocal_env = nonlocal_env
+        self.arity = len(self.func.params)
 
     def evaluate(self, *args, **kwargs):
         # TODO: currently py_kwargs line errors out bc it's trying to evaluate the param variable
