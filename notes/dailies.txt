@@ -582,12 +582,30 @@ X -stage #64: runtime errors
     -add more low effort task bullets
 -stage #65: function scope (new stage!)
 	-skim ui/book to see what I need to implement
-	-ui tests pass
-		-0
-		-1
-		-2
-		-3
+	~ -ui tests pass
+		X -0
+		X -1
+		X -2
+		X -3
 		-4
+			> last 2 printed lines are wrong. Found this a bit brain exploding but I think the gist of it is: printBoth is defined such that it will always reference the global vars x and y. Creating and modifying vars inside our block does NOT modify the globals. So this has no impact on the func call at the end. In test case 1 (which initially seemed like inconsistent behavior with test case 4 to me), things only appear to work differently, what's really happening is the first print inside printAndModify prints the global val, the second prints the local val, and nothing in printAndModify modifies the global var (bit confusing name...). Uf we call print a after the func call, it's actually still 68.
+	-`make test_functions_w_jlox` stages 1-8 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+
+8/10/25 mon
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #65: function scope (new stage!)
+	-skim ui/book to see what I need to implement
+	-ui tests pass
+		-4
+			> last 2 printed lines are wrong. Found this a bit brain exploding but I think the gist of it is: printBoth is defined such that it will always reference the global vars x and y. Creating and modifying vars inside our block does NOT modify the globals. So this has no impact on the func call at the end. In test case 1 (which initially seemed like inconsistent behavior with test case 4 to me), things only appear to work differently, what's really happening is the first print inside printAndModify prints the global val, the second prints the local val, and nothing in printAndModify modifies the global var (bit confusing name...). Uf we call print a after the func call, it's actually still 68.
 	-`make test_functions_w_jlox` stages 1-8 pass
 	-prev rounds' tests still pass
 		-scanning
