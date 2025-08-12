@@ -601,13 +601,33 @@ X -stage #64: runtime errors
 -----------
 -low effort tasks:
     -add more low effort task bullets
--stage #65: function scope (new stage!)
-	-skim ui/book to see what I need to implement
-	-ui tests pass
-		-4
+X -stage #65: function scope (new stage!)
+	X -skim ui/book to see what I need to implement
+	X -ui tests pass
+		X -4
 			> last 2 printed lines are wrong. Found this a bit brain exploding but I think the gist of it is: printBoth is defined such that it will always reference the global vars x and y. Creating and modifying vars inside our block does NOT modify the globals. So this has no impact on the func call at the end. In test case 1 (which initially seemed like inconsistent behavior with test case 4 to me), things only appear to work differently, what's really happening is the first print inside printAndModify prints the global val, the second prints the local val, and nothing in printAndModify modifies the global var (bit confusing name...). If we call print a after the func call, it's actually still 68.
 			> seems like we need to make our func check the global state before the parent/caller state. Think we prob need to set this as func definition time, so in Function.init or Function.evaluate? Or maybe in LoxFunction.evaluate, I need to actually execute in nonlocal_env itself vs passing its state to new_env? That doesn't seem quite right, maybe I need to allow passing a parent env to new_env and make new_env a child of nonlocal_env. UPDATE: nonlocal env is only used when writing closures I think, does not affect this case.
-	-`make test_functions_w_jlox` stages 1-8 pass
+	X -`make test_functions_w_jlox` stages 1-8 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+
+8/11/25 tues
+------------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #66: closures (new stage! last in functions section)
+	-skim ui/book to see what I need to implement
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_functions_w_jlox` stages 1-9 pass
 	-prev rounds' tests still pass
 		-scanning
 		-parsing

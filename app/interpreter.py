@@ -536,7 +536,8 @@ class LoxFunction(LoxCallable):
         # be a python val, not a lox var. So I think we need to resolve args/kwargs with the
         # expected params rather than calling param.evaluate. Does lox suppport both positional
         # and named args tho? gpt says positional only, let's try that for now.
-        with INTERPRETER.new_env(**getattr(self.nonlocal_env, "state", {})) as env:
+        with INTERPRETER.new_env(parent=self.func.definition_env,
+                                 **getattr(self.nonlocal_env, "state", {})) as env:
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
                 return self.func.body.evaluate(**py_kwargs)
@@ -558,6 +559,7 @@ class Function(Statement):
         self.name = name
         self.params = params
         self.body = body
+        self.definition_env = INTERPRETER.env
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
         # Returns a LoxFunction object, NOT the result of calling the function.
@@ -600,13 +602,13 @@ class Interpreter:
             self.env.update_state(name, func, is_declaration=True)
 
     @contextmanager
-    def new_env(self, **kwargs):
+    def new_env(self, parent: Optional[Environment] = None, **kwargs):
         # TODO: trying to allow passing in kwargs to allow LoxFunction to provide args in the new
         # env that its body (Block) will create. atm we assume kwargs map name (str) to val (python
         # obj).
         prev_env = self.env
         try:
-            self.env = Environment(parent=prev_env)
+            self.env = Environment(parent=parent or prev_env)
             for name, val in kwargs.items():
                 self.env.update_state(name, val, is_declaration=True)
             yield self.env
