@@ -639,19 +639,19 @@ X -stage #66: closures (new stage! last in functions section)
 -----------
 -low effort tasks:
     -add more low effort task bullets
--stage #66: closures (new stage! last in functions section)
-	-skim ui/book to see what I need to implement
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	! -skim ui/book to see what I need to implement
 	-ui tests pass
 		-0
 		-1
 		-2
 		-3
 		-4
-	-`make test_functions_w_jlox` stages 1-9 pass
+	-`make test_resolving_w_jlox` stage 1/4 pass
 	-prev rounds' tests still pass
 		-scanning
 		-parsing
 		-evaluation
 		-statements
 		-control_flow
--stage #67: closures (new stage! last in functions section)
+		-functions
