@@ -529,6 +529,23 @@ class LoxFunction(LoxCallable):
         self.nonlocal_env = nonlocal_env
         self.arity = len(self.func.params)
 
+        # TODO rm
+        # print("LoxFunction", self.func.name.lexeme)
+        # if nonlocal_env:
+        #     print('\tnonlocal_env:', id(nonlocal_env), nonlocal_env.state)
+        #     tmp = nonlocal_env
+        #     while tmp.parent:
+        #         print('parent-id:', id(tmp.parent))
+        #         tmp = tmp.parent
+        #     if nonlocal_env.parent:
+        #         print('\tnonlocal_env.parent:', id(nonlocal_env.parent), nonlocal_env.parent.state)
+        # else:
+        #     print("\tnonlocal_env=None")
+        # if self.func.definition_env:
+        #     print('\tdefinition_env:', id(self.func.definition_env), self.func.definition_env.state)
+        # else:
+        #     print('\tdefinition_env=None')
+
     def evaluate(self, *args, **kwargs):
         # TODO: currently py_kwargs line errors out bc it's trying to evaluate the param variable
         # in the scope that contains the function and we have not defined this as anything. BUT
@@ -536,8 +553,10 @@ class LoxFunction(LoxCallable):
         # be a python val, not a lox var. So I think we need to resolve args/kwargs with the
         # expected params rather than calling param.evaluate. Does lox suppport both positional
         # and named args tho? gpt says positional only, let's try that for now.
-        with INTERPRETER.new_env(parent=self.func.definition_env,
-                                 **getattr(self.nonlocal_env, "state", {})) as env:
+        # print("LoxFunction.EVALUATE", self.func.name, 'nonlocal_env:', id(self.nonlocal_env), getattr(self.nonlocal_env, 'state', {})) # TODO rm
+        # with INTERPRETER.new_env(parent=self.func.definition_env,
+        #                          **getattr(self.nonlocal_env, "state", {})) as env:
+        with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
                 return self.func.body.evaluate(**py_kwargs)
@@ -560,6 +579,7 @@ class Function(Statement):
         self.params = params
         self.body = body
         self.definition_env = INTERPRETER.env
+        # print(name, id(self.definition_env), self.definition_env.state) # TODO rm
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
         # Returns a LoxFunction object, NOT the result of calling the function.

@@ -455,7 +455,7 @@ X -new stage #61: syntax errors
 		-statements
 		-control_flow
 
-8/2/25 sun
+8/3/25 sun
 ----------
 -low effort tasks:
     -add more low effort task bullets
@@ -483,7 +483,7 @@ X -stage #62: return statements
         -4
 	-`make test_functions_w_jlox` stages 1-6 pass
 
-8/3/25 mon
+8/4/25 mon
 ----------
 -low effort tasks:
     -add more low effort task bullets
@@ -496,7 +496,7 @@ X -stage #62: return statements
         -4
 	-`make test_functions_w_jlox` stages 1-6 pass
 
-8/4/25 tues
+8/5/25 tues
 -----------
 -low effort tasks:
     -add more low effort task bullets
@@ -511,7 +511,7 @@ X -stage #62: return statements
 			> undefined variable min, basically looks like outer scope params are not being exposed in inner scope.
 	-`make test_functions_w_jlox` stages 1-6 pass
 
-8/5/25 wed
+8/6/25 wed
 ----------
 -low effort tasks:
     -add more low effort task bullets
@@ -524,7 +524,7 @@ X -stage #62: return statements
 			> UPDATE: some notes in misc.txt. Think it's time to dive back in to the book to see if they provide guidance on implementation.
 	-`make test_functions_w_jlox` stages 1-6 pass
 
-8/6/25 thurs
+8/7/25 thurs
 ------------
 -low effort tasks:
     -add more low effort task bullets
@@ -537,7 +537,7 @@ X -stage #62: return statements
             > update: good progress, think I resolved the closure issue. But now encountering the problem that returning from a nested block does not cause us to return from the outer block. Need to figure out how to make this work for arbitrarily deep levels of nesting.
 	-`make test_functions_w_jlox` stages 1-6 pass
 
-8/7/25 fri
+8/8/25 fri
 ----------
 -low effort tasks:
     -add more low effort task bullets
@@ -555,7 +555,7 @@ X -stage #63: higher order functions
 			> update: yep, new leading_substring logic broke empty str lexing. Fixed now.
 		X -control_flow
 
-8/8/25 sat
+8/9/25 sat
 ----------
 -low effort tasks:
     -add more low effort task bullets
@@ -576,8 +576,8 @@ X -stage #64: runtime errors
 		-statements
 		-control_flow
 
-8/9/25 sun
-----------
+8/10/25 sun
+-----------
 -low effort tasks:
     -add more low effort task bullets
 -stage #65: function scope (new stage!)
@@ -597,7 +597,7 @@ X -stage #64: runtime errors
 		-statements
 		-control_flow
 
-8/10/25 mon
+8/11/25 mon
 -----------
 -low effort tasks:
     -add more low effort task bullets
@@ -615,8 +615,28 @@ X -stage #65: function scope (new stage!)
 		-statements
 		-control_flow
 
-8/11/25 tues
+8/12/25 tues
 ------------
+-low effort tasks:
+    -add more low effort task bullets
+X -stage #66: closures (new stage! last in functions section)
+	! -skim ui/book to see what I need to implement
+	X -ui tests pass
+		X -0
+		X -1
+		X -2
+		X -3
+		X -4
+	X -`make test_functions_w_jlox` stages 1-9 pass
+	X -prev rounds' tests still pass
+		X -scanning
+		X -parsing
+		X -evaluation
+		X -statements
+		X -control_flow
+
+8/13/25 wed
+-----------
 -low effort tasks:
     -add more low effort task bullets
 -stage #66: closures (new stage! last in functions section)
@@ -634,3 +654,4 @@ X -stage #65: function scope (new stage!)
 		-evaluation
 		-statements
 		-control_flow
+-stage #67: closures (new stage! last in functions section)

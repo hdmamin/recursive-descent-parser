@@ -15,3 +15,15 @@ Issue
 - so basically, we should be defining a var in that env when we CREATED the filter by calling the outer func. But apparently that's not happening, OR is not persisting.
 - update: I *think* the empty env is actually corresponding to a while block (though would if not create a block too? maybe not). And then current_env (top row) is for the function call f(n), i.e. greaterThanX(0). So maybe mentally I've kind of been modeling envs as a linked list but it's really more of a tree, and the env where we set min=55 is in some leaf node we're not traversing.
 	- another framing: maybe envs are kind of ephemeral and so we need to do something different/additional to bind args to funcs?
+
+8/12/25 tues
+------------
+trying to understand what's happening with closures
+-when we execute the inner func, I notice we set i twice. First with declaration=True, then False.
+-I believe the first of those calls is happening inside Interpreter.new_env() bc LoxFunction.evaluate unpacks nonlocal_env.state into new_env creation call.
+	-somewhat oddly, this also means we define the inner func itself in its nonlocal env when executing it - maybe this is fine, but does feel a little strange.
+-I think this means that when we later call update_state to increment i, we encounter i in the current state and simply update it there, when we really want to update it in the nonlocal env's state.
+-so we need to NOT set nonlocal env vars in the new func env itself.
+-however, we're already passing in definition_env as the parent. And we do need to attach the nonlocal env somehow.
+	-can we maybe view nonlocal env as the child of definition_env? If so maybe we can enforce that chain of envs?
+
