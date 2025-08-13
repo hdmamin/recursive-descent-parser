@@ -52,14 +52,12 @@ class Environment:
         """
         if is_declaration:
             self.state[name] = val
-            # if name == 'i': print('env.update', id(self), name, val) # TODO rm
             return
 
         env = self
         while True:
             if name in env.state:
                 env.state[name] = val
-                # if name == 'i': print('env.update (not declaration)', id(self), name, val) # TODO rm
                 return
             elif env.parent:
                 env = env.parent
