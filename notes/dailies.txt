@@ -640,7 +640,7 @@ X -stage #66: closures (new stage! last in functions section)
 -low effort tasks:
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
-	! -skim ui/book to see what I need to implement
+	-skim ui/book to see what I need to implement
 	-ui tests pass
 		-0
 		-1
