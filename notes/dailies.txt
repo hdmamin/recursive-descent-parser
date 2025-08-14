@@ -640,7 +640,30 @@ X -stage #66: closures (new stage! last in functions section)
 -low effort tasks:
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	~ -skim ui/book to see what I need to implement
+		> still wrapping my head around intended behavior, seems like we're undoing all the work I just did in closures (which already felt like undoing the work I did for higher order funcs) :/
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+
+8/14/25 thurs
+-------------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	-skim ui/book to see what I need to implement
+		> still wrapping my head around intended behavior, seems like we're undoing all the work I just did in closures (which already felt like undoing the work I did for higher order funcs) :/
 	-ui tests pass
 		-0
 		-1
