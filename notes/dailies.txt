@@ -664,6 +664,32 @@ X -stage #66: closures (new stage! last in functions section)
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	-skim ui/book to see what I need to implement
 		> still wrapping my head around intended behavior, seems like we're undoing all the work I just did in closures (which already felt like undoing the work I did for higher order funcs) :/
+		> read a bit more, still not really getting closer to figuring out how to approach this. Peeked at some future stages and I don't think skipping ahead even temporarily will work, need to barrel through.
+		> learnings/realizations from today's chat: scope maps varname to boolean, not var value. Bool indicates whether the var has been initialized but not clear to me yet when vars are not initialized. Asked gpt for some pseudocode as an illustrative tool and seems like I will need to implement a new resolve() method for each statement/expr/decl subclass. That at least gives me some direction to fumble around in.
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+
+8/15/25 fri
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	-skim ui/book to see what I need to implement
+		> still wrapping my head around intended behavior, seems like we're undoing all the work I just did in closures (which already felt like undoing the work I did for higher order funcs) :/
+		> read a bit more, still not really getting closer to figuring out how to approach this. Peeked at some future stages and I don't think skipping ahead even temporarily will work, need to barrel through.
+		> learnings/realizations from today's chat: scope maps varname to boolean, not var value. Bool indicates whether the var has been initialized but not clear to me yet when vars are not initialized. Asked gpt for some pseudocode as an illustrative tool and seems like I will need to implement a new resolve() method for each statement/expr/decl subclass. That at least gives me some direction to fumble around in.
 	-ui tests pass
 		-0
 		-1
