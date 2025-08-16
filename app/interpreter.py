@@ -1,3 +1,4 @@
+from collections import ABC, abstractmethod
 from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
@@ -6,6 +7,7 @@ from typing import Any, Optional, Union
 from app.environment import GLOBAL_ENV, Environment
 from app.exceptions import ParsingError
 from app.lexer import TokenTypes, ReservedTokenTypes, Token
+from app.resolution import Resolver
 from app.utils import truthy, is_number, SENTINEL
 
 
@@ -328,7 +330,7 @@ class Assign(Expression):
         return self.val
 
 
-class Statement:
+class Statement(ABC):
     """Statements 'do things' that have side effects, but do not return a value.
     This is in contrast to expressions, which compute and return a value.
 
@@ -354,6 +356,11 @@ class Statement:
     printStmt      → "print" expression ";" ;
     varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
     """
+
+    @abstractmethod
+    def resolve(self):
+        """Used by Resolver to determine which scope a variable is referring to at parse time.
+        """
 
 
 class ExpressionStatement(Statement):
@@ -423,6 +430,10 @@ class Block(Statement):
                     statement.evaluate(env=env)
                 except Return as e:
                     raise e
+
+    def resolve(self):
+        for statement in self.statements:
+            statement.resolve()
 
     
 class While(Statement):
@@ -593,6 +604,7 @@ class Interpreter:
 
     def __init__(self):
         self.env = GLOBAL_ENV
+        self.resolver = Resolver()
         for name, func in BUILTIN_FUNCTIONS.items():
             self.env.update_state(name, func, is_declaration=True)
 
