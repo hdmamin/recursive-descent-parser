@@ -407,6 +407,12 @@ class VariableDeclaration(Statement):
         self.value = self.expr.evaluate()
         env.update_state(self.name, self.value, is_declaration=True)
 
+    def resolve(self):
+        INTERPRETER.resolver.declare(self.name)
+        if self.expr:
+            self.expr.resolve()
+        INTERPRETER.resolver.define(self.name)
+
 
 class Block(Statement):
     """Section of code enclosed in curly braces that defines a new temporary scope.
