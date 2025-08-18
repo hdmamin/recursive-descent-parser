@@ -737,7 +737,31 @@ X -stage #66: closures (new stage! last in functions section)
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	-resolve method for (not super confident in which need it at this point but this is my impression):
-		-Expression (Varible?)
+		X -Expression (Variable?)
+		-others?
+			> looks like I need to do Assign (or something for var assignment)
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+
+8/18/25 sun
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	-resolve method for (not super confident in which need it at this point but this is my impression):
+		-Assign
 		-others?
 	-ui tests pass
 		-0

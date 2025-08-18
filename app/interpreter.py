@@ -1,4 +1,3 @@
-from collections import ABC, abstractmethod
 from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
@@ -22,6 +21,10 @@ class Expression:
     
     def __str__(self) -> str:
         return f"{type(self)}()"
+
+    def resolve(self):
+        """Used by Resolver to determine which scope a variable is referring to at parse time.
+        """
 
 
 class Literal(Expression):
@@ -60,6 +63,17 @@ class Variable(Expression):
         ReservedTokenTypes.NIL.
         """
         return self.identifier.evaluate()
+
+    def resolve(self):
+        if (
+            INTERPRETER.resolver.scopes and not
+            INTERPRETER.resolver.scopes.get(self.identifier.lexeme, True)
+        ):
+            # TODO: a little fuzzy on what's going on here, why is this considered inside an
+            # "initializer"? No code changes needed per se, but would be good to understand better.
+            raise SyntaxError("Can't read local variable in its own initializer.")
+
+        INTERPRETER.resolver.resolve_local(self.identifier.lexeme)
 
 
 class Unary(Expression):
@@ -330,7 +344,7 @@ class Assign(Expression):
         return self.val
 
 
-class Statement(ABC):
+class Statement:
     """Statements 'do things' that have side effects, but do not return a value.
     This is in contrast to expressions, which compute and return a value.
 
@@ -357,7 +371,6 @@ class Statement(ABC):
     varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
     """
 
-    @abstractmethod
     def resolve(self):
         """Used by Resolver to determine which scope a variable is referring to at parse time.
         """
