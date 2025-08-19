@@ -106,6 +106,8 @@ class Unary(Expression):
 
         raise ValueError("Unexpected operator in Unary: {self.val.token_type}")
 
+    def resolve(self):
+        self.right.resolve()
 
 class Binary(Expression):
     """
@@ -185,6 +187,10 @@ class Binary(Expression):
 
         raise ParsingError(f"Unexpected operator in Binary: {self.val.token_type}")
 
+    def resolve(self):
+        self.left.resolve()
+        self.right.resolve()
+
 
 class Logical(Expression):
 
@@ -203,6 +209,10 @@ class Logical(Expression):
     def __str__(self) -> str:
         # TODO check if this is format book wants
         return f"({self.op.non_null_literal} {self.left} {self.right})"
+
+    def resolve(self):
+        self.left.resolve()
+        self.right.resolve()
 
 
 def clock() -> int:
@@ -299,6 +309,10 @@ class Call(Expression):
             )
         return lox_callable.evaluate(*py_args)
 
+    def resolve(self):
+        self.callee.resolve()
+        for arg in self.args:
+            arg.resolve()
 
 class Grouping(Expression):
     """
@@ -318,6 +332,9 @@ class Grouping(Expression):
         ReservedTokenTypes.NIL.
         """
         return self.val.evaluate()
+
+    def resolve(self):
+        self.val.resolve()
 
 
 class Assign(Expression):
@@ -342,6 +359,10 @@ class Assign(Expression):
         self.val = self.expr.evaluate()
         env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
         return self.val
+
+    def resolve(self):
+        self.expr.resolve()
+        INTERPRETER.resolver.resolve_local(self.name.lexeme)
 
 
 class Statement:
@@ -387,6 +408,9 @@ class ExpressionStatement(Statement):
     def evaluate(self, *arg, **kwargs) -> None:
         self.expr.evaluate()
 
+    def resolve(self):
+        self.expr.resolve()
+
 
 class PrintStatement(Statement):
     
@@ -422,6 +446,8 @@ class VariableDeclaration(Statement):
 
     def resolve(self):
         INTERPRETER.resolver.declare(self.name)
+        # TODO is this necessary? Book does this but I type hinted expr as non-optional in init.
+        # Probably the type hint is just wrong bc I do remember declaring vars without a value works.
         if self.expr:
             self.expr.resolve()
         INTERPRETER.resolver.define(self.name)
@@ -470,6 +496,10 @@ class While(Statement):
         # pass without doing this) but good to confirm.
         while truthy(self.condition.evaluate()):
             self.statement.evaluate()
+
+    def resolve(self):
+        self.condition.resolve()
+        self.statement.resolve()
 
 
 class For(Statement):
@@ -528,6 +558,12 @@ class IfStatement(Statement):
             res += f" {self.other_value}"
         return res + ")"
 
+    def resolve(self):
+        self.condition.resolve()
+        self.value.resolve()
+        if self.other_value:
+            self.other_value.resolve()
+
 
 class ReturnStatement(Statement):
     
@@ -546,6 +582,10 @@ class ReturnStatement(Statement):
     def __str__(self) -> str:
         # TODO prob need to change this format, check what book wants here if it says
         return f"Return({self.expr})"
+
+    def resolve(self):
+        if self.expr:
+            self.expr.resolve()
 
 
 class LoxFunction(LoxCallable):
@@ -591,6 +631,11 @@ class Function(Statement):
         func = LoxFunction(self, kwargs.get("env", None))
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func
+
+    def resolve(self):
+        INTERPRETER.resolver.declare(self.name.lexeme)
+        INTERPRETER.resolver.define(self.name.lexeme)
+        INTERPRETER.resolver.resolve_function(self)
 
 
 def boolean_lexeme(val: bool) -> str:

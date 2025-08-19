@@ -755,14 +755,17 @@ X -stage #66: closures (new stage! last in functions section)
 		-control_flow
 		-functions
 
-8/18/25 sun
+8/18/25 mon
 -----------
 -low effort tasks:
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
-	-resolve method for (not super confident in which need it at this point but this is my impression):
-		-Assign
-		-others?
+	~ -resolve method for (not super confident in which need it at this point but this is my impression):
+		X -Assign
+		X -function declarations
+		X -others?
+			> turns out we do need a resolve method for all expr/statement classes but most were super simple. Haven't done one for LoxCallable or LoxFunction yet bc book didn't but can confirm next time.
+	-make use of resolver somehow? (like I've defined a bunch of methods but need to actually start the chain somewhere)
 	-ui tests pass
 		-0
 		-1
@@ -777,3 +780,26 @@ X -stage #66: closures (new stage! last in functions section)
 		-statements
 		-control_flow
 		-functions
+
+8/19/25 tues
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	-confirm whether LoxFunction and/or LoxCallable need resolve methods
+	-make use of resolver somehow? (I've defined a bunch of methods but need to actually start the chain somewhere. Think this is what book section 11.4 does)
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage

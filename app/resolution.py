@@ -48,5 +48,15 @@ class Resolver:
                 self.record_depth(name, i)
                 return
 
+    def resolve_function(self, func: "Function"):
+        with self.scope():
+            for param in func.params:
+                self.declare(param.lexeme)
+                self.define(param.lexeme)
+            # TODO: translating from book here, not sure if need to call body resolve method or
+            # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
+            # going with the former for now.
+            func.body.resolve()
+
     def record_depth(self, name, depth: int):
         self.depths[name] = depth
