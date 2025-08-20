@@ -595,6 +595,8 @@ class LoxFunction(LoxCallable):
     """
 
     def __init__(self, func: "Function", nonlocal_env: Optional[Environment] = None):
+        # func typehint is in quotes because we haven't defined Function yet, and Function also uses
+        # LoxFunction as a type hint so moving this class down wouldn't resolve the issue.
         self.func = func
         self.nonlocal_env = nonlocal_env
         self.arity = len(self.func.params)
@@ -668,9 +670,11 @@ class Interpreter:
 
     def __init__(self):
         self.env = GLOBAL_ENV
+        self.locals = {}
         self.resolver = Resolver()
         for name, func in BUILTIN_FUNCTIONS.items():
             self.env.update_state(name, func, is_declaration=True)
+
 
     @contextmanager
     def new_env(self, parent: Optional[Environment] = None, **kwargs):
@@ -685,6 +689,9 @@ class Interpreter:
             yield self.env
         finally:
             self.env = prev_env
+
+    def resolve(self, expr: Expression, depth: int):
+        self.locals[expr] = depth
 
 
 INTERPRETER = Interpreter()

@@ -786,7 +786,8 @@ X -stage #66: closures (new stage! last in functions section)
 -low effort tasks:
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
-	-confirm whether LoxFunction and/or LoxCallable need resolve methods
+	X -confirm whether LoxFunction and/or LoxCallable need resolve methods
+		> LoxCallable is never directly instantiated. LoxFunction is, as is NativeClock. gpt claims I don't need a resolve method for LoxFunction bc it's a runtime obj and by the time we call it, resolution is done. So I think that applies to its parents/siblings as well.
 	-make use of resolver somehow? (I've defined a bunch of methods but need to actually start the chain somewhere. Think this is what book section 11.4 does)
 	-ui tests pass
 		-0
