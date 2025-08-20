@@ -67,7 +67,7 @@ class Environment:
                     f"Cannot assign a value to var {name!r} because it does not exist."
                 )
 
-    def read_state(self, name: str) -> None:
+    def read_state(self, name: str) -> Any:
         """Read the *current* value of a variable given current environment state. This is a
         resolved python value (vs set/get, which work with unresolved VariableDeclarations).
         Just a convenience method to avoid making the user reference nested attrs.
@@ -78,6 +78,10 @@ class Environment:
             if self.parent:
                 return self.parent.read_state(name)
             raise e
+
+    def read_state_at(self, name: str, depth: int) -> Any:
+        # TODO
+        pass
 
     # TODO: maybe need to update to use state attr now? Not sure if variables attr still being used.
     def contains(self, name: str) -> bool:

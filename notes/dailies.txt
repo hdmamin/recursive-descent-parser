@@ -788,7 +788,31 @@ X -stage #66: closures (new stage! last in functions section)
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	X -confirm whether LoxFunction and/or LoxCallable need resolve methods
 		> LoxCallable is never directly instantiated. LoxFunction is, as is NativeClock. gpt claims I don't need a resolve method for LoxFunction bc it's a runtime obj and by the time we call it, resolution is done. So I think that applies to its parents/siblings as well.
-	-make use of resolver somehow? (I've defined a bunch of methods but need to actually start the chain somewhere. Think this is what book section 11.4 does)
+	~ -make use of resolver somehow? (I've defined a bunch of methods but need to actually start the chain somewhere. Think this is what book section 11.4 does)
+		> UPDATE: new Interpreter.resolve method, tentatively updated how Variable gets resolved (implemented in Token.evaluate). Need to define new Environment.read_state_at method, see book for help.
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+8/20/25 wed
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	> status: new Interpreter.resolve method, tentatively updated how Variable gets resolved (implemented in Token.evaluate). Initially thought I had to update all expr/stmt evaluate methods but actually sounds like maybe unnecessary bc my Token.evaluate update handles all that?
+	-Environment.read_state_at method (see book for help)
 	-ui tests pass
 		-0
 		-1
