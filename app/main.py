@@ -65,6 +65,7 @@ def main():
         # wants us to exit early.
         if not lexed["success"]:
             exit(65)
+        print("parsed:", parsed)
 
         # At this point we know `parsed` exists.
         if parsed["success"]:

@@ -79,9 +79,45 @@ class Environment:
                 return self.parent.read_state(name)
             raise e
 
+    def update_state_at(self, name: str, val: Any, depth: int):
+        """Assign a value to a variable in a specific env.
+        We do not expose is_declaration param from update_state because we don't want to try the
+        parents, we just want to update the env at the specified depth.
+
+        Parameters
+        ----------
+        name : str
+            Name of variable to update.
+        var : Any
+            The value of the variable.
+        depth : int
+            Number of envs away from the current env to set the var in. E.g. depth=1 means
+            the env's parent.
+        """
+        env = self.ancestor(depth)
+        return env.update_state(name, val, is_declaration=True)
+
     def read_state_at(self, name: str, depth: int) -> Any:
-        # TODO
-        pass
+        """
+        Parameters
+        ----------
+        name : str
+            Name of variable to retrieve.
+        depth : int
+            Number of envs away from the current env to retrieve the var from. E.g. depth=1 means
+            the env's parent.
+        """
+        env = self.ancestor(depth)
+        return env.read_state(name)
+
+    def ancestor(self, depth: int) -> "Environment":
+        """Grab the n'th parent. E.g. depth=1 returns the env's parent, depth=2 returns its
+        parent's parent.
+        """
+        env = self
+        for i in range(depth):
+            env = env.parent
+        return env
 
     # TODO: maybe need to update to use state attr now? Not sure if variables attr still being used.
     def contains(self, name: str) -> bool:

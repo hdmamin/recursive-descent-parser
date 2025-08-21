@@ -812,7 +812,31 @@ X -stage #66: closures (new stage! last in functions section)
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	> status: new Interpreter.resolve method, tentatively updated how Variable gets resolved (implemented in Token.evaluate). Initially thought I had to update all expr/stmt evaluate methods but actually sounds like maybe unnecessary bc my Token.evaluate update handles all that?
-	-Environment.read_state_at method (see book for help)
+	X -Environment.read_state_at method (see book for help)
+		> also wrote update_state_at method. Book does something with globals, don't think I've implemented that yet and not totally clear what that consists of. But can get to it when it comes up.
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+8/21/25 thurs
+-------------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	> status: need to figure out where/how to run resolver.resolve(statements). Seems like book expects us to run parse and then run separately, but I've been doing either/or. Also parse and run both fail now on the open test case, argh, probably broke a ton of stuff with this section's changes.
+	-figure out where/how to call resolver.resolve()
 	-ui tests pass
 		-0
 		-1
