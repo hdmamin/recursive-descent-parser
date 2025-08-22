@@ -836,7 +836,32 @@ X -stage #66: closures (new stage! last in functions section)
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	> status: need to figure out where/how to run resolver.resolve(statements). Seems like book expects us to run parse and then run separately, but I've been doing either/or. Also parse and run both fail now on the open test case, argh, probably broke a ton of stuff with this section's changes.
-	-figure out where/how to call resolver.resolve()
+	~ -figure out where/how to call resolver.resolve()
+		> working on it, refactoring top level logic in main a bit. Still WIP.
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+8/22/25 fri
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	> status: need to figure out where/how to run resolver.resolve(statements). Seems like book expects us to run parse and then run separately, but I've been doing either/or. Also parse and run both fail now on the open test case, argh, probably broke a ton of stuff with this section's changes.
+	-finish updating command-calling logic in main (do we always want to resolve?)
+	-debug why parse is now failing
 	-ui tests pass
 		-0
 		-1

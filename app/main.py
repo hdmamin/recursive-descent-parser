@@ -3,7 +3,7 @@ import sys
 from typing import Optional
 
 from app.data_structures import ASTNode
-from app.interpreter import to_lox_dtype
+from app.interpreter import to_lox_dtype, INTERPRETER
 from app.lexer import lex
 from app.parser import Parser
 
@@ -46,13 +46,6 @@ def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
     lexed = lex(file_contents)
-    if lexed["success"] and command != "tokenize":
-        parser = Parser(lexed["tokenized"])
-        parsed = parser.parse(mode=command)
-    else:
-        # TODO: running into unterminated str errors when the closing quotes are on a different line
-        # than the opening quotes.
-        parsed = {"success": False}
 
     # Print results for codecrafters.
     if command == "tokenize":
@@ -60,12 +53,22 @@ def main():
             print(row, file=sys.stderr if row.startswith("[line") else sys.stdout)
         if not lexed["success"]:
             exit(65)
-    elif command == "parse":
+
+        return
+
+    if lexed["success"]:
+        parser = Parser(lexed["tokenized"])
+        # TODO: may need to revisit this if more modes are added but for now, every remaining mode
+        # (parse, evaluate, run) requires parsing to be run next.
+        parsed = parser.parse(mode="parse")
+    else:
+        parsed = {"success": False}
+
+    if command == "parse":
         # When tokenizer catches some errors before we reach the parsing stage, Codecrafters
         # wants us to exit early.
         if not lexed["success"]:
             exit(65)
-        print("parsed:", parsed)
 
         # At this point we know `parsed` exists.
         if parsed["success"]:
@@ -75,7 +78,13 @@ def main():
             for row in parsed["errors"]:
                 print(row, file=sys.stderr)
             exit(65)
-    elif command == "evaluate":
+
+        return
+
+    # TODO maybe only resolve if parser succeeded?
+    INTERPRETER.resolver.resolve(parsed["parsed"])
+    res = parser.parse(mode=command)
+    if command == "evaluate":
         # TODO: again, would like to consolidate and raise this only once instead of in each
         # command, but codecrafters is picky about when/where errors are raised. Clean up later.
         if not lexed["success"]:
@@ -83,7 +92,7 @@ def main():
 
         # if parsed["success"]:
         # TODO: may need to change key back to declarations, depending
-        for expr in parsed["parsed"]:
+        for expr in res["parsed"]:
             try:
                 # TODO rm one of these?
                 print(to_lox_dtype(expr.evaluate()))
@@ -98,12 +107,12 @@ def main():
         # here specifically for syntaxerrors, but not sure if we rely on that for previous chapter's
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
-        if not parsed["success"]:
-            for row in parsed["errors"]:
+        if not res["success"]:
+            for row in res["errors"]:
                 print(row, file=sys.stderr)
             exit(65)
 
-        for statement in parsed["parsed"]:
+        for statement in res["parsed"]:
             try:
                 statement.evaluate()
             except RuntimeError as e:
