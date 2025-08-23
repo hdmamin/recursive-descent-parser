@@ -79,9 +79,10 @@ def main():
                 print(row, file=sys.stderr)
             exit(65)
 
-        return
+        return locals() # TODO rm, just for debugging consistency
 
-    # TODO maybe only resolve if parser succeeded?
+    # TODO maybe only resolve if parser succeeded? Need to be a little careful to raise the right
+    # error at the right point depending on what codecrafters expects.
     INTERPRETER.resolver.resolve(parsed["parsed"])
     res = parser.parse(mode=command)
     if command == "evaluate":

@@ -1,13 +1,5 @@
 var variable = "global";
-
-{
-  fun f() {
-    print variable;
-  }
-
-  f();
-
-  var variable = "local";
-
-  f();
+fun f() {
+	print variable;
 }
+f();

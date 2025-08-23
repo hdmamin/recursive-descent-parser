@@ -862,6 +862,7 @@ X -stage #66: closures (new stage! last in functions section)
 	> status: need to figure out where/how to run resolver.resolve(statements). Seems like book expects us to run parse and then run separately, but I've been doing either/or. Also parse and run both fail now on the open test case, argh, probably broke a ton of stuff with this section's changes.
 	-finish updating command-calling logic in main (do we always want to resolve?)
 	-debug why parse is now failing
+		> parse fails even for pretty simple function call now.
 	-ui tests pass
 		-0
 		-1

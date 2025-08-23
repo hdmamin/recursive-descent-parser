@@ -506,9 +506,11 @@ class Parser:
             elif self.match(ReservedTokenTypes.VAR):
                 return self.variable_declaration()
             else:
+                print('\t>>> else', self.current_token(), self.current_token().line)
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
+            print(">>> declr", self.current_token(), self.current_token().line, 'ERROR:', e)
             self.synchronize(**kwargs)
         
     def variable_declaration(self) -> VariableDeclaration:
