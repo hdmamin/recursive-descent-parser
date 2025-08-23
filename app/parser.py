@@ -172,6 +172,13 @@ class Parser:
         if self.match(TokenTypes.IDENTIFIER):
             return Variable(token)
 
+        # TODO: in parse mode, func call is hitting this error at the semicolon after the func call.
+        # Think the primary call is triggered by self.call() and should be matching IDENTIFIER.
+        # Looks like we are matching identifier, see below with idx-3, but for some reason we must
+        # not be parsing the full expr? Or maybe we finished parsing that nd are trying to parse
+        # seimcolon as its own expr? UPDATE: looks like it's the latter, we do parse a call() for
+        # f() but then call primary again for some reason on just the semicolon.
+        print('primary', self.tokens[self.curr_idx - 3].token_type.name)
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme}.")
 
     def call(self) -> Call:
@@ -182,10 +189,12 @@ class Parser:
         Rule:
         call → primary ( "(" arguments? ")" )* ;
         """
+        print('call start', self.current_token())
         expr = self.primary()
         while self.match(TokenTypes.LEFT_PAREN):
             args = self._get_call_args()
             expr = Call(expr, self.previous_token(), args)
+        print('call', expr, type(expr)) # TODO rm
         return expr
 
     def _get_call_args(self) -> list[Expression]:
@@ -506,11 +515,10 @@ class Parser:
             elif self.match(ReservedTokenTypes.VAR):
                 return self.variable_declaration()
             else:
-                print('\t>>> else', self.current_token(), self.current_token().line)
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
-            print(">>> declr", self.current_token(), self.current_token().line, 'ERROR:', e)
+            print(">>> declr", self.current_token(), self.current_token().line, 'ERROR:', e) # TODO rm
             self.synchronize(**kwargs)
         
     def variable_declaration(self) -> VariableDeclaration:
