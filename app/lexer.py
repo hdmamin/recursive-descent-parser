@@ -424,7 +424,6 @@ class Token:
                 # value = interpreter.env.read_state(self.lexeme)
 
                 depth = interpreter.locals[self]
-                # TODO: define read_state_at
                 value = interpreter.env.read_state_at(self.identifier.lexeme, depth)
             except KeyError:
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")

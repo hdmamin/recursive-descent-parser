@@ -114,11 +114,11 @@ class Parser:
 
             try:
                 res["parsed"].append(method())
-                breakpoint() # TODO rm
+                # breakpoint() # TODO rm
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
-                breakpoint() # TODO rm
+                # breakpoint() # TODO rm
                 res["success"] = False
                 res["errors"].append(e)
                 # Avoid getting stuck in infinite loop on parsing errors that don't hit
@@ -180,7 +180,6 @@ class Parser:
         # not be parsing the full expr? Or maybe we finished parsing that nd are trying to parse
         # seimcolon as its own expr? UPDATE: looks like it's the latter, we do parse a call() for
         # f() but then call primary again for some reason on just the semicolon.
-        print('primary', self.tokens[self.curr_idx - 3].token_type.name)
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme}.")
 
     def call(self) -> Call:
@@ -191,12 +190,10 @@ class Parser:
         Rule:
         call → primary ( "(" arguments? ")" )* ;
         """
-        print('call start', self.current_token())
         expr = self.primary()
         while self.match(TokenTypes.LEFT_PAREN):
             args = self._get_call_args()
             expr = Call(expr, self.previous_token(), args)
-        print('call', expr, type(expr)) # TODO rm
         return expr
 
     def _get_call_args(self) -> list[Expression]:
@@ -447,15 +444,15 @@ class Parser:
         ExpressionStatement if mode is "run" or "evaluate"
         Expression if mode is "parse"
         """
-        print("EXPRESSION_STATEMENT", self.current_token(), self.current_token().line) # TODO
         expr = self.expression()
-        # In these modes, we don't want to enforce the trailing semicolon.
+
+        # Only 'run' mode enforces the semicolon but we should still check when in the other modes 
+        # to increment the current index if there is a semicolon, so we don't try to parse it again.
+        if not self.match(TokenTypes.SEMICOLON) and self.mode == "run":
+            raise SyntaxError("Expect ';' after expression.")
+
         if self.mode in ("parse", "evaluate"):
             return expr
-
-        # At this point we know the statement needs a semicolon next to finish it.
-        if not self.match(TokenTypes.SEMICOLON):
-            raise SyntaxError("Expect ';' after expression.")
 
         return ExpressionStatement(expr)
 
@@ -521,7 +518,6 @@ class Parser:
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
-            print(">>> declr", self.current_token(), self.current_token().line, 'ERROR:', e) # TODO rm
             self.synchronize(**kwargs)
         
     def variable_declaration(self) -> VariableDeclaration:

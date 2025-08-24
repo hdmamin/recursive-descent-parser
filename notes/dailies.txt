@@ -886,9 +886,33 @@ X -stage #66: closures (new stage! last in functions section)
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	> status: need to figure out where/how to run resolver.resolve(statements). Seems like book expects us to run parse and then run separately, but I've been doing either/or. Also parse and run both fail now on the open test case, argh, probably broke a ton of stuff with this section's changes.
-	-debug why parse is now failing
+	X -debug why parse is now failing
 		> see notes in parser.py, need to figure out why call() is running on just semicolon alone after parsing a function call rather than attaching the semicolon to the preceding expr. May need to chat a bit about expected behavior.
+		> update: not 100% sure this is right but makefile tests still pass and now the test case appears to parse correctly. Issue was that I returned early before checking semicolons in parse mode which caused us to attempt to parse the semicolon again as its own expression, bc we never incremented index past it. That should now be resolved.
 	-finish updating command-calling logic in main (do we always want to resolve?)
+	-ui tests pass
+		-0
+		-1
+		-2
+		-3
+		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+8/24/25 sun
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	> status: make parse seems ok now, now try to get make run working.
+	-get make run working on open test case
 	-ui tests pass
 		-0
 		-1

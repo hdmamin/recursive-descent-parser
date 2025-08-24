@@ -79,7 +79,7 @@ def main():
                 print(row, file=sys.stderr)
             exit(65)
 
-        return locals() # TODO rm, just for debugging consistency
+        return
 
     # TODO maybe only resolve if parser succeeded? Need to be a little careful to raise the right
     # error at the right point depending on what codecrafters expects.
@@ -129,7 +129,7 @@ def main():
 
 if __name__ == "__main__":
     # TODO: for easier debugging
-    kwargs = main()
+    kwargs = main() or {}
     from app.environment import Environment
     kwargs["env"] = Environment
     # print(kwargs['parsed'])
