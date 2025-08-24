@@ -616,8 +616,8 @@ class LoxFunction(LoxCallable):
 
 
 class Function(Statement):
-    """For parsing a user-defined function. In contrast, LoxFunction is used at runtime to execute
-    such a function.
+    """For parsing a user-defined function (FunctionDeclaration would also be a fitting name).
+    In contrast, LoxFunction is used at runtime to execute such a function.
     """
 
     # TODO: statements are defined in parser.py. Could see if we can move them to a separate module

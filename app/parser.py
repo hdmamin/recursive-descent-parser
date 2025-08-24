@@ -114,9 +114,11 @@ class Parser:
 
             try:
                 res["parsed"].append(method())
+                breakpoint() # TODO rm
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
+                breakpoint() # TODO rm
                 res["success"] = False
                 res["errors"].append(e)
                 # Avoid getting stuck in infinite loop on parsing errors that don't hit
@@ -445,6 +447,7 @@ class Parser:
         ExpressionStatement if mode is "run" or "evaluate"
         Expression if mode is "parse"
         """
+        print("EXPRESSION_STATEMENT", self.current_token(), self.current_token().line) # TODO
         expr = self.expression()
         # In these modes, we don't want to enforce the trailing semicolon.
         if self.mode in ("parse", "evaluate"):
