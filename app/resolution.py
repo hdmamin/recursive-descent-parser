@@ -40,6 +40,9 @@ class Resolver:
         if self.scopes:
             self.scopes[-1][name] = True
 
+    # TODO: we only hit this method once, for f declaration, and it passes through the NOT declared
+    # path. I think key may be that this is defined at global level and we need to handle that
+    # separately?
     def resolve_local(self, name: str):
         i = len(self.scopes) - 1
         while i >= 0:
@@ -47,6 +50,7 @@ class Resolver:
             if declared:
                 self.record_depth(name, i)
                 return
+            i -= 1
 
     def resolve_function(self, func: "Function"):
         with self.scope():
@@ -59,4 +63,8 @@ class Resolver:
             func.body.resolve()
 
     def record_depth(self, name, depth: int):
+        # TODO: this is never getting called. Also sounds like I might want to rm this and have
+        # resolve_local call INTERPRETER.resolve instead? Get the sense there is a separate bug
+        # though, seems like nothing is ever getting declared?
+        print('record_depth', name, depth) # TODO rm
         self.depths[name] = depth

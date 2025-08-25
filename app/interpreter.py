@@ -67,12 +67,11 @@ class Variable(Expression):
     def resolve(self):
         if (
             INTERPRETER.resolver.scopes and not
-            INTERPRETER.resolver.scopes.get(self.identifier.lexeme, True)
+            INTERPRETER.resolver.scopes[-1].get(self.identifier.lexeme, True)
         ):
             # TODO: a little fuzzy on what's going on here, why is this considered inside an
             # "initializer"? No code changes needed per se, but would be good to understand better.
             raise SyntaxError("Can't read local variable in its own initializer.")
-
         INTERPRETER.resolver.resolve_local(self.identifier.lexeme)
 
 
@@ -675,7 +674,6 @@ class Interpreter:
         for name, func in BUILTIN_FUNCTIONS.items():
             self.env.update_state(name, func, is_declaration=True)
 
-
     @contextmanager
     def new_env(self, parent: Optional[Environment] = None, **kwargs):
         # TODO: trying to allow passing in kwargs to allow LoxFunction to provide args in the new
@@ -692,6 +690,10 @@ class Interpreter:
 
     def resolve(self, expr: Expression, depth: int):
         self.locals[expr] = depth
+
+    def resolve_all(self, expressions: list[Expression]):
+        for expr in expressions:
+            self.resolver.resolve(expr)
 
 
 INTERPRETER = Interpreter()
