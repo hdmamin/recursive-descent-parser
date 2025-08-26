@@ -5,7 +5,9 @@ from typing import Any
 
 class Resolver:
 
-    def __init__(self):
+    # Type hint is str to avoid circular import.
+    def __init__(self, interpreter: "Interpreter"):
+        self.interpreter = interpreter
         # Stack of dict[str, bool] containing (varname, has_been_defined)
         self.scopes = deque()
         # dict[str, int] containing (varname, depth in scopes stack)
@@ -48,7 +50,9 @@ class Resolver:
         while i >= 0:
             declared = name in self.scopes[i]
             if declared:
-                self.record_depth(name, i)
+                # TODO test replacing with interpreter method
+                # self.record_depth(name, i)
+                self.interpreter.resolve(name, i)
                 return
             i -= 1
 
@@ -62,9 +66,10 @@ class Resolver:
             # going with the former for now.
             func.body.resolve()
 
-    def record_depth(self, name, depth: int):
-        # TODO: this is never getting called. Also sounds like I might want to rm this and have
-        # resolve_local call INTERPRETER.resolve instead? Get the sense there is a separate bug
-        # though, seems like nothing is ever getting declared?
-        print('record_depth', name, depth) # TODO rm
-        self.depths[name] = depth
+    # TODO trying to replace this with Interpreter.resolve
+    # def record_depth(self, name, depth: int):
+    #     # TODO: this is never getting called. Also sounds like I might want to rm this and have
+    #     # resolve_local call INTERPRETER.resolve instead? Get the sense there is a separate bug
+    #     # though, seems like nothing is ever getting declared?
+    #     print('record_depth', name, depth) # TODO rm
+    #     self.depths[name] = depth

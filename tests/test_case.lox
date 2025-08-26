@@ -1,13 +1,19 @@
-var variable = "global";
+var count = 0;
 
 {
-  fun f() {
-    print variable;
+  fun makeCounter() {
+    fun counter() {
+      count = count + 1;
+      print count;
+    }
+    return counter;
   }
 
-  f();
+  var counter1 = makeCounter();
+  counter1();
+  counter1();
 
-  var variable = "local";
+  var count = 0;
 
-  f();
+  counter1();
 }

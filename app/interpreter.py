@@ -670,7 +670,8 @@ class Interpreter:
     def __init__(self):
         self.env = self.global_env = GLOBAL_ENV
         self.locals = {}
-        self.resolver = Resolver()
+        # TODO test passing interpreter into resolver
+        self.resolver = Resolver(interpreter=self)
         for name, func in BUILTIN_FUNCTIONS.items():
             self.env.update_state(name, func, is_declaration=True)
 
@@ -688,8 +689,11 @@ class Interpreter:
         finally:
             self.env = prev_env
 
-    def resolve(self, expr: Expression, depth: int):
-        self.locals[expr] = depth
+    # TODO: testing replacing resolver.record_depth with this
+    # def resolve(self, expr: Expression, depth: int):
+        # self.locals[expr] = depth
+    def resolve(self, name: str, depth: int):
+        self.locals[name] = depth
 
     def resolve_all(self, expressions: list[Expression]):
         for expr in expressions:

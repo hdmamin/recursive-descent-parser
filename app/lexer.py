@@ -423,8 +423,9 @@ class Token:
                 # TODO: trying to replace w/ scope-based resolution
                 # value = interpreter.env.read_state(self.lexeme)
 
-                depth = interpreter.locals.get(self, None)
-                print('token.evaluate', self.lexeme, depth, interpreter.locals, interpreter.resolver.depths)
+                # TODO testing using new locals version where keys are strings
+                # depth = interpreter.locals.get(self, None)
+                depth = interpreter.locals.get(self.lexeme, None)
                 if depth is None:
                     value = interpreter.global_env.read_state(self.lexeme)
                 else:

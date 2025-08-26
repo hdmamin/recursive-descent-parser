@@ -936,17 +936,36 @@ X -stage #66: closures (new stage! last in functions section)
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	> status: make parse seems ok now, now try to get make run working.
-	-get make run working on open test case
+	X -get make run working on open test case
 		> recall: variable isn't getting defined/declared by resolve_local, I think bc it's a global?
-		-add handling for globals (see comment above resolve_local and book section)
-		-try rm resolver.record_depth and use INTERPRETER.resolve instead? (sounds like this is the intended way; resolver.depths should not be needed)
-		-test passes
+		X -add handling for globals (see comment above resolve_local and book section)
+		X -try rm resolver.record_depth and use INTERPRETER.resolve instead? (sounds like this is the intended way; resolver.depths should not be needed)
+		X -test passes
 	-ui tests pass
-		-0
-		-1
+		> regular function and func inside block work now. Nested functions seemingly do not yet.
+		X -0
+		X -1
 		-2
 		-3
-		-4
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+8/26/25 tues
+------------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	-ui tests pass
+		> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
+		-2
+		-3
 	-`make test_resolving_w_jlox` stage 1/4 pass
 	-prev rounds' tests still pass
 		-scanning
