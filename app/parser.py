@@ -47,6 +47,10 @@ class Parser:
         self.curr_idx = 0
         self.mode = None
 
+    def reset_index(self):
+        """After parsing, we need to reset the index back to 0 before we run."""
+        self.curr_idx = 0
+
     def match(self, *token_types: TokenType) -> bool:
         """Check if the current token has one fo the expected token_types. If so, increment the
         index and return True. Otherwise return False without incrementing.
@@ -114,7 +118,6 @@ class Parser:
 
             try:
                 res["parsed"].append(method())
-                # breakpoint() # TODO rm
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:

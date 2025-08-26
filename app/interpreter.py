@@ -668,7 +668,7 @@ BUILTIN_FUNCTIONS = {
 class Interpreter:
 
     def __init__(self):
-        self.env = GLOBAL_ENV
+        self.env = self.global_env = GLOBAL_ENV
         self.locals = {}
         self.resolver = Resolver()
         for name, func in BUILTIN_FUNCTIONS.items():

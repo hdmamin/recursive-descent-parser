@@ -423,8 +423,12 @@ class Token:
                 # TODO: trying to replace w/ scope-based resolution
                 # value = interpreter.env.read_state(self.lexeme)
 
-                depth = interpreter.locals[self]
-                value = interpreter.env.read_state_at(self.identifier.lexeme, depth)
+                depth = interpreter.locals.get(self, None)
+                print('token.evaluate', self.lexeme, depth, interpreter.locals, interpreter.resolver.depths)
+                if depth is None:
+                    value = interpreter.global_env.read_state(self.lexeme)
+                else:
+                    value = interpreter.env.read_state_at(self.lexeme, depth)
             except KeyError:
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
             
