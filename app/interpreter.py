@@ -476,7 +476,9 @@ class Block(Statement):
                     raise e
 
     def resolve(self):
+        print("resolving block", self.statements) # TODO
         for statement in self.statements:
+            print("\t", statement)
             statement.resolve()
 
     
@@ -634,6 +636,7 @@ class Function(Statement):
         return func
 
     def resolve(self):
+        print('resolving function:', self.name.lexeme) # TODO
         INTERPRETER.resolver.declare(self.name.lexeme)
         INTERPRETER.resolver.define(self.name.lexeme)
         INTERPRETER.resolver.resolve_function(self)

@@ -431,6 +431,7 @@ class Token:
                 else:
                     value = interpreter.env.read_state_at(self.lexeme, depth)
             except KeyError:
+                print(self.lexeme, 'depth:', depth, 'global env:', interpreter.global_env.state, 'locals:', interpreter.locals, 'resolver.scopes:', interpreter.resolver.scopes)
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
             
             return value

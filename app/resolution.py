@@ -10,14 +10,16 @@ class Resolver:
         self.interpreter = interpreter
         # Stack of dict[str, bool] containing (varname, has_been_defined)
         self.scopes = deque()
+        # TODO: hoping I can rm depths
         # dict[str, int] containing (varname, depth in scopes stack)
-        self.depths = {}
+        # self.depths = {}
 
     @contextmanager
     def scope(self):
+        print('new scope')
         try:
             self.scopes.append({})
-            yield
+            yield self.scopes[-1]
         finally:
             self.scopes.pop()
 
@@ -65,6 +67,8 @@ class Resolver:
             # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
             # going with the former for now.
             func.body.resolve()
+            print("finished resolve_function on", func.name.lexeme, 'resolver.scopes:', self.scopes,
+                  'interpreter.locals:', self.interpreter.locals) # TODO rm
 
     # TODO trying to replace this with Interpreter.resolve
     # def record_depth(self, name, depth: int):
