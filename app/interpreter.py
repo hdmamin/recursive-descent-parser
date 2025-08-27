@@ -477,9 +477,10 @@ class Block(Statement):
 
     def resolve(self):
         print("resolving block", self.statements) # TODO
-        for statement in self.statements:
-            print("\t", statement)
-            statement.resolve()
+        with INTERPRETER.resolver.scope():
+            for statement in self.statements:
+                print("\t", statement)
+                statement.resolve()
 
     
 class While(Statement):

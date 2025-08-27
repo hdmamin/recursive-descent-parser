@@ -24,8 +24,11 @@ class Resolver:
             self.scopes.pop()
 
     def resolve(self, obj: Any):
-        with self.scope():
-            obj.resolve()
+        # with self.scope():
+            # obj.resolve()
+
+        # TODO testing
+        obj.resolve()
 
     def declare(self, name: str):
         """
@@ -59,16 +62,17 @@ class Resolver:
             i -= 1
 
     def resolve_function(self, func: "Function"):
-        with self.scope():
-            for param in func.params:
-                self.declare(param.lexeme)
-                self.define(param.lexeme)
-            # TODO: translating from book here, not sure if need to call body resolve method or
-            # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
-            # going with the former for now.
-            func.body.resolve()
-            print("finished resolve_function on", func.name.lexeme, 'resolver.scopes:', self.scopes,
-                  'interpreter.locals:', self.interpreter.locals) # TODO rm
+        # TODO try removing bc block already does this
+        # with self.scope():
+        for param in func.params:
+            self.declare(param.lexeme)
+            self.define(param.lexeme)
+        # TODO: translating from book here, not sure if need to call body resolve method or
+        # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
+        # going with the former for now.
+        func.body.resolve()
+        print("finished resolve_function on", func.name.lexeme, 'resolver.scopes:', self.scopes,
+                'interpreter.locals:', self.interpreter.locals) # TODO rm
 
     # TODO trying to replace this with Interpreter.resolve
     # def record_depth(self, name, depth: int):
