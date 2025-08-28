@@ -984,7 +984,29 @@ X -stage #66: closures (new stage! last in functions section)
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
 	> Decided one clue might be that issue I had flagged about resolver.resolve always creating a new scope, revised things a bit and I *think* we are creating the correct number of scopes now, though overall we still error out as before.
-	-review latest logs and try to determine why makeCounter makes it into locals but counter does not
+	! -review latest logs and try to determine why makeCounter makes it into locals but counter does not
+		> debugged a bit, not making huge progress. Decided to just comb through the book code again to make sure all my functions are implemented correctly. Think I found one error in resolve_local though it did not visibly affect results yet. Got through 11.3.4 and feel reasonably confident about the stuff preceding that. Next is 11.3.5 and resolve_function, really hoping the issue is there.
+	-ui tests pass
+		-2
+		-3
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+8/28/25 thurs
+-------------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
+	> Recall: combing through book to check my implementation func by func.
+	-check func implementations vs book one by one (resume with: 11.3.5, resolve_function)
 	-ui tests pass
 		-2
 		-3

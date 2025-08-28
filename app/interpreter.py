@@ -65,12 +65,17 @@ class Variable(Expression):
         return self.identifier.evaluate()
 
     def resolve(self):
+        # Need to handle case like this:
+        # ```
+        # var a = "outer";
+        # {
+        #   var a = a;
+        # }
+        # ```
         if (
-            INTERPRETER.resolver.scopes and not
-            INTERPRETER.resolver.scopes[-1].get(self.identifier.lexeme, True)
+            INTERPRETER.resolver.scopes
+            and not INTERPRETER.resolver.scopes[-1].get(self.identifier.lexeme, True)
         ):
-            # TODO: a little fuzzy on what's going on here, why is this considered inside an
-            # "initializer"? No code changes needed per se, but would be good to understand better.
             raise SyntaxError("Can't read local variable in its own initializer.")
         INTERPRETER.resolver.resolve_local(self.identifier.lexeme)
 
@@ -641,6 +646,9 @@ class Function(Statement):
         INTERPRETER.resolver.declare(self.name.lexeme)
         INTERPRETER.resolver.define(self.name.lexeme)
         INTERPRETER.resolver.resolve_function(self)
+
+    def __str__(self) -> str:
+        return f"Function({self.name=})"
 
 
 def boolean_lexeme(val: bool) -> str:

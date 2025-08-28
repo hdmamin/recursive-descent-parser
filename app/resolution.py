@@ -16,7 +16,7 @@ class Resolver:
 
     @contextmanager
     def scope(self):
-        print('new scope')
+        print('resolver.new scope')
         try:
             self.scopes.append({})
             yield self.scopes[-1]
@@ -51,13 +51,13 @@ class Resolver:
     # path. I think key may be that this is defined at global level and we need to handle that
     # separately?
     def resolve_local(self, name: str):
-        i = len(self.scopes) - 1
+        max_idx = i = len(self.scopes) - 1
         while i >= 0:
             declared = name in self.scopes[i]
             if declared:
                 # TODO test replacing with interpreter method
                 # self.record_depth(name, i)
-                self.interpreter.resolve(name, i)
+                self.interpreter.resolve(name, max_idx - i)
                 return
             i -= 1
 
