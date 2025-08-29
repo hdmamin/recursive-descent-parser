@@ -1006,7 +1006,33 @@ X -stage #66: closures (new stage! last in functions section)
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
 	> Recall: combing through book to check my implementation func by func.
-	-check func implementations vs book one by one (resume with: 11.3.5, resolve_function)
+	X -check resolve implementations vs book one by one (resume with: 11.3.5, resolve_function)
+		> finished combing through 11.3.5 and everything seems fine, I did re-enable new scope creation in resolve_function which I *believe* matches book behavior, does mean we're back to what gpt told me was the wrong number of new scope creations but I'm growing a bit skeptical about whether that was actually correct. Bit stuck, maybe need to brainstorm new approaches to debugging this.
+	-ui tests pass
+		-2
+		-3
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+8/29/25 fri
+-----------
+-low effort tasks:
+	-brainstorm new debugging approaches to this resolution stuff
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
+	-new resolution approaches:
+		-show cursor/claude code the whole repo rather than janky gpt snippet chat
+		-look for codecrafters forum discussions
+		-look for random online lox discussions
+		-[add more here]
 	-ui tests pass
 		-2
 		-3

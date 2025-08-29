@@ -427,6 +427,9 @@ class PrintStatement(Statement):
     def evaluate(self, *args, **kwargs) -> None:
         print(to_lox_dtype(self.expr.evaluate()))
 
+    def resolve(self):
+        self.expr.resolve()
+
     
 class VariableDeclaration(Statement):
     """Creates a variable (global by default).
@@ -484,7 +487,6 @@ class Block(Statement):
         print("resolving block", self.statements) # TODO
         with INTERPRETER.resolver.scope():
             for statement in self.statements:
-                print("\t", statement)
                 statement.resolve()
 
     
@@ -637,6 +639,10 @@ class Function(Statement):
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
         # Returns a LoxFunction object, NOT the result of calling the function.
+        # TODO: note that gpt claims I should be using interp.env as fallback instead of None.
+        # But seems like that would break my closure impelmentation even if I discarded Resolution
+        # stuff? Idk, tried it and it did not change my current resolution error.
+        print(">>> ENV", self.name.lexeme, kwargs.get("env", "<missing>"), kwargs.get("env").state) # TODO rm
         func = LoxFunction(self, kwargs.get("env", None))
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func

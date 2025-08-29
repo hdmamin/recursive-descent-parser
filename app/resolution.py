@@ -62,17 +62,21 @@ class Resolver:
             i -= 1
 
     def resolve_function(self, func: "Function"):
-        # TODO try removing bc block already does this
-        # with self.scope():
-        for param in func.params:
-            self.declare(param.lexeme)
-            self.define(param.lexeme)
-        # TODO: translating from book here, not sure if need to call body resolve method or
-        # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
-        # going with the former for now.
-        func.body.resolve()
-        print("finished resolve_function on", func.name.lexeme, 'resolver.scopes:', self.scopes,
-                'interpreter.locals:', self.interpreter.locals) # TODO rm
+        # TODO slightly unclear how scopes are supposed to be handled here, I *think* we want params
+        # in a new scope and then body in a nested scope (because Block always creates a new one)
+        # but not sure of that.
+        with self.scope():
+            for param in func.params:
+                self.declare(param.lexeme)
+                self.define(param.lexeme)
+            # TODO: translating from book here, not sure if need to call body resolve method or
+            # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
+            # going with the former for now.
+            print("pre resolve_function body for:", func.name.lexeme, 'resolver.scopes:', self.scopes,
+                    'interpreter.locals:', self.interpreter.locals) # TODO rm
+            func.body.resolve()
+            print("finished resolve_function body for:", func.name.lexeme, 'resolver.scopes:', self.scopes,
+                    'interpreter.locals:', self.interpreter.locals) # TODO rm
 
     # TODO trying to replace this with Interpreter.resolve
     # def record_depth(self, name, depth: int):
