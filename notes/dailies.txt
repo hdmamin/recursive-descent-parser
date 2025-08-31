@@ -1021,18 +1021,49 @@ X -stage #66: closures (new stage! last in functions section)
 		-functions
 	-go back and try to understand wth we just did in this stage
 
-8/29/25 fri
+8/30/25 sat
 -----------
 -low effort tasks:
-	-brainstorm new debugging approaches to this resolution stuff
+	X -brainstorm new debugging approaches to this resolution stuff
     -add more low effort task bullets
 -stage #67: identifier resolution (new stage! and new section, resolving & binding!)
 	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
 	-new resolution approaches:
 		-show cursor/claude code the whole repo rather than janky gpt snippet chat
-		-look for codecrafters forum discussions
-		-look for random online lox discussions
+		! -look for codecrafters forum discussions
+		X -look for random online lox discussions
 		-[add more here]
+			-try simpler test case (e.g. func in block vs func in func in block) and slowly add back in complexity (actually I guess test case 1 already does this)
+			-try to skip resolution and move on for now (supposedly not a great idea but could test that claim)
+			~ -more standard-ish debugging: print in resolve_local what all the resolved deptsh are (noticing a lot of 0s in my scopes dict 🤔)
+				> confirmed we're currently only resolving depth to 0. Need to confirm but I don't think that's correct.
+			~ -look for a working implementation online (perhaps whatever is being used in the original tests repo? Recall it cloned something and seemingly ran tests against that when I first cloned it)
+				> found a couple versions in other language. Kind of nice that it's not python, feels less like cheating.
+	-ui tests pass
+		-2
+		-3
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+8/31/25 sun
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
+	-new resolution approaches:
+		-more standard-ish debugging:
+			-chat to confirm that not all depths should be reoslved to 0 for current test case (more generally, need better understanding of what these depths are - I think it's # of steps from global env but confirm)
+			-confirm if expected that depths are only set (i.e. interpreter.resolve is only called) in resolve_local (so only Variable(Definition) and Assign call it)
+		-look through online implementations resolution sections to try to find where I'm going wrong
+		-show cursor/claude code the whole repo rather than janky gpt snippet chat
 	-ui tests pass
 		-2
 		-3
