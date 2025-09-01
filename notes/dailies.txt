@@ -1035,7 +1035,7 @@ X -stage #66: closures (new stage! last in functions section)
 		-[add more here]
 			-try simpler test case (e.g. func in block vs func in func in block) and slowly add back in complexity (actually I guess test case 1 already does this)
 			-try to skip resolution and move on for now (supposedly not a great idea but could test that claim)
-			~ -more standard-ish debugging: print in resolve_local what all the resolved deptsh are (noticing a lot of 0s in my scopes dict 🤔)
+			~ -more standard-ish debugging: print in resolve_local what all the resolved depths are (noticing a lot of 0s in my scopes dict 🤔)
 				> confirmed we're currently only resolving depth to 0. Need to confirm but I don't think that's correct.
 			~ -look for a working implementation online (perhaps whatever is being used in the original tests repo? Recall it cloned something and seemingly ran tests against that when I first cloned it)
 				> found a couple versions in other language. Kind of nice that it's not python, feels less like cheating.
@@ -1060,8 +1060,34 @@ X -stage #66: closures (new stage! last in functions section)
 	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
 	-new resolution approaches:
 		-more standard-ish debugging:
-			-chat to confirm that not all depths should be reoslved to 0 for current test case (more generally, need better understanding of what these depths are - I think it's # of steps from global env but confirm)
-			-confirm if expected that depths are only set (i.e. interpreter.resolve is only called) in resolve_local (so only Variable(Definition) and Assign call it)
+			X -chat to confirm that not all depths should be resolved to 0 for current test case (more generally, need better understanding of what these depths are - I think it's # of steps from global env but confirm)
+				> all 0s is actually correct (seemingly) BUT uncovered a big bug where return statements could be unintentionally empty (returning null). Fixed that and the counter variable not found error disappeared, though output is still wrong. Wrong in kind of a weird way actually: I would have expected 1/1/1 (always reference the global and never update it) or 1/2/1 (erroneously switch to referencing the local var once it's defined) but we get 1/2/2.
+			X -confirm if expected that depths are only set (i.e. interpreter.resolve is only called) in resolve_local (so only Variable(Definition) and Assign call it)
+		-look through online implementations resolution sections to try to find where I'm going wrong
+		-show cursor/claude code the whole repo rather than janky gpt snippet chat
+	-ui tests pass
+		-2
+		-3
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-prev rounds' tests still pass
+		-scanning
+		-parsing
+		-evaluation
+		-statements
+		-control_flow
+		-functions
+	-go back and try to understand wth we just did in this stage
+
+9/1/25 mon
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
+	> status: fixed counter var not found error, but output is still wrong in kind of a weird way: I would have expected 1/1/1 (always reference the global and never update it) or 1/2/1 (erroneously switch to referencing the local var once it's defined) but we get 1/2/2.
+	-investigate what is causing 1/2/2 printed output (which count var are we referencing at each point? Which env is that in and what does its state look like at that point?)
+	-prob need to refactor so that Interpreter.resolve uses objects as keys instead of strings? (Also will need to figure out how this will work since I recreate objects when time to run 😬)
+	-other debugging options for if I get badly stuck again:
 		-look through online implementations resolution sections to try to find where I'm going wrong
 		-show cursor/claude code the whole repo rather than janky gpt snippet chat
 	-ui tests pass

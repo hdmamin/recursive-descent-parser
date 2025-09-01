@@ -57,7 +57,7 @@ class Resolver:
             if declared:
                 # TODO test replacing with interpreter method
                 # self.record_depth(name, i)
-                print(f"RESOLVE_LOCAL resolved depth to {max_idx - i}")
+                print(f"RESOLVE_LOCAL resolved depth to {max_idx - i} ({name})") # TODO rm
                 self.interpreter.resolve(name, max_idx - i)
                 return
             i -= 1

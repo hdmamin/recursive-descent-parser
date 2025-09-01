@@ -77,6 +77,7 @@ class Variable(Expression):
             and not INTERPRETER.resolver.scopes[-1].get(self.identifier.lexeme, True)
         ):
             raise SyntaxError("Can't read local variable in its own initializer.")
+        # print(f"Variable ({self.identifier.lexeme}): about to call resolve_local") # TODO
         INTERPRETER.resolver.resolve_local(self.identifier.lexeme)
 
 
@@ -484,7 +485,7 @@ class Block(Statement):
                     raise e
 
     def resolve(self):
-        print("resolving block", self.statements) # TODO
+        # print("resolving block", self.statements) # TODO
         with INTERPRETER.resolver.scope():
             for statement in self.statements:
                 statement.resolve()
@@ -577,6 +578,7 @@ class IfStatement(Statement):
 class ReturnStatement(Statement):
     
     def __init__(self, expr: Optional[Expression] = None):
+        print('RETURN.init', expr)
         self.expr = expr
 
     def evaluate(self, *args, **kwargs):
@@ -593,6 +595,7 @@ class ReturnStatement(Statement):
         return f"Return({self.expr})"
 
     def resolve(self):
+        print(">>> RETURN RESOLVE", self.expr) # TODO
         if self.expr:
             self.expr.resolve()
 
@@ -642,7 +645,6 @@ class Function(Statement):
         # TODO: note that gpt claims I should be using interp.env as fallback instead of None.
         # But seems like that would break my closure impelmentation even if I discarded Resolution
         # stuff? Idk, tried it and it did not change my current resolution error.
-        print(">>> ENV", self.name.lexeme, kwargs.get("env", "<missing>"), kwargs.get("env").state) # TODO rm
         func = LoxFunction(self, kwargs.get("env", None))
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func
@@ -710,6 +712,10 @@ class Interpreter:
     # TODO: testing replacing resolver.record_depth with this
     # def resolve(self, expr: Expression, depth: int):
         # self.locals[expr] = depth
+    # TODO: I think we will need to change this to take in expr name, not str, bc if we reference
+    # a var n different times we'd want n different locals. Like each foo could potentially refer
+    # to a different foo depending on where in the program we are. Will need to figure out how to deal
+    # with parsing and execution occurring separately, id(variable) will not be the same rn 😬.
     def resolve(self, name: str, depth: int):
         self.locals[name] = depth
 
