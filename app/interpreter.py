@@ -656,6 +656,10 @@ class Function(Statement):
         # TODO: note that gpt claims I should be using interp.env as fallback instead of None.
         # But seems like that would break my closure impelmentation even if I discarded Resolution
         # stuff? Idk, tried it and it did not change my current resolution error.
+        # TODO: when testing closures, I saw saw instances where this was the global env even though
+        # the func was defined inside a different func (need to confirm but I assume this creates a
+        # new env, certainly creates a new scope). Also maybe this is unneeded entirely with
+        # resolution?
         func = LoxFunction(self, kwargs.get("env", None))
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func
