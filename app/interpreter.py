@@ -361,6 +361,7 @@ class Assign(Expression):
     def evaluate(self, env: Optional[Environment] = None):
         """Evaluates the value of the variable and returns the corresponding python object."""
         env = env or INTERPRETER.env
+        print('Assign', self.name.lexeme, id(env)) # TODO rm
         self.val = self.expr.evaluate()
         env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
         return self.val
@@ -595,7 +596,6 @@ class ReturnStatement(Statement):
         return f"Return({self.expr})"
 
     def resolve(self):
-        print(">>> RETURN RESOLVE", self.expr) # TODO
         if self.expr:
             self.expr.resolve()
 
@@ -617,6 +617,8 @@ class LoxFunction(LoxCallable):
         # TODO does lox suppport both positional
         # and named args tho? gpt says positional only, let's try that for now.
         with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
+            print("LoxFunction.evaluate env.parent:", self.func.name.lexeme, id(env.parent),
+                  'nonlocal:', id(self.nonlocal_env), 'definition:', id(self.func.definition_env))
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
                 return self.func.body.evaluate(**py_kwargs)

@@ -1082,7 +1082,7 @@ X -stage #66: closures (new stage! last in functions section)
 ----------
 -low effort tasks:
     -add more low effort task bullets
--stage #67: identifier resolution (new stage! and new section, resolving & binding!)
+-stage #67: identifier resolution
 	> next step is to get nested funcs working. Regular func and func in block work, but not func in func.
 	> status: fixed counter var not found error, but output is still wrong in kind of a weird way: I would have expected 1/1/1 (always reference the global and never update it) or 1/2/1 (erroneously switch to referencing the local var once it's defined) but we get 1/2/2.
 	-investigate what is causing 1/2/2 printed output (which count var are we referencing at each point? Which env is that in and what does its state look like at that point?)

@@ -27,3 +27,23 @@ trying to understand what's happening with closures
 -however, we're already passing in definition_env as the parent. And we do need to attach the nonlocal env somehow.
 	-can we maybe view nonlocal env as the child of definition_env? If so maybe we can enforce that chain of envs?
 
+9/1/25 mon
+----------
+debugging why closure test case is not working
+-we get two var lookups per call, one for the Assign (initially thought there might be two here but apparently not) and one for the Print
+-first two func calls look good. we reference the global state, that var gets incremented between the two lookups, the second lookup reflects the incremented value
+-third call, now we have a new count var in the block env where makeCounter was defined. So I THINK what is happening is we end up incrementing that one but printing the global? Not sure why yet.
+-Also notice read_state_at ends up calling read_state which can traverse up through parents if var is not found. So I think we need to allow caller to disable that behavior. Basically, I think we're not finding count in the current env so we just traverse up automatically and hit the enclosing block env.
+	-initially remembered chatgpt as claiming depth=0 was correct for count, not sure how that is supposed to work. But thinking back, actually we just said all vars that had some assigned depth had depth=0, but I think depth=None was actually correct here. So we should hit that if condition in lexer.py and jump straight to the global count. Maybe that explains why we print that at the end. So mystery becomes, why does the var increment step (I'm predicting) affect the block env?
+	-update: not exactly what I thought. Somehow we update the block env count from 0 straight to 3, but must be printing the global env still which is 2. So I'm thinking the increment expression first retrieves the global var of 2, adds 1 to get 3, and assigns that back to the block env. And then in print we get the unchanged global. But really this function call should not be changing the block env at all.
+-guessing this is maybe tied to the function call evaluate logic where I pass in something like 
+```
+kwargs.get("env") or self.definition_env
+```
+UPDATE: it's actually
+```
+self.nonlocal_env or self.func.definition_env
+```
+-And I confirmed we are consistently using nonlocal_env (seems like this should be the env created by makeCounter body block?)
+-weirdly, current and parent env states are both showing up as empty? might be printing the wrong thing in debugging lines?
+	-also notice neither current_env and parent_env are the nonlocal env. Aha, looks like current.parent.parent is nonlocal env. Somehwhat to my surprise, definition_env is global_env (that seems wrong? Looks like we set that based on what the current interpreter env is at func definition time which seems reasonable enough to me but idk. Recall adjusting this env logic quite carefully to get nested funcs and closures working pre resolution stage. 🤔)
