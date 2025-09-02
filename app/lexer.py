@@ -427,15 +427,14 @@ class Token:
                 # depth = interpreter.locals.get(self, None)
                 depth = interpreter.locals.get(self.lexeme, None)
                 if depth is None:
-                    print("env lookup depth:", self.lexeme, depth) # TODO rm
-                    print("global env state:", id(interpreter.global_env), interpreter.global_env.state,
-                          "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
-                          "\n\tparent env state:", id(interpreter.env.parent), interpreter.env.parent.state) # TODO rm
+                    # print("env lookup depth:", self.lexeme, depth) # TODO rm
+                    # print("global env state:", id(interpreter.global_env), interpreter.global_env.state,
+                    #       "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
+                    #       "\n\tparent env state:", id(interpreter.env.parent), interpreter.env.parent.state) # TODO rm
                     value = interpreter.global_env.read_state(self.lexeme)
                 else:
                     value = interpreter.env.read_state_at(self.lexeme, depth)
             except KeyError:
-                print(self.lexeme, 'depth:', depth, 'global env:', interpreter.global_env.state, 'locals:', interpreter.locals, 'resolver.scopes:', interpreter.resolver.scopes)
                 raise RuntimeError(f"Undefined variable {self.lexeme!r}.\n[line {self.line}]")
             
             return value

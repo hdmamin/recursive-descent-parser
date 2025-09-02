@@ -16,7 +16,6 @@ class Resolver:
 
     @contextmanager
     def scope(self):
-        print('resolver.new scope')
         try:
             self.scopes.append({})
             yield self.scopes[-1]
@@ -57,7 +56,6 @@ class Resolver:
             if declared:
                 # TODO test replacing with interpreter method
                 # self.record_depth(name, i)
-                print(f"RESOLVE_LOCAL resolved depth to {max_idx - i} ({name})") # TODO rm
                 self.interpreter.resolve(name, max_idx - i)
                 return
             i -= 1
@@ -73,11 +71,7 @@ class Resolver:
             # TODO: translating from book here, not sure if need to call body resolve method or
             # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
             # going with the former for now.
-            print("pre resolve_function body for:", func.name.lexeme, 'resolver.scopes:', self.scopes,
-                    'interpreter.locals:', self.interpreter.locals) # TODO rm
             func.body.resolve()
-            print("finished resolve_function body for:", func.name.lexeme, 'resolver.scopes:', self.scopes,
-                    'interpreter.locals:', self.interpreter.locals) # TODO rm
 
     # TODO trying to replace this with Interpreter.resolve
     # def record_depth(self, name, depth: int):

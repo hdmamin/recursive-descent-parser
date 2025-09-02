@@ -1090,9 +1090,10 @@ X -stage #66: closures (new stage! last in functions section)
 	-other debugging options for if I get badly stuck again:
 		-look through online implementations resolution sections to try to find where I'm going wrong
 		-show cursor/claude code the whole repo rather than janky gpt snippet chat
-	-ui tests pass
-		-2
-		-3
+	X -ui tests pass
+		X -2
+		X -3
+		X -(once 3 passes) check that 1 still passes
 	-`make test_resolving_w_jlox` stage 1/4 pass
 	-prev rounds' tests still pass
 		-scanning

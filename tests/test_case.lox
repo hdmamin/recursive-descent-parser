@@ -1,15 +1,21 @@
-var count = 0;
-{
-  fun makeCounter() {
-    fun counter() {
-      count = count + 1;
-      print count;
+var x = "global";
+
+fun outer() {
+  var x = "outer";
+
+  fun middle() {
+    fun inner() {
+      print x;
     }
-    return counter;
+
+    inner();
+
+    var x = "middle";
+
+    inner();
   }
-  var counter1 = makeCounter();
-  counter1();
-  counter1();
-  var count = 0;
-  counter1();
+
+  middle();
 }
+
+outer();

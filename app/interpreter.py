@@ -360,10 +360,19 @@ class Assign(Expression):
 
     def evaluate(self, env: Optional[Environment] = None):
         """Evaluates the value of the variable and returns the corresponding python object."""
-        env = env or INTERPRETER.env
-        print('Assign', self.name.lexeme, id(env)) # TODO rm
+        # env = env or INTERPRETER.env
+        # TODO testing
+        depth = INTERPRETER.locals.get(self.name.lexeme, None)
+        # TODO end
         self.val = self.expr.evaluate()
-        env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
+
+        # TODO start
+        if depth is None:
+            INTERPRETER.global_env.update_state(self.name.lexeme, self.val, is_declaration=False)
+        else:
+            INTERPRETER.env.update_state_at(self.name.lexeme, self.val, depth)
+        # TODO end
+        # env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
         return self.val
 
     def resolve(self):
@@ -579,7 +588,6 @@ class IfStatement(Statement):
 class ReturnStatement(Statement):
     
     def __init__(self, expr: Optional[Expression] = None):
-        print('RETURN.init', expr)
         self.expr = expr
 
     def evaluate(self, *args, **kwargs):
@@ -617,8 +625,9 @@ class LoxFunction(LoxCallable):
         # TODO does lox suppport both positional
         # and named args tho? gpt says positional only, let's try that for now.
         with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
-            print("LoxFunction.evaluate env.parent:", self.func.name.lexeme, id(env.parent),
-                  'nonlocal:', id(self.nonlocal_env), 'definition:', id(self.func.definition_env))
+            # TODO rm
+            # print("LoxFunction.evaluate env.parent:", self.func.name.lexeme, id(env.parent),
+            #       'nonlocal:', id(self.nonlocal_env), 'definition:', id(self.func.definition_env))
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
                 return self.func.body.evaluate(**py_kwargs)
@@ -652,7 +661,6 @@ class Function(Statement):
         return func
 
     def resolve(self):
-        print('resolving function:', self.name.lexeme) # TODO
         INTERPRETER.resolver.declare(self.name.lexeme)
         INTERPRETER.resolver.define(self.name.lexeme)
         INTERPRETER.resolver.resolve_function(self)
@@ -692,7 +700,6 @@ class Interpreter:
     def __init__(self):
         self.env = self.global_env = GLOBAL_ENV
         self.locals = {}
-        # TODO test passing interpreter into resolver
         self.resolver = Resolver(interpreter=self)
         for name, func in BUILTIN_FUNCTIONS.items():
             self.env.update_state(name, func, is_declaration=True)
