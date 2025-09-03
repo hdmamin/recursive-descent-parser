@@ -367,6 +367,7 @@ class Assign(Expression):
         self.val = self.expr.evaluate()
 
         # TODO start
+        print(f'assign: {self.name.lexeme}; depth:', depth) # TODO rm
         if depth is None:
             INTERPRETER.global_env.update_state(self.name.lexeme, self.val, is_declaration=False)
         else:
@@ -730,6 +731,7 @@ class Interpreter:
     # to a different foo depending on where in the program we are. Will need to figure out how to deal
     # with parsing and execution occurring separately, id(variable) will not be the same rn 😬.
     def resolve(self, name: str, depth: int):
+        print('interp.resolve', name, depth) # TODO rm
         self.locals[name] = depth
 
     def resolve_all(self, expressions: list[Expression]):

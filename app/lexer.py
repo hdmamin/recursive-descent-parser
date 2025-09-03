@@ -426,11 +426,11 @@ class Token:
                 # TODO testing using new locals version where keys are strings
                 # depth = interpreter.locals.get(self, None)
                 depth = interpreter.locals.get(self.lexeme, None)
+                # print("env lookup depth:", self.lexeme, depth) # TODO rm
+                # print("global env state:", id(interpreter.global_env), interpreter.global_env.state,
+                #       "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
+                #       "\n\tparent env state:", id(interpreter.env.parent), getattr(interpreter.env.parent, 'state', 'null')) # TODO rm
                 if depth is None:
-                    # print("env lookup depth:", self.lexeme, depth) # TODO rm
-                    # print("global env state:", id(interpreter.global_env), interpreter.global_env.state,
-                    #       "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
-                    #       "\n\tparent env state:", id(interpreter.env.parent), interpreter.env.parent.state) # TODO rm
                     value = interpreter.global_env.read_state(self.lexeme)
                 else:
                     value = interpreter.env.read_state_at(self.lexeme, depth)

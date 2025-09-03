@@ -1113,11 +1113,31 @@ X -stage #66: closures (new stage! last in functions section)
 -stage #67: identifier resolution
 	> status: got ui tests passing but broke some previous rounds test cases 😭
 	-fix prev rounds' tests
-		-statements
+		~ -statements
 			> 💀 stage 410 test 4 fails now (one of those "modified foo, inner baz, modified foo" ones but I now print "outer foo" for the last one)
+			> update: looks like this is due to the str key issue mentioned a couple bullets below. See misct.txt.
 		-functions
 			> 😭 stage 602 test 4 now fails with "undefined variable i"
 	-prob need to refactor so that Interpreter.resolve uses objects as keys instead of strings? (Also will need to figure out how this will work since I recreate objects when time to run 😬)
+	-other debugging options for if I get badly stuck again:
+		-look through online implementations resolution sections to try to find where I'm going wrong
+		-show cursor/claude code the whole repo rather than janky gpt snippet chat
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-go back and try to understand wth we just did in this stage
+
+9/3/25 wed
+----------
+-low effort tasks:
+    -add more low effort task bullets
+-stage #67: identifier resolution
+	> status: got ui tests passing but broke some previous rounds test cases
+	-refactor so that Interpreter.resolve uses objects as keys instead of strings (Also will need to figure out how this will work since I recreate objects when time to run 😬)
+		> looks like this is causing the stage 410 failure mentioned below. See misc.txt for more notes.
+	-fix prev rounds' tests
+		-statements
+			> stage 410 test 4 fails now (open in subl or see bash cmd history).
+		-functions
+			> 😭 stage 602 test 4 now fails with "undefined variable i"
 	-other debugging options for if I get badly stuck again:
 		-look through online implementations resolution sections to try to find where I'm going wrong
 		-show cursor/claude code the whole repo rather than janky gpt snippet chat

@@ -47,3 +47,28 @@ self.nonlocal_env or self.func.definition_env
 -And I confirmed we are consistently using nonlocal_env (seems like this should be the env created by makeCounter body block?)
 -weirdly, current and parent env states are both showing up as empty? might be printing the wrong thing in debugging lines?
 	-also notice neither current_env and parent_env are the nonlocal env. Aha, looks like current.parent.parent is nonlocal env. Somehwhat to my surprise, definition_env is global_env (that seems wrong? Looks like we set that based on what the current interpreter env is at func definition time which seems reasonable enough to me but idk. Recall adjusting this env logic quite carefully to get nested funcs and closures working pre resolution stage. 🤔)
+
+9/2/25 tues
+-----------
+```
+// Variables declared in an outer scope should be
+// accessible inside inner scopes, but not the
+// other way around
+{
+  var foo = "outer foo";
+  var baz = "outer baz";
+  {
+    foo = "modified foo";
+    var baz = "inner baz";
+    print foo;
+    print baz;
+  }
+  print foo;
+  print baz;
+}
+print foo;
+```
+
+findings
+-the outer vars NEVER get modified here. This is correct behavior for baz, which gets redefined, but not for foo, which is just an assign call.
+-foo has depth 0 in assign call which I think is why we update inner block. I see during resolution we do resolve foo to both depth 1 and 0. So I think this reflects the issue of using str keys in locals. Looks like we do need to change that 😬.
