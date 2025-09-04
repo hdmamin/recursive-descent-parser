@@ -78,7 +78,9 @@ class Variable(Expression):
         ):
             raise SyntaxError("Can't read local variable in its own initializer.")
         # print(f"Variable ({self.identifier.lexeme}): about to call resolve_local") # TODO
-        INTERPRETER.resolver.resolve_local(self.identifier.lexeme)
+        # TODO testing obj key instead of str
+        # INTERPRETER.resolver.resolve_local(self.identifier.lexeme)
+        INTERPRETER.resolver.resolve_local(self)
 
 
 class Unary(Expression):
@@ -362,12 +364,15 @@ class Assign(Expression):
         """Evaluates the value of the variable and returns the corresponding python object."""
         # env = env or INTERPRETER.env
         # TODO testing
-        depth = INTERPRETER.locals.get(self.name.lexeme, None)
+        # depth = INTERPRETER.locals.get(self.name.lexeme, None)
+        # TODO nested test: obj key instead of str
+        print(f'[assign] {self} {INTERPRETER.locals}')
+        depth = INTERPRETER.locals.get(self, None)
         # TODO end
         self.val = self.expr.evaluate()
 
         # TODO start
-        print(f'assign: {self.name.lexeme}; depth:', depth) # TODO rm
+        print(f'[Assign] assign: {self.name.lexeme}; depth:', depth) # TODO rm
         if depth is None:
             INTERPRETER.global_env.update_state(self.name.lexeme, self.val, is_declaration=False)
         else:
@@ -378,7 +383,9 @@ class Assign(Expression):
 
     def resolve(self):
         self.expr.resolve()
-        INTERPRETER.resolver.resolve_local(self.name.lexeme)
+        # TODO testing obj key instead of str
+        # INTERPRETER.resolver.resolve_local(self.name.lexeme)
+        INTERPRETER.resolver.resolve_local(self.expr)
 
 
 class Statement:
