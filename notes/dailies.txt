@@ -1131,9 +1131,9 @@ X -stage #66: closures (new stage! last in functions section)
     -add more low effort task bullets
 -stage #67: identifier resolution
 	> status: got ui tests passing but broke some previous rounds test cases
-	-refactor so that Interpreter.resolve uses objects as keys instead of strings (Also will need to figure out how this will work since I recreate objects when time to run 😬)
+	X -refactor so that Interpreter.resolve uses objects as keys instead of strings (Also will need to figure out how this will work since I recreate objects when time to run 😬)
 		> looks like this is causing the stage 410 failure mentioned below. See misc.txt for more notes.
-	-fix prev rounds' tests
+	~ -fix prev rounds' tests
 		X -statements
 			> stage 410 test 4 fails now (open in subl or see bash cmd history).
 		-functions
@@ -1143,4 +1143,22 @@ X -stage #66: closures (new stage! last in functions section)
 		-look through online implementations resolution sections to try to find where I'm going wrong
 		-show cursor/claude code the whole repo rather than janky gpt snippet chat
 	-`make test_resolving_w_jlox` stage 1/4 pass
+	-go back and try to understand wth we just did in this stage
+
+9/4/25 thurs
+------------
+-low effort tasks:
+	-tons of comments to clean up from testing my obj keys (vs strs) in interpreter.locals
+    -add more low effort task bullets
+-stage #67: identifier resolution
+	> status: fixed `statements` tests and more `functions` tests pass, but functions 603.1 still fails. test_case_2.lox has it loaded.
+	-fix prev rounds' tests
+		-functions
+			-fix 603.1 (yikes, looks like args are no longer available in func env)
+			-fix any other tests if they fail too
+	-other debugging options for if I get badly stuck again:
+		-look through online implementations resolution sections to try to find where I'm going wrong
+		-show cursor/claude code the whole repo rather than janky gpt snippet chat
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-run all prev `make test...` rounds again (high risk of breaking something with each of these fixes)
 	-go back and try to understand wth we just did in this stage

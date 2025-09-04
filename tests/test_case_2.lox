@@ -1,21 +1,4 @@
-// Variables declared in an outer scope should be
-// accessible inside inner scopes, but not the
-// other way around
-{
-  var foo = "outer foo";
-  var baz = "outer baz";
-  {
-    foo = "modified foo";
-    var baz = "inner baz";
-    print foo;
-    print baz;
-  }
-  // problem: currently this prints "outer foo"
-  // (the original val defined in the outer 
-  // scope) but it should print "modified foo"
-  // (meaning the inner scope modifies the outer)
-  print foo; 
-  print baz;
-}
-print foo;
-
+// This is a simple function that takes one
+// argument and prints it
+fun f1(a) { print a; }
+f1(96);

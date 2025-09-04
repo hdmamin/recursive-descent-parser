@@ -173,7 +173,7 @@ test_resolving_w_jlox: build
 		{\"slug\":\"pz7\",\"tester_log_prefix\":\"stage_703\",\"title\":\"Stage #707: Resolving: Variable Re-declaration\"}, \
 		{\"slug\":\"eh3\",\"tester_log_prefix\":\"stage_704\",\"title\":\"Stage #705: Resolving: Invalid Return\"} \
 	]" \
-	$(shell pwd)/dist/main.out
+	$(shell pwd)/tests/dist/main.out
 
 test_classes_w_jlox: build
 	CODECRAFTERS_TEST_CASES_JSON="[ \
