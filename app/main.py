@@ -84,9 +84,12 @@ def main():
     # TODO maybe only resolve if parser succeeded? Need to be a little careful to raise the right
     # error at the right point depending on what codecrafters expects.
     INTERPRETER.resolve_all(parsed["parsed"])
-    print(">>> resolution done") # TODO rm
+    # print(">>> resolution done") # TODO rm
     parser.reset_index()
-    res = parser.parse(mode=command)
+    # TODO testing (noticed parse and run use same mode, eval will prob break but will get to that)
+    # res = parser.parse(mode=command)
+    res = parsed
+    # breakpoint() # TODO rm
     if command == "evaluate":
         # TODO: again, would like to consolidate and raise this only once instead of in each
         # command, but codecrafters is picky about when/where errors are raised. Clean up later.

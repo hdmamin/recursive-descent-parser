@@ -392,7 +392,7 @@ class Token:
             return self.literal
         return self.lexeme
 
-    def evaluate(self) -> Any:
+    def evaluate(self, **kwargs) -> Any:
         """Return the associated python value represented by a Lox token.
         This is necessary when evaluating expressions: we need to grab the actual value of the
         token so we can perform various operations on it. We will have to cast back to a lox
@@ -401,6 +401,12 @@ class Token:
         Here we distinguish between int and float since this
         is what the book/tests require for evaluation; but note this cannot be used at the lexing
         and parsing stages, where the book expects all numbers to have a trailing decimal place.
+
+        Parameters
+        ----------
+        kwargs : Any
+            Used by Interpreter.Variable to pass in an Expression (key: "expr")
+            so we can retrieve the right depth from Interpreter.locals.
         """
         if self.token_type == TokenTypes.STRING:
             return self.value
@@ -425,7 +431,7 @@ class Token:
 
                 # TODO testing using new locals version where keys are strings
                 # depth = interpreter.locals.get(self, None)
-                depth = interpreter.locals.get(self.lexeme, None)
+                depth = interpreter.locals.get(kwargs["expr"], None)
                 # print("env lookup depth:", self.lexeme, depth) # TODO rm
                 # print("global env state:", id(interpreter.global_env), interpreter.global_env.state,
                 #       "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,

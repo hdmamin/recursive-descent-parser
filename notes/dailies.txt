@@ -1134,10 +1134,11 @@ X -stage #66: closures (new stage! last in functions section)
 	-refactor so that Interpreter.resolve uses objects as keys instead of strings (Also will need to figure out how this will work since I recreate objects when time to run 😬)
 		> looks like this is causing the stage 410 failure mentioned below. See misc.txt for more notes.
 	-fix prev rounds' tests
-		-statements
+		X -statements
 			> stage 410 test 4 fails now (open in subl or see bash cmd history).
 		-functions
 			> 😭 stage 602 test 4 now fails with "undefined variable i"
+			> 9/3 update: 602.4 now passes, 603.1 is the first failure.
 	-other debugging options for if I get badly stuck again:
 		-look through online implementations resolution sections to try to find where I'm going wrong
 		-show cursor/claude code the whole repo rather than janky gpt snippet chat

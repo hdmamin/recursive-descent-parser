@@ -62,7 +62,8 @@ class Variable(Expression):
         """This returns the relevant python value, not the lox value. E.g. None rather than
         ReservedTokenTypes.NIL.
         """
-        return self.identifier.evaluate()
+        # TODO: testing for obj keys in locals
+        return self.identifier.evaluate(expr=self)
 
     def resolve(self):
         # Need to handle case like this:
@@ -80,7 +81,7 @@ class Variable(Expression):
         # print(f"Variable ({self.identifier.lexeme}): about to call resolve_local") # TODO
         # TODO testing obj key instead of str
         # INTERPRETER.resolver.resolve_local(self.identifier.lexeme)
-        INTERPRETER.resolver.resolve_local(self)
+        INTERPRETER.resolver.resolve_local(self, self.identifier.lexeme)
 
 
 class Unary(Expression):
@@ -366,13 +367,14 @@ class Assign(Expression):
         # TODO testing
         # depth = INTERPRETER.locals.get(self.name.lexeme, None)
         # TODO nested test: obj key instead of str
-        print(f'[assign] {self} {INTERPRETER.locals}')
-        depth = INTERPRETER.locals.get(self, None)
+        tmp_locals = {hash(k): v for k, v in INTERPRETER.locals.items()}
+        # print(f'[assign] {self} {tmp_locals} {hash(self.expr)}', self.expr in INTERPRETER.locals)
+        depth = INTERPRETER.locals.get(self.expr, None)
         # TODO end
         self.val = self.expr.evaluate()
 
         # TODO start
-        print(f'[Assign] assign: {self.name.lexeme}; depth:', depth) # TODO rm
+        # print(f'[Assign] assign: {self.name.lexeme}; depth:', depth) # TODO rm
         if depth is None:
             INTERPRETER.global_env.update_state(self.name.lexeme, self.val, is_declaration=False)
         else:
@@ -385,7 +387,7 @@ class Assign(Expression):
         self.expr.resolve()
         # TODO testing obj key instead of str
         # INTERPRETER.resolver.resolve_local(self.name.lexeme)
-        INTERPRETER.resolver.resolve_local(self.expr)
+        INTERPRETER.resolver.resolve_local(self.expr, self.name.lexeme)
 
 
 class Statement:
@@ -738,8 +740,8 @@ class Interpreter:
     # to a different foo depending on where in the program we are. Will need to figure out how to deal
     # with parsing and execution occurring separately, id(variable) will not be the same rn 😬.
     def resolve(self, name: str, depth: int):
-        print('interp.resolve', name, depth) # TODO rm
         self.locals[name] = depth
+        # print('interp.resolve', name, depth) # TODO rm
 
     def resolve_all(self, expressions: list[Expression]):
         for expr in expressions:

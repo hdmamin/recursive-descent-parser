@@ -49,14 +49,15 @@ class Resolver:
     # TODO: we only hit this method once, for f declaration, and it passes through the NOT declared
     # path. I think key may be that this is defined at global level and we need to handle that
     # separately?
-    def resolve_local(self, name: str):
+    def resolve_local(self, expr: "Expression", name: str):
+        # print(f'[resolve_local], {name}, {type(name)}, {hash(expr)}')
         max_idx = i = len(self.scopes) - 1
         while i >= 0:
             declared = name in self.scopes[i]
             if declared:
-                # TODO test replacing with interpreter method
-                # self.record_depth(name, i)
-                self.interpreter.resolve(name, max_idx - i)
+                # TODO testing obj key in interp.resolve
+                # self.interpreter.resolve(name, max_idx - i)
+                self.interpreter.resolve(expr, max_idx - i)
                 return
             i -= 1
 
