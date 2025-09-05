@@ -51,13 +51,16 @@ class Resolver:
     # separately?
     def resolve_local(self, expr: "Expression", name: str):
         # print(f'[resolve_local], {name}, {type(name)}, {hash(expr)}')
+        # If scopes is empty, that means the var is global and the while loop never executes.
         max_idx = i = len(self.scopes) - 1
+        # print('[resolve local]', name, self.scopes) # TODO
         while i >= 0:
             declared = name in self.scopes[i]
             if declared:
                 # TODO testing obj key in interp.resolve
                 # self.interpreter.resolve(name, max_idx - i)
                 self.interpreter.resolve(expr, max_idx - i)
+                # print(f'[resolve local] {name}: resolved', self.scopes, max_idx-i, self.interpreter.locals) # TODO
                 return
             i -= 1
 
@@ -72,7 +75,7 @@ class Resolver:
             # TODO: translating from book here, not sure if need to call body resolve method or
             # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
             # going with the former for now.
-            func.body.resolve()
+            func.body.resolve(is_function_body=True)
 
     # TODO trying to replace this with Interpreter.resolve
     # def record_depth(self, name, depth: int):

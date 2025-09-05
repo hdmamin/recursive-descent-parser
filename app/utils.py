@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import sys
 from typing import Any
 
@@ -38,3 +39,26 @@ def get_interpreter() -> "Interpreter":
         return sys.modules["app.interpreter"].INTERPRETER
     except (KeyError, AttributeError):
         raise RuntimeError("Interpreter object is not available.")
+
+
+@contextmanager
+def _dummy_context_manager(*args, **kwargs):
+    """Context manager that does nothing. Convenient when we want to enable/disable use of a
+    real context manager depending on some arg.
+    """
+    try:
+        yield
+    finally:
+        pass
+
+
+def maybe_context_manager(context_manager, enable: bool, *args, **kwargs):
+    """
+    Examples
+    --------
+    def foo(track_time: bool):
+        with maybe_context_manager(timer, enabled=track_time):
+            do_the_thing()
+    """
+    resolved = context_manager if enable else _dummy_context_manager
+    return resolved(*args, **kwargs)

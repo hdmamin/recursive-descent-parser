@@ -7,7 +7,7 @@ from app.environment import GLOBAL_ENV, Environment
 from app.exceptions import ParsingError
 from app.lexer import TokenTypes, ReservedTokenTypes, Token
 from app.resolution import Resolver
-from app.utils import truthy, is_number, SENTINEL
+from app.utils import truthy, is_number, SENTINEL, maybe_context_manager
 
 
 class Return(Exception):
@@ -322,6 +322,7 @@ class Call(Expression):
         for arg in self.args:
             arg.resolve()
 
+
 class Grouping(Expression):
     """
     Example
@@ -504,9 +505,10 @@ class Block(Statement):
                 except Return as e:
                     raise e
 
-    def resolve(self):
+    def resolve(self, is_function_body: bool = False):
         # print("resolving block", self.statements) # TODO
-        with INTERPRETER.resolver.scope():
+        # with INTERPRETER.resolver.scope():
+        with maybe_context_manager(INTERPRETER.resolver.scope, enable=not is_function_body):
             for statement in self.statements:
                 statement.resolve()
 
@@ -636,8 +638,11 @@ class LoxFunction(LoxCallable):
         # and named args tho? gpt says positional only, let's try that for now.
         with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
             # TODO rm
-            # print("LoxFunction.evaluate env.parent:", self.func.name.lexeme, id(env.parent),
-            #       'nonlocal:', id(self.nonlocal_env), 'definition:', id(self.func.definition_env))
+            # print("LoxFunction.evaluate", self.func.name.lexeme,
+            #       kwargs,
+            #       '\nparent:', getattr(env.parent, "state", None),
+            #       '\nnonlocal:', getattr(self.nonlocal_env, "state", None),
+            #       '\ndefinition:', getattr(self.func.definition_env, "state", None))
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
                 return self.func.body.evaluate(**py_kwargs)
