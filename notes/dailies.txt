@@ -1154,7 +1154,26 @@ X -stage #66: closures (new stage! last in functions section)
 	> status: fixed `statements` tests and more `functions` tests pass, but functions 603.1 still fails. test_case_2.lox has it loaded.
 	-fix prev rounds' tests
 		-functions
-			-fix 603.1 (yikes, looks like args are no longer available in func env)
+			X -fix 603.1 (yikes, looks like args are no longer available in func env)
+			~ -fix any other tests if they fail too
+				> 608.3 failed, Call.evaluate did not accept 'env' var. I fixed that (just allow unused kwargs 🤷‍♂️). But 609.1 fails now (closures 😬).
+	-other debugging options for if I get badly stuck again:
+		-look through online implementations resolution sections to try to find where I'm going wrong
+		-show cursor/claude code the whole repo rather than janky gpt snippet chat
+	-`make test_resolving_w_jlox` stage 1/4 pass
+	-run all prev `make test...` rounds again (high risk of breaking something with each of these fixes)
+	-go back and try to understand wth we just did in this stage
+
+9/5/25 fri
+----------
+-low effort tasks:
+	-tons of comments to clean up from testing my obj keys (vs strs) in interpreter.locals
+    -add more low effort task bullets
+-stage #67: identifier resolution
+	> status: fixed a few problems with function scopes, now every functions substage passes except closures.
+	-fix prev rounds' tests
+		-functions
+			-fix 609.1 (in test_case_2.lox)
 			-fix any other tests if they fail too
 	-other debugging options for if I get badly stuck again:
 		-look through online implementations resolution sections to try to find where I'm going wrong

@@ -303,7 +303,7 @@ class Call(Expression):
         # TODO check if this is format book wants
         return f"({self.callee} {self.args})"
 
-    def evaluate(self):
+    def evaluate(self, **kwargs):
         py_args = [arg.evaluate() for arg in self.args]
         lox_callable = self.callee.evaluate()
         if not isinstance(lox_callable, LoxCallable):
