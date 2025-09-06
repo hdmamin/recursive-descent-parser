@@ -568,6 +568,14 @@ class For(Statement):
             if self.incrementer is not None:
                 self.incrementer.evaluate()
 
+    def resolve(self):
+        if self.initializer:
+            self.initializer.resolve()
+        self.condition.resolve()
+        if self.incrementer:
+            self.incrementer.resolve()
+        self.statement.resolve()
+
 class IfStatement(Statement):
 
     def __init__(self, condition: Expression, value: Statement,
