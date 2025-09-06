@@ -1,18 +1,21 @@
-// This program demonstrates the use of closures
-// to create a counter function.
-// The inner function count() needs access to the
-// outer function's local variable i.
-// This can be achieved using closures.
-fun makeCounter() {
-  var i = 0;
-  fun count() {
-    i = i + 3;
-    print i;
-  }
+var baz = "after";
+{
+  var baz = "before";
 
-  return count;
+  for (var baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+    var baz = -1;
+    print baz;
+  }
 }
 
-var counter = makeCounter();
-counter();
-counter();
+{
+  for (var baz = 0; baz > 0; baz = baz + 1) {}
+
+  var baz = "after";
+  print baz;
+
+  for (baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+  }
+}

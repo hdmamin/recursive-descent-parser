@@ -493,12 +493,13 @@ class Block(Statement):
     def __str__(self) -> str:
         return f"({self.statements})"
 
-    def evaluate(self, *args, **kwargs) -> None:
+    def evaluate(self, *args, _new_env: bool = True, **kwargs) -> None:
         # args, kwargs is needed because statement.evaluate is always passed an env arg.
         # But block always creates a new one anyway so doesn't need to use that.
         # TODO: confirm if above is still accurate, looks like this is the only place we call
         # "env=" in this project...
-        with INTERPRETER.new_env(**kwargs) as env:
+        context_manager = INTERPRETER.new_env if _new_env else INTERPRETER.existing_env
+        with context_manager(**kwargs) as env:
             for statement in self.statements:
                 try:
                     statement.evaluate(env=env)
@@ -637,15 +638,17 @@ class LoxFunction(LoxCallable):
         # TODO does lox suppport both positional
         # and named args tho? gpt says positional only, let's try that for now.
         with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
-            # TODO rm
-            # print("LoxFunction.evaluate", self.func.name.lexeme,
-            #       kwargs,
-            #       '\nparent:', getattr(env.parent, "state", None),
-            #       '\nnonlocal:', getattr(self.nonlocal_env, "state", None),
-            #       '\ndefinition:', getattr(self.func.definition_env, "state", None))
+            # # TODO rm
+            # if self.func.name.lexeme == 'count':
+            #     print("LoxFunction.evaluate", self.func.name.lexeme,
+            #         kwargs,
+            #         '\nenv:', id(env), env.state,
+            #         '\nparent:', id(env.parent), getattr(env.parent, "state", None),
+            #         '\nnonlocal:', id(self.nonlocal_env), getattr(self.nonlocal_env, "state", None),
+            #         '\ndefinition:', id(self.func.definition_env), getattr(self.func.definition_env, "state", None))
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
-                return self.func.body.evaluate(**py_kwargs)
+                return self.func.body.evaluate(**py_kwargs, _new_env=False)
             except Return as e:
                 return e.value
 
@@ -736,6 +739,15 @@ class Interpreter:
             yield self.env
         finally:
             self.env = prev_env
+
+    @contextmanager
+    def existing_env(self, **kwargs):
+        try:
+            for k, v in kwargs.items():
+                self.env.update_state(k, v, is_declaration=True)
+            yield self.env
+        finally:
+            pass
 
     # TODO: testing replacing resolver.record_depth with this
     # def resolve(self, expr: Expression, depth: int):

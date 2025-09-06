@@ -74,3 +74,27 @@ findings
 -foo has depth 0 in assign call which I think is why we update inner block. I see during resolution we do resolve foo to both depth 1 and 0. So I think this reflects the issue of using str keys in locals. Looks like we do need to change that 😬.
 
 ---
+// This program uses for loops and block scopes
+// to print the updates to the same variable
+var baz = "after";
+{
+  var baz = "before";
+
+  for (var baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+    var baz = -1;
+    print baz;
+  }
+}
+
+{
+  for (var baz = 0; baz > 0; baz = baz + 1) {}
+
+  var baz = "after";
+  print baz;
+
+  for (baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+  }
+}
+

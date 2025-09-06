@@ -433,11 +433,13 @@ class Token:
                 # depth = interpreter.locals.get(self, None)
                 depth = interpreter.locals.get(kwargs["expr"], None)
                 # TODO rm
-                # print('[lexer]')
-                # print("\tenv lookup depth:", self.lexeme, depth)
-                # print("\tglobal env state:", id(interpreter.global_env), interpreter.global_env.state,
-                #       "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
-                #       "\n\tparent env state:", id(interpreter.env.parent), getattr(interpreter.env.parent, 'state', 'null')) # TODO rm
+                # if self.lexeme == 'i':
+                #     print('[lexer]')
+                #     print("\tenv lookup depth:", self.lexeme, depth)
+                #     print("\tglobal env state:", id(interpreter.global_env), interpreter.global_env.state,
+                #         "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
+                #         "\n\tparent env state:", id(interpreter.env.parent), getattr(interpreter.env.parent, 'state', 'null')) # TODO rm
+                # TODO end
                 if depth is None:
                     value = interpreter.global_env.read_state(self.lexeme)
                 else:
