@@ -34,8 +34,13 @@ class Resolver:
         Example:
         var a;
         """
-        if self.scopes:
-            self.scopes[-1][name] = False
+        if not self.scopes:
+            return
+
+        scope = self.scopes[-1]
+        if name in scope:
+            raise RuntimeError(f"") # TODO
+        scope[name] = False
 
     def define(self, name: str):
         """Mark a previously declared variable as ready for binding.
