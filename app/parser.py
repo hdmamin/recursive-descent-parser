@@ -533,7 +533,7 @@ class Parser:
         if self.match(TokenTypes.IDENTIFIER):
             if self.match(TokenTypes.EQUAL):
                 expr = self.expression()
-                declaration = VariableDeclaration(name.lexeme, expr)
+                declaration = VariableDeclaration(name, expr)
                 if self.match(TokenTypes.SEMICOLON):
                     return declaration
                 else:
@@ -541,7 +541,7 @@ class Parser:
             elif self.match(TokenTypes.SEMICOLON):
                 # Assign default value of nil.
                 return VariableDeclaration(
-                    name.lexeme,
+                    name,
                     Literal(Token("nil", name.line, token_type=ReservedTokenTypes.NIL))
                 )
             else:

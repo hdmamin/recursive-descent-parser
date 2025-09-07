@@ -460,7 +460,7 @@ class VariableDeclaration(Statement):
     """Creates a variable (global by default).
     """
     
-    def __init__(self, name: str, expr: Expression) -> None:
+    def __init__(self, name: Token, expr: Expression) -> None:
         self.name = name
         self.expr = expr
         # We will set this in evaluate. Don't use default=None because evaluate could return None.
@@ -468,13 +468,13 @@ class VariableDeclaration(Statement):
 
     # TODO: getting displayed like "((a = foo);)", guessing that may not be correct.
     def __str__(self) -> str:
-        return f"({self.name} = {self.expr})"
+        return f"({self.name.lexeme} = {self.expr})"
 
     def evaluate(self, env: Optional[Environment] = None) -> None:
         env = env or INTERPRETER.env
         # Only want to evaluate once, not every time we reference a variable.
         self.value = self.expr.evaluate()
-        env.update_state(self.name, self.value, is_declaration=True)
+        env.update_state(self.name.lexeme, self.value, is_declaration=True)
 
     def resolve(self):
         INTERPRETER.resolver.declare(self.name)
@@ -694,8 +694,8 @@ class Function(Statement):
         return func
 
     def resolve(self):
-        INTERPRETER.resolver.declare(self.name.lexeme)
-        INTERPRETER.resolver.define(self.name.lexeme)
+        INTERPRETER.resolver.declare(self.name)
+        INTERPRETER.resolver.define(self.name)
         INTERPRETER.resolver.resolve_function(self)
 
     def __str__(self) -> str:

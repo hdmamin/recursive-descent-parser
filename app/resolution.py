@@ -2,6 +2,8 @@ from collections import deque
 from contextlib import contextmanager
 from typing import Any
 
+from app.lexer import Token
+
 
 class Resolver:
 
@@ -29,7 +31,7 @@ class Resolver:
         # TODO testing
         obj.resolve()
 
-    def declare(self, name: str):
+    def declare(self, name: Token):
         """
         Example:
         var a;
@@ -38,18 +40,21 @@ class Resolver:
             return
 
         scope = self.scopes[-1]
-        if name in scope:
-            raise RuntimeError(f"") # TODO
-        scope[name] = False
+        if name.lexeme in scope:
+            raise RuntimeError(
+                f"[line {name.line}] Error at {name.lexeme}: Can't read local variable in its "
+                "own initializer."
+            )
+        scope[name.lexeme] = False
 
-    def define(self, name: str):
+    def define(self, name: Token):
         """Mark a previously declared variable as ready for binding.
 
         Example:
         a = 6;
         """
         if self.scopes:
-            self.scopes[-1][name] = True
+            self.scopes[-1][name.lexeme] = True
 
     # TODO: we only hit this method once, for f declaration, and it passes through the NOT declared
     # path. I think key may be that this is defined at global level and we need to handle that
@@ -75,8 +80,8 @@ class Resolver:
         # but not sure of that.
         with self.scope():
             for param in func.params:
-                self.declare(param.lexeme)
-                self.define(param.lexeme)
+                self.declare(param)
+                self.define(param)
             # TODO: translating from book here, not sure if need to call body resolve method or
             # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
             # going with the former for now.
