@@ -77,7 +77,9 @@ class Variable(Expression):
             INTERPRETER.resolver.scopes
             and not INTERPRETER.resolver.scopes[-1].get(self.identifier.lexeme, True)
         ):
-            raise SyntaxError("Can't read local variable in its own initializer.")
+            raise SyntaxError(
+                f"[line {self.identifier.line}] Error at '{self.identifier.lexeme}': Can't read local variable in its own initializer."
+            )
         # print(f"Variable ({self.identifier.lexeme}): about to call resolve_local") # TODO
         # TODO testing obj key instead of str
         # INTERPRETER.resolver.resolve_local(self.identifier.lexeme)

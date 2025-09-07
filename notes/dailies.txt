@@ -1196,14 +1196,22 @@ X -stage #67: identifier resolution
 		> maybe should actually do this now? Or wait til end of resolution stage?
     -add more low effort task bullets
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
--stage #68: self initialization (new stage!)
+X -stage #68: self initialization (new stage!)
+	X -skim ui/book to see what I need to implement
+	X -ui tests pass
+		X -0
+		X -1
+		X -2
+		X -3
+	X -`make test_resolving_w_jlox` stage 2/4 pass
+-stage #69: variable redeclaration (new stage!)
 	-skim ui/book to see what I need to implement
 	-ui tests pass
 		-0
 		-1
 		-2
 		-3
-	-`make test_resolving_w_jlox` stage 2/4 pass
+	-`make test_resolving_w_jlox` stage 3/4 pass
 	-prev rounds' tests still pass
 		-scanning
 		-parsing
