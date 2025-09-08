@@ -5,11 +5,17 @@ from typing import Any
 from app.lexer import Token
 
 
+class FunctionType:
+    FUNCTION = "FUNCTION"
+    NONE = "NONE"
+
+
 class Resolver:
 
     # Type hint is str to avoid circular import.
     def __init__(self, interpreter: "Interpreter"):
         self.interpreter = interpreter
+        self.current_function = FunctionType.NONE
         # Stack of dict[str, bool] containing (varname, has_been_defined)
         self.scopes = deque()
         # TODO: hoping I can rm depths
@@ -23,6 +29,17 @@ class Resolver:
             yield self.scopes[-1]
         finally:
             self.scopes.pop()
+
+    @contextmanager
+    def inside_function(self):
+        """Set current_function attr temporarily so other code can check if we're currently
+        resolving a function.
+        """
+        try:
+            self.current_function = FunctionType.FUNCTION
+            yield
+        finally:
+            self.current_function = FunctionType.NONE
 
     def resolve(self, obj: Any):
         # with self.scope():
@@ -79,13 +96,14 @@ class Resolver:
         # in a new scope and then body in a nested scope (because Block always creates a new one)
         # but not sure of that.
         with self.scope():
-            for param in func.params:
-                self.declare(param)
-                self.define(param)
-            # TODO: translating from book here, not sure if need to call body resolve method or
-            # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
-            # going with the former for now.
-            func.body.resolve(is_function_body=True)
+            with self.inside_function():
+                for param in func.params:
+                    self.declare(param)
+                    self.define(param)
+                # TODO: translating from book here, not sure if need to call body resolve method or
+                # resolver.resolve(func.body) here. Guessing we want to stay in the same scope (?) so
+                # going with the former for now.
+                func.body.resolve(is_function_body=True)
 
     # TODO trying to replace this with Interpreter.resolve
     # def record_depth(self, name, depth: int):

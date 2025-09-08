@@ -6,7 +6,7 @@ from typing import Any, Optional, Union
 from app.environment import GLOBAL_ENV, Environment
 from app.exceptions import ParsingError
 from app.lexer import TokenTypes, ReservedTokenTypes, Token
-from app.resolution import Resolver
+from app.resolution import Resolver, FunctionType
 from app.utils import truthy, is_number, SENTINEL, maybe_context_manager
 
 
@@ -611,7 +611,8 @@ class IfStatement(Statement):
 
 class ReturnStatement(Statement):
     
-    def __init__(self, expr: Optional[Expression] = None):
+    def __init__(self, line_num: int, expr: Optional[Expression] = None):
+        self.line_num = line_num
         self.expr = expr
 
     def evaluate(self, *args, **kwargs):
@@ -628,6 +629,11 @@ class ReturnStatement(Statement):
         return f"Return({self.expr})"
 
     def resolve(self):
+        if INTERPRETER.resolver.current_function != FunctionType.FUNCTION:
+            raise RuntimeError(
+                f"[line {self.line_num}] Error at 'return': Can't return from top-level code."
+            )
+
         if self.expr:
             self.expr.resolve()
 

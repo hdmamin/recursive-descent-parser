@@ -357,6 +357,7 @@ class Parser:
         # TODO: presumably somewhere need to check if this is a valid place for return, i.e. are we
         # inside a class/function. May rm this if, could be unnecessary, we may actually want
         # expr_stmt.
+        line_num = self.current_token().line
         if self.match(ReservedTokenTypes.RETURN):
             # TODO: we're hitting an error in the expression() call. Looks like the parsing logic
             # here is a little more complex, need to flesh it out. May also need to deal with case
@@ -365,7 +366,7 @@ class Parser:
             expr = None if self.match(TokenTypes.SEMICOLON) else self.expression_statement()
             if isinstance(expr, ExpressionStatement):
                 expr = expr.expr
-            return ReturnStatement(expr)
+            return ReturnStatement(line_num=line_num, expr=expr)
         return self.expression_statement()
     
     def while_statement(self):

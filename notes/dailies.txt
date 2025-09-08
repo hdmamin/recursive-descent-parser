@@ -1228,12 +1228,32 @@ X -stage #69: variable redeclaration (new stage!)
     -add more low effort task bullets
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
 -stage #70: invalid return (new stage!)
-	-skim ui/book to see what I need to implement
-	-ui tests pass
-		-0
-		-1
-		-2
+	X -skim ui/book to see what I need to implement
+	~ -ui tests pass
+		X -0
+		X -1
+		X -2
 		-3
+			> fails on second return (outer scope in nested funcs). I think this must be why the book did some kind of stack/queue, will need to fix that.
+	-`make test_resolving_w_jlox` all stages pass (4/4)
+-prev rounds' tests still pass
+	-scanning
+	-parsing
+	-evaluation
+	-statements
+	-control_flow
+	-functions
+
+9/8/25 mon
+----------
+-low effort tasks:
+	-tons of comments to clean up from testing my obj keys (vs strs) in interpreter.locals
+		> maybe should actually do this now? Or wait til end of resolution stage?
+    -add more low effort task bullets
+	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
+-stage #70: invalid return (new stage!)
+	-ui tests pass: 3
+		> fails on second return (outer scope in nested funcs). I think this must be why the book did some kind of stack/queue, will need to fix that.
 	-`make test_resolving_w_jlox` all stages pass (4/4)
 -prev rounds' tests still pass
 	-scanning
