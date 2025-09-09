@@ -54,17 +54,8 @@ class Resolver:
         Example:
         var a;
         """
-        if not self.scopes:
-            return
-
-        scope = self.scopes[-1]
-        print('declare;', scope)
-        if name.lexeme in scope:
-            raise RuntimeError(
-                f"[line {name.line}] Error at {name.lexeme}: Can't read local variable in its "
-                "own initializer."
-            )
-        scope[name.lexeme] = False
+        if self.scopes:
+            self.scopes[-1][name.lexeme] = False
 
     def define(self, name: Token):
         """Mark a previously declared variable as ready for binding.
