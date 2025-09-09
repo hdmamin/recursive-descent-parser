@@ -88,12 +88,10 @@ def main():
     except Exception as e:
         print(e, file=sys.stderr)
         exit(65)
-    # print(">>> resolution done") # TODO rm
     parser.reset_index()
     # TODO testing (noticed parse and run use same mode, eval will prob break but will get to that)
     # res = parser.parse(mode=command)
     res = parsed
-    # breakpoint() # TODO rm
     if command == "evaluate":
         # TODO: again, would like to consolidate and raise this only once instead of in each
         # command, but codecrafters is picky about when/where errors are raised. Clean up later.

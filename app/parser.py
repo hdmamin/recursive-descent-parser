@@ -121,7 +121,6 @@ class Parser:
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
-                # breakpoint() # TODO rm
                 res["success"] = False
                 res["errors"].append(e)
                 # Avoid getting stuck in infinite loop on parsing errors that don't hit

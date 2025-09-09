@@ -1247,8 +1247,9 @@ X -stage #69: variable redeclaration (new stage!)
 9/8/25 mon
 ----------
 -low effort tasks:
-	-tons of comments to clean up from testing my obj keys (vs strs) in interpreter.locals
+	X -tons of comments to clean up from testing my obj keys (vs strs) in interpreter.locals
 		> maybe should actually do this now? Or wait til end of resolution stage?
+		> still lots of todos but cleaned up resolution stage debugging comments.
     -add more low effort task bullets
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
@@ -1266,3 +1267,26 @@ X -prev rounds' tests still pass
 	X -control_flow
 		> 508.4 fails (for loops, 2nd last substage)
 	X -functions
+
+9/9/25 tues
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
+	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
+		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+-stage #71: class declarations (new stage! new mega-stage!)
+	-ui tests pass:
+		-0
+		-1
+		-2
+		-3
+	-`make test_classes_w_jlox` all stages pass (1/8)
+-prev rounds' tests still pass
+	-scanning
+	-parsing
+	-evaluation
+	-statements
+	-control_flow
+	-functions
+	-resolution

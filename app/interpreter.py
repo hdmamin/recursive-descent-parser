@@ -62,7 +62,6 @@ class Variable(Expression):
         """This returns the relevant python value, not the lox value. E.g. None rather than
         ReservedTokenTypes.NIL.
         """
-        # TODO: testing for obj keys in locals
         return self.identifier.evaluate(expr=self)
 
     def resolve(self):
@@ -81,9 +80,6 @@ class Variable(Expression):
                 f"[line {self.identifier.line}] Error at '{self.identifier.lexeme}': "
                 "Can't read local variable in its own initializer."
             )
-        # print(f"Variable ({self.identifier.lexeme}): about to call resolve_local") # TODO
-        # TODO testing obj key instead of str
-        # INTERPRETER.resolver.resolve_local(self.identifier.lexeme)
         INTERPRETER.resolver.resolve_local(self, self.identifier.lexeme)
 
 
@@ -367,30 +363,17 @@ class Assign(Expression):
 
     def evaluate(self, env: Optional[Environment] = None):
         """Evaluates the value of the variable and returns the corresponding python object."""
-        # env = env or INTERPRETER.env
-        # TODO testing
-        # depth = INTERPRETER.locals.get(self.name.lexeme, None)
-        # TODO nested test: obj key instead of str
-        tmp_locals = {hash(k): v for k, v in INTERPRETER.locals.items()}
-        # print(f'[assign] {self} {tmp_locals} {hash(self.expr)}', self.expr in INTERPRETER.locals)
         depth = INTERPRETER.locals.get(self.expr, None)
-        # TODO end
         self.val = self.expr.evaluate()
 
-        # TODO start
-        # print(f'[Assign] assign: {self.name.lexeme}; depth:', depth) # TODO rm
         if depth is None:
             INTERPRETER.global_env.update_state(self.name.lexeme, self.val, is_declaration=False)
         else:
             INTERPRETER.env.update_state_at(self.name.lexeme, self.val, depth)
-        # TODO end
-        # env.update_state(self.name.non_null_literal, self.val, is_declaration=False)
         return self.val
 
     def resolve(self):
         self.expr.resolve()
-        # TODO testing obj key instead of str
-        # INTERPRETER.resolver.resolve_local(self.name.lexeme)
         INTERPRETER.resolver.resolve_local(self.expr, self.name.lexeme)
 
 
@@ -510,8 +493,6 @@ class Block(Statement):
                     raise e
 
     def resolve(self, is_function_body: bool = False):
-        # print("resolving block", self.statements) # TODO
-        # with INTERPRETER.resolver.scope():
         with maybe_context_manager(INTERPRETER.resolver.scope, enable=not is_function_body):
             for statement in self.statements:
                 statement.resolve()
@@ -655,14 +636,6 @@ class LoxFunction(LoxCallable):
         # TODO does lox suppport both positional
         # and named args tho? gpt says positional only, let's try that for now.
         with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
-            # # TODO rm
-            # if self.func.name.lexeme == 'count':
-            #     print("LoxFunction.evaluate", self.func.name.lexeme,
-            #         kwargs,
-            #         '\nenv:', id(env), env.state,
-            #         '\nparent:', id(env.parent), getattr(env.parent, "state", None),
-            #         '\nnonlocal:', id(self.nonlocal_env), getattr(self.nonlocal_env, "state", None),
-            #         '\ndefinition:', id(self.func.definition_env), getattr(self.func.definition_env, "state", None))
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
                 return self.func.body.evaluate(**py_kwargs, _new_env=False)
@@ -745,9 +718,6 @@ class Interpreter:
 
     @contextmanager
     def new_env(self, parent: Optional[Environment] = None, **kwargs):
-        # TODO: trying to allow passing in kwargs to allow LoxFunction to provide args in the new
-        # env that its body (Block) will create. atm we assume kwargs map name (str) to val (python
-        # obj). Check if we still need this, I removed one useage in LoxFunction.
         prev_env = self.env
         try:
             self.env = Environment(parent=parent or prev_env)
@@ -766,16 +736,8 @@ class Interpreter:
         finally:
             pass
 
-    # TODO: testing replacing resolver.record_depth with this
-    # def resolve(self, expr: Expression, depth: int):
-        # self.locals[expr] = depth
-    # TODO: I think we will need to change this to take in expr name, not str, bc if we reference
-    # a var n different times we'd want n different locals. Like each foo could potentially refer
-    # to a different foo depending on where in the program we are. Will need to figure out how to deal
-    # with parsing and execution occurring separately, id(variable) will not be the same rn 😬.
     def resolve(self, name: str, depth: int):
         self.locals[name] = depth
-        # print('interp.resolve', name, depth) # TODO rm
 
     def resolve_all(self, expressions: list[Expression]):
         for expr in expressions:
