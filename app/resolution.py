@@ -35,11 +35,12 @@ class Resolver:
         """Set current_function attr temporarily so other code can check if we're currently
         resolving a function.
         """
+        prev = self.current_function
         try:
             self.current_function = FunctionType.FUNCTION
             yield
         finally:
-            self.current_function = FunctionType.NONE
+            self.current_function = prev
 
     def resolve(self, obj: Any):
         # with self.scope():
@@ -57,6 +58,7 @@ class Resolver:
             return
 
         scope = self.scopes[-1]
+        print('declare;', scope)
         if name.lexeme in scope:
             raise RuntimeError(
                 f"[line {name.line}] Error at {name.lexeme}: Can't read local variable in its "

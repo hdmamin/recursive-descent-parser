@@ -1251,14 +1251,17 @@ X -stage #69: variable redeclaration (new stage!)
 		> maybe should actually do this now? Or wait til end of resolution stage?
     -add more low effort task bullets
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
--stage #70: invalid return (new stage!)
-	-ui tests pass: 3
+	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
+		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+-stage #70: invalid return
+	X -ui tests pass: 3
 		> fails on second return (outer scope in nested funcs). I think this must be why the book did some kind of stack/queue, will need to fix that.
-	-`make test_resolving_w_jlox` all stages pass (4/4)
+	X -`make test_resolving_w_jlox` all stages pass (4/4)
 -prev rounds' tests still pass
-	-scanning
-	-parsing
-	-evaluation
-	-statements
+	X -scanning
+	X -parsing
+	X -evaluation
+	X -statements
 	-control_flow
-	-functions
+		> 508.4 fails (for loops, 2nd last substage)
+	X -functions

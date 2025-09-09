@@ -1,15 +1,23 @@
-fun outer() {
-  fun inner() {
-    return "ok";
-  }
+// This program uses for loops and block scopes
+// to print the updates to the same variable
+var baz = "after";
+{
+  var baz = "before";
 
-  return "also ok";
+  for (var baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+    var baz = -1;
+    print baz;
+  }
 }
 
-if (true) {
-  fun nested() {
-    return;
-  }
+{
+  for (var baz = 0; baz > 0; baz = baz + 1) {}
 
-  return "not ok";
+  var baz = "after";
+  print baz;
+
+  for (baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+  }
 }
