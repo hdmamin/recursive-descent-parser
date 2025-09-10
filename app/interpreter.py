@@ -385,9 +385,10 @@ class Statement:
     Grammar:
 
     program        → declaration* EOF ;
-    declaration    → funDecl
-                | varDecl
-                | statement ;
+    declaration    → classDecl
+               | funDecl
+               | varDecl
+               | statement;
     funDecl        → "fun" function ;
     function       → IDENTIFIER "(" parameters? ")" block ;
     statement      → exprStmt
@@ -496,6 +497,28 @@ class Block(Statement):
         with maybe_context_manager(INTERPRETER.resolver.scope, enable=not is_function_body):
             for statement in self.statements:
                 statement.resolve()
+
+
+class Class(Statement):
+    """Represents a class *declaration*.
+    """
+
+    def __init__(self, name: Token, methods: list["Function"]):
+        self.name = name
+        self.methods = methods
+
+    def __str__(self) -> str:
+        pass
+
+    def evaluate(self, *args, **kwargs):
+        # TODO
+        cls = LoxClass(self, kwargs.get("env", None))
+        INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
+        return cls
+
+    def resolve(self):
+        INTERPRETER.resolver.declare(self.name)
+        INTERPRETER.resolver.define(self.name)
 
     
 class While(Statement):
@@ -644,6 +667,42 @@ class LoxFunction(LoxCallable):
 
     def __str__(self) -> str:
         return f"<fn {self.func.name.lexeme}>"
+
+
+class LoxClass(LoxCallable):
+    """The class object we use at runtime. (This is in contrast to Class which is used to parse
+    class *definitions*.)
+    """
+
+    def __init__(self, cls_declaration: "Class", nonlocal_env: Optional[Environment] = None):
+        self.cls_declaration = cls_declaration
+        # TODO are these needed? Using dummy arity for now
+        # self.nonlocal_env = nonlocal_env
+        self.arity = 0
+
+    def evaluate(self, *args, **kwargs):
+        # TODO
+        return LoxInstance(self)
+        # # TODO does lox suppport both positional
+        # # and named args tho? gpt says positional only, let's try that for now.
+        # with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
+        #     py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
+        #     try:
+        #         return self.func.body.evaluate(**py_kwargs, _new_env=False)
+        #     except Return as e:
+        #         return e.value
+
+    def __str__(self) -> str:
+        return self.cls_declaration.name.lexeme
+
+
+class LoxInstance:
+
+    def __init__(self, cls: LoxClass):
+        self.cls = cls
+
+    def __str__(self) -> str:
+        return f"{self.cls.cls_declaration.name.lexeme} instance"
 
 
 class Function(Statement):

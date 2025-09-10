@@ -1,23 +1,10 @@
-// This program uses for loops and block scopes
-// to print the updates to the same variable
-var baz = "after";
-{
-  var baz = "before";
+// Basic property setting and getting
+class Spaceship {}
+var falcon = Spaceship();
 
-  for (var baz = 0; baz < 1; baz = baz + 1) {
-    print baz;
-    var baz = -1;
-    print baz;
-  }
-}
+falcon.name = "Millennium Falcon";
+falcon.speed = 75.5;
 
-{
-  for (var baz = 0; baz > 0; baz = baz + 1) {}
-
-  var baz = "after";
-  print baz;
-
-  for (baz = 0; baz < 1; baz = baz + 1) {
-    print baz;
-  }
-}
+print "Ship details:";
+print falcon.name;
+print falcon.speed;

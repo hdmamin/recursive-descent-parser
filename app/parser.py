@@ -4,7 +4,7 @@ from app.exceptions import ParsingError
 from app.interpreter import (
     Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping,
     Statement, IfStatement, PrintStatement, ExpressionStatement, ReturnStatement,
-    VariableDeclaration, Block, While, For, Function
+    VariableDeclaration, Block, While, For, Function, Class
 )
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
@@ -519,6 +519,8 @@ class Parser:
                 return self.function_declaration(kind="function")
             elif self.match(ReservedTokenTypes.VAR):
                 return self.variable_declaration()
+            elif self.match(ReservedTokenTypes.CLASS):
+                return self.class_declaration()
             else:
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
@@ -557,21 +559,28 @@ class Parser:
             "function" or "class"
 
         funDecl → "fun" function ;
+        classDecl → "class" IDENTIFIER "{" function* "}" ;
 
         Example
         fun foo(bar, baz) {
             print bar;
             print baz;
         }
+
+        class Breakfast {
+            cook() {
+                print "cooking";
+            }
+        }
         """
         name = self.current_token()
         self.curr_idx += 1
-        params = []
-        n_params = 0
         if not self.match(TokenTypes.LEFT_PAREN):
             # TODO syntax or parsing error?
             raise SyntaxError(f"Expect '(' after {kind} name.")
         
+        params = []
+        n_params = 0
         prev_token = None
         while True:
             param = self.current_token()
@@ -604,3 +613,19 @@ class Parser:
             raise SyntaxError(f"Expect '{{' before {kind} body.")
         body = Block(self.block())
         return Function(name, params, body)
+
+    def class_declaration(self) -> Class:
+        if not self.match(TokenTypes.IDENTIFIER):
+            raise SyntaxError("Expect class name.")
+
+        name = self.previous_token()
+        if not self.match(TokenTypes.LEFT_BRACE):
+            raise SyntaxError("Expect '{' before class body.")
+
+        methods = []
+        while self.curr_idx <= self.max_idx and not self.match(TokenTypes.RIGHT_BRACE):
+            method = self.function_declaration(kind="function")
+            methods.append(method)
+        if self.previous_token().token_type != TokenTypes.RIGHT_BRACE:
+            raise SyntaxError("Expect '}' after class body.")
+        return Class(name, methods)
