@@ -222,6 +222,48 @@ class Logical(Expression):
         self.right.resolve()
 
 
+class Get(Expression):
+
+    def __init__(self, obj: Expression, attr: Token):
+        self.obj = obj
+        self.attr = attr
+
+    def __str__(self):
+        return f"{type(self).__name__}(obj={self.obj}, attr={self.attr})"
+
+    def evaluate(self):
+        obj = self.obj.evaluate()
+        if not isinstance(obj, LoxInstance):
+            raise RuntimeError("Only instances have properties.")
+        return obj.get(self.attr.lexeme)
+
+    def resolve(self):
+        self.obj.resolve()
+
+
+class Set(Expression):
+
+    def __init__(self, obj: Expression, attr: Token, val: Expression):
+        self.obj = obj
+        self.attr = attr
+        self.val = val
+
+    def __str__(self):
+        return f"{type(self).__name__}(obj={self.obj}, attr={self.attr}, val={self.val})"
+
+    def evaluate(self, **kwargs):
+        obj = self.obj.evaluate()
+        if not isinstance(obj, LoxInstance):
+            raise RuntimeError("Only instances have fields.")
+
+        val = self.val.evaluate()
+        obj.set(self.attr.lexeme, val)
+        return val
+
+    def resolve(self):
+        self.obj.resolve()
+        self.val.resolve()
+
 def clock() -> int:
     """Return the current time in seconds since January 1, 1970 UTC."""
     return int(datetime.now().timestamp())
@@ -700,9 +742,18 @@ class LoxInstance:
 
     def __init__(self, cls: LoxClass):
         self.cls = cls
+        self.attrs = {}
 
     def __str__(self) -> str:
         return f"{self.cls.cls_declaration.name.lexeme} instance"
+
+    def get(self, name: str) -> Any:
+        if name in self.attrs:
+            return self.attrs[name]
+        raise RuntimeError(f"Undefined property {name.lexeme!r}.")
+    
+    def set(self, name: str, val: Any):
+        self.attrs[name] = val
 
 
 class Function(Statement):

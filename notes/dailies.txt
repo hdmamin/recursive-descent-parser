@@ -1308,14 +1308,38 @@ X -stage #72: Class Instances (new stage!)
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
 		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
--stage #73: getters and setters (new stage!)
+X -stage #73: getters and setters (new stage!)
+	X -skim ui/book to see what we need to implement
+	X -ui tests pass:
+		X -0 (in test_case.lox)
+		X -1
+		X -2
+		X -3
+	X -`make test_classes_w_jlox` stages pass: 3/8
+-prev rounds' tests still pass
+	-scanning
+	-parsing
+	-evaluation
+	-statements
+	-control_flow
+	-functions
+	-resolution
+
+9/11/25 thurs
+-------------
+-low effort tasks:
+    -add more low effort task bullets
+	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
+	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
+		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+-stage #74: instance methods (new stage!)
 	-skim ui/book to see what we need to implement
 	-ui tests pass:
 		-0 (in test_case.lox)
 		-1
 		-2
 		-3
-	-`make test_classes_w_jlox` stages pass: 3/8
+	-`make test_classes_w_jlox` stages pass: 4/8
 -prev rounds' tests still pass
 	-scanning
 	-parsing

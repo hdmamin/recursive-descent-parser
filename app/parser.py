@@ -4,7 +4,7 @@ from app.exceptions import ParsingError
 from app.interpreter import (
     Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping,
     Statement, IfStatement, PrintStatement, ExpressionStatement, ReturnStatement,
-    VariableDeclaration, Block, While, For, Function, Class
+    VariableDeclaration, Block, While, For, Function, Class, Get, Set
 )
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
@@ -22,8 +22,8 @@ class Parser:
     Grammar
     -------
     expression     → assignment ;
-    assignment     → IDENTIFIER "=" assignment
-                | logic_or ;
+    assignment     → ( call "." )? IDENTIFIER "=" assignment
+               | logic_or ;
     logic_or       → logic_and ( "or" logic_and )* ;
     logic_and      → equality ( "and" equality )* ;
     equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -31,7 +31,7 @@ class Parser:
     term           → factor ( ( "-" | "+" ) factor )* ;
     factor         → unary ( ( "/" | "*" ) unary )* ;
     unary          → ( "!" | "-" ) unary | call ;
-    call           → primary ( "(" arguments? ")" )* ;
+    call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
     arguments      → expression ( "," expression )* ;
     primary        → "true" | "false" | "nil" | NUMBER | STRING
                | "(" expression ")"
@@ -190,12 +190,17 @@ class Parser:
         foo()
 
         Rule:
-        call → primary ( "(" arguments? ")" )* ;
+        call → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
         """
         expr = self.primary()
+        args = None
         while self.match(TokenTypes.LEFT_PAREN):
             args = self._get_call_args()
             expr = Call(expr, self.previous_token(), args)
+        if args is None and self.match(TokenTypes.DOT):
+            expr = Get(expr, self.current_token())
+            # Increment to avoid processing the attr name token again separately.
+            self.curr_idx += 1
         return expr
 
     def _get_call_args(self) -> list[Expression]:
@@ -297,18 +302,21 @@ class Parser:
         bar = "bar"
 
         Rule:
-        assignment     → IDENTIFIER "=" assignment
+        assignment     → ( call "." )? IDENTIFIER "=" assignment
                | logic_or ;
         """
         expr = self.logic_or()
         if self.match(TokenTypes.EQUAL):
-            value = self.assignment()
+            right = self.assignment()
             if isinstance(expr, Variable):
-                return Assign(name=expr.identifier, expr=value)
+                return Assign(name=expr.identifier, expr=right)
+            if isinstance(expr, Get):
+                return Set(expr.obj, expr.attr, right)
             # TODO: add expr/value/etc into error msg to make more informative? Might break tests
             # since they check for specific wording?
             # And is parsing error the right type?
             raise ParsingError("Invalid assignment target.")
+        # print('[assign] end:', expr, type(expr), '\n') # TODO
         return expr
 
     def logic_or(self) -> Logical:
