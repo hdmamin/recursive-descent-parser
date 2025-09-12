@@ -193,16 +193,16 @@ class Parser:
         call → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
         """
         expr = self.primary()
-        args = None
-        while self.match(TokenTypes.LEFT_PAREN):
-            args = self._get_call_args()
-            expr = Call(expr, self.previous_token(), args)
-        if args is None and self.match(TokenTypes.DOT):
-            print('call:', expr, self.current_token().line) # TODO
-            expr = Get(expr, self.current_token())
-            # Increment to avoid processing the attr name token again separately.
-            self.curr_idx += 1
-            print('after expr', expr, self.current_token()) # TODO
+        while True:
+            if self.match(TokenTypes.LEFT_PAREN):
+                args = self._get_call_args()
+                expr = Call(expr, self.previous_token(), args)
+            elif self.match(TokenTypes.DOT):
+                expr = Get(expr, self.current_token())
+                # Increment to avoid processing the attr name token again separately.
+                self.curr_idx += 1
+            else:
+                break
         return expr
 
     def _get_call_args(self) -> list[Expression]:
@@ -375,11 +375,7 @@ class Parser:
             if isinstance(expr, ExpressionStatement):
                 expr = expr.expr
             return ReturnStatement(line_num=line_num, expr=expr)
-        print('[stmt] before:', self.current_token(), self.current_token().line) # TODO
-        # return self.expression_statement()
-        tmp = self.expression_statement()
-        print('\t[stmt] after:', tmp) # TODO
-        return tmp
+        return self.expression_statement()
     
     def while_statement(self):
         """
@@ -469,7 +465,6 @@ class Parser:
         if not self.match(TokenTypes.SEMICOLON) and self.mode == "run":
             raise SyntaxError("Expect ';' after expression.")
 
-        print('expr:', expr) # TODO rm
         if self.mode in ("parse", "evaluate"):
             return expr
 

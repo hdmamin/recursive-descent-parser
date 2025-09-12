@@ -1,10 +1,9 @@
-class Robot {
-  beep() {
-    print "Beep boop!";
+class Calculator {
+  add(a, b) {
+    return a + b + this.memory;
   }
 }
 
-var r2d2 = Robot();
-r2d2.beep();
-
-Robot().beep();
+var calc = Calculator();
+calc.memory = 82;
+print calc.add(92, 1);

@@ -227,13 +227,11 @@ class Get(Expression):
     def __init__(self, obj: Expression, attr: Token):
         self.obj = obj
         self.attr = attr
-        print('get.init') # TODO
 
     def __str__(self):
         return f"{type(self).__name__}(obj={self.obj}, attr={self.attr})"
 
     def evaluate(self):
-        print('get.eval') # TODO
         obj = self.obj.evaluate()
         if not isinstance(obj, LoxInstance):
             raise RuntimeError("Only instances have properties.")
@@ -556,8 +554,8 @@ class Class(Statement):
 
     def evaluate(self, *args, **kwargs):
         # TODO do we need to evaluate the LoxFunctions?
-        methods = {method.name.lexeme: LoxFunction(method) for method in self.methods}
-        print('methods:', methods) # TODO
+        methods = {method.name.lexeme: LoxFunction(method, kwargs.get("env", None))
+                   for method in self.methods}
         cls = LoxClass(self, methods)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
         return cls
@@ -681,7 +679,10 @@ class ReturnStatement(Statement):
         return f"Return({self.expr})"
 
     def resolve(self):
-        if INTERPRETER.resolver.current_function != FunctionType.FUNCTION:
+        if INTERPRETER.resolver.current_function not in {
+            FunctionType.FUNCTION,
+            FunctionType.METHOD
+        }:
             raise RuntimeError(
                 f"[line {self.line_num}] Error at 'return': Can't return from top-level code."
             )
@@ -728,16 +729,8 @@ class LoxClass(LoxCallable):
         self.arity = 0
 
     def evaluate(self, *args, **kwargs):
-        # TODO
+        # TODO flesh out
         return LoxInstance(self)
-        # # TODO does lox suppport both positional
-        # # and named args tho? gpt says positional only, let's try that for now.
-        # with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
-        #     py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
-        #     try:
-        #         return self.func.body.evaluate(**py_kwargs, _new_env=False)
-        #     except Return as e:
-        #         return e.value
 
     def get_method(self, name: str):
         return self.methods.get(name, None)
@@ -756,7 +749,6 @@ class LoxInstance:
         return f"{self.cls.cls_declaration.name.lexeme} instance"
 
     def get(self, name: str) -> Any:
-        print("get:", name) # TODO
         if name in self.attrs:
             return self.attrs[name]
 
