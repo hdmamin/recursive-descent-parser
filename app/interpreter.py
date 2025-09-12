@@ -227,11 +227,13 @@ class Get(Expression):
     def __init__(self, obj: Expression, attr: Token):
         self.obj = obj
         self.attr = attr
+        print('get.init') # TODO
 
     def __str__(self):
         return f"{type(self).__name__}(obj={self.obj}, attr={self.attr})"
 
     def evaluate(self):
+        print('get.eval') # TODO
         obj = self.obj.evaluate()
         if not isinstance(obj, LoxInstance):
             raise RuntimeError("Only instances have properties.")
@@ -550,17 +552,21 @@ class Class(Statement):
         self.methods = methods
 
     def __str__(self) -> str:
-        pass
+        return f"{type(self).__name__}(name={self.name}, methods={self.methods})"
 
     def evaluate(self, *args, **kwargs):
-        # TODO
-        cls = LoxClass(self, kwargs.get("env", None))
+        # TODO do we need to evaluate the LoxFunctions?
+        methods = {method.name.lexeme: LoxFunction(method) for method in self.methods}
+        print('methods:', methods) # TODO
+        cls = LoxClass(self, methods)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
         return cls
 
     def resolve(self):
         INTERPRETER.resolver.declare(self.name)
         INTERPRETER.resolver.define(self.name)
+        for method in self.methods:
+            INTERPRETER.resolver.resolve_function(method, FunctionType.METHOD)
 
     
 class While(Statement):
@@ -716,10 +722,9 @@ class LoxClass(LoxCallable):
     class *definitions*.)
     """
 
-    def __init__(self, cls_declaration: "Class", nonlocal_env: Optional[Environment] = None):
+    def __init__(self, cls_declaration: "Class", methods: dict[str, LoxFunction]):
         self.cls_declaration = cls_declaration
-        # TODO are these needed? Using dummy arity for now
-        # self.nonlocal_env = nonlocal_env
+        self.methods = methods
         self.arity = 0
 
     def evaluate(self, *args, **kwargs):
@@ -733,6 +738,9 @@ class LoxClass(LoxCallable):
         #         return self.func.body.evaluate(**py_kwargs, _new_env=False)
         #     except Return as e:
         #         return e.value
+
+    def get_method(self, name: str):
+        return self.methods.get(name, None)
 
     def __str__(self) -> str:
         return self.cls_declaration.name.lexeme
@@ -748,8 +756,14 @@ class LoxInstance:
         return f"{self.cls.cls_declaration.name.lexeme} instance"
 
     def get(self, name: str) -> Any:
+        print("get:", name) # TODO
         if name in self.attrs:
             return self.attrs[name]
+
+        method = self.cls.get_method(name)
+        if method:
+            return method
+
         raise RuntimeError(f"Undefined property {name.lexeme!r}.")
     
     def set(self, name: str, val: Any):

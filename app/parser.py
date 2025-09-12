@@ -198,9 +198,11 @@ class Parser:
             args = self._get_call_args()
             expr = Call(expr, self.previous_token(), args)
         if args is None and self.match(TokenTypes.DOT):
+            print('call:', expr, self.current_token().line) # TODO
             expr = Get(expr, self.current_token())
             # Increment to avoid processing the attr name token again separately.
             self.curr_idx += 1
+            print('after expr', expr, self.current_token()) # TODO
         return expr
 
     def _get_call_args(self) -> list[Expression]:
@@ -316,7 +318,6 @@ class Parser:
             # since they check for specific wording?
             # And is parsing error the right type?
             raise ParsingError("Invalid assignment target.")
-        # print('[assign] end:', expr, type(expr), '\n') # TODO
         return expr
 
     def logic_or(self) -> Logical:
@@ -374,7 +375,11 @@ class Parser:
             if isinstance(expr, ExpressionStatement):
                 expr = expr.expr
             return ReturnStatement(line_num=line_num, expr=expr)
-        return self.expression_statement()
+        print('[stmt] before:', self.current_token(), self.current_token().line) # TODO
+        # return self.expression_statement()
+        tmp = self.expression_statement()
+        print('\t[stmt] after:', tmp) # TODO
+        return tmp
     
     def while_statement(self):
         """
@@ -464,6 +469,7 @@ class Parser:
         if not self.match(TokenTypes.SEMICOLON) and self.mode == "run":
             raise SyntaxError("Expect ';' after expression.")
 
+        print('expr:', expr) # TODO rm
         if self.mode in ("parse", "evaluate"):
             return expr
 

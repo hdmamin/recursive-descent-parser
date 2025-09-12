@@ -7,6 +7,7 @@ from app.lexer import Token
 
 class FunctionType:
     FUNCTION = "FUNCTION"
+    METHOD = "METHOD"
     NONE = "NONE"
 
 
@@ -28,13 +29,13 @@ class Resolver:
             self.scopes.pop()
 
     @contextmanager
-    def inside_function(self):
+    def inside_function(self, function_type: FunctionType):
         """Set current_function attr temporarily so other code can check if we're currently
         resolving a function.
         """
         prev = self.current_function
         try:
-            self.current_function = FunctionType.FUNCTION
+            self.current_function = function_type
             yield
         finally:
             self.current_function = prev
@@ -69,12 +70,16 @@ class Resolver:
                 return
             i -= 1
 
-    def resolve_function(self, func: "Function"):
+    def resolve_function(
+            self,
+            func: "Function",
+            function_type: FunctionType = FunctionType.FUNCTION
+        ):
         # TODO slightly unclear how scopes are supposed to be handled here, I *think* we want params
         # in a new scope and then body in a nested scope (because Block always creates a new one)
         # but not sure of that.
         with self.scope():
-            with self.inside_function():
+            with self.inside_function(function_type):
                 for param in func.params:
                     self.declare(param)
                     self.define(param)
