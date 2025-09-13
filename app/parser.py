@@ -4,7 +4,7 @@ from app.exceptions import ParsingError
 from app.interpreter import (
     Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping,
     Statement, IfStatement, PrintStatement, ExpressionStatement, ReturnStatement,
-    VariableDeclaration, Block, While, For, Function, Class, Get, Set
+    VariableDeclaration, Block, While, For, Function, Class, Get, Set, This
 )
 from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
@@ -172,6 +172,9 @@ class Parser:
                     f"{self.current_token().token_type}."
                 )
             return Grouping(expr)
+
+        if self.match(ReservedTokenTypes.THIS):
+            return This(token)
 
         if self.match(TokenTypes.IDENTIFIER):
             return Variable(token)

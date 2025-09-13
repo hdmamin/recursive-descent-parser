@@ -264,6 +264,16 @@ class Set(Expression):
         self.obj.resolve()
         self.val.resolve()
 
+
+class This(Expression):
+
+    def __init__(self, this: Token):
+        self.this = this
+
+    def resolve(self):
+        INTERPRETER.resolver.resolve_local(self, "this")
+
+
 def clock() -> int:
     """Return the current time in seconds since January 1, 1970 UTC."""
     return int(datetime.now().timestamp())
@@ -554,6 +564,7 @@ class Class(Statement):
 
     def evaluate(self, *args, **kwargs):
         # TODO do we need to evaluate the LoxFunctions?
+        print("env:", kwargs.get("env", None)) # TODO
         methods = {method.name.lexeme: LoxFunction(method, kwargs.get("env", None))
                    for method in self.methods}
         cls = LoxClass(self, methods)
@@ -563,8 +574,10 @@ class Class(Statement):
     def resolve(self):
         INTERPRETER.resolver.declare(self.name)
         INTERPRETER.resolver.define(self.name)
-        for method in self.methods:
-            INTERPRETER.resolver.resolve_function(method, FunctionType.METHOD)
+        with INTERPRETER.resolver.scope():
+            INTERPRETER.resolver.define() # TODO book passes in str here but my method expects a token 🤔
+            for method in self.methods:
+                INTERPRETER.resolver.resolve_function(method, FunctionType.METHOD)
 
     
 class While(Statement):

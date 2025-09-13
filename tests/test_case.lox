@@ -1,9 +1,7 @@
-class Calculator {
-  add(a, b) {
-    return a + b + this.memory;
+class Spaceship {
+  identify() {
+    print this;
   }
 }
 
-var calc = Calculator();
-calc.memory = 82;
-print calc.add(92, 1);
+Spaceship().identify();
