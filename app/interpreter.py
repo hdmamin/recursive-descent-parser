@@ -272,6 +272,9 @@ class This(Expression):
 
     def resolve(self):
         INTERPRETER.resolver.resolve_local(self, "this")
+    
+    def evaluate(self):
+        return self.this.evaluate(expr=self)
 
 
 def clock() -> int:
@@ -563,8 +566,6 @@ class Class(Statement):
         return f"{type(self).__name__}(name={self.name}, methods={self.methods})"
 
     def evaluate(self, *args, **kwargs):
-        # TODO do we need to evaluate the LoxFunctions?
-        print("env:", kwargs.get("env", None)) # TODO
         methods = {method.name.lexeme: LoxFunction(method, kwargs.get("env", None))
                    for method in self.methods}
         cls = LoxClass(self, methods)
@@ -575,7 +576,8 @@ class Class(Statement):
         INTERPRETER.resolver.declare(self.name)
         INTERPRETER.resolver.define(self.name)
         with INTERPRETER.resolver.scope():
-            INTERPRETER.resolver.define() # TODO book passes in str here but my method expects a token 🤔
+            # We don't actually use the line number, this is a dummy value.
+            INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))
             for method in self.methods:
                 INTERPRETER.resolver.resolve_function(method, FunctionType.METHOD)
 
@@ -727,6 +729,13 @@ class LoxFunction(LoxCallable):
             except Return as e:
                 return e.value
 
+    def bind(self, instance: "LoxInstance") -> "LoxFunction":
+        # TODO don't fully understand whether to pick definition_env or nonlocal_env here, need to
+        # refresh my memory of what purpose each serves.
+        with INTERPRETER.new_env(parent=self.func.definition_env) as env:
+            env.update_state("this", instance, is_declaration=True)
+            return LoxFunction(func=self.func, nonlocal_env=env)
+
     def __str__(self) -> str:
         return f"<fn {self.func.name.lexeme}>"
 
@@ -767,7 +776,7 @@ class LoxInstance:
 
         method = self.cls.get_method(name)
         if method:
-            return method
+            return method.bind(self)
 
         raise RuntimeError(f"Undefined property {name.lexeme!r}.")
     
@@ -865,8 +874,8 @@ class Interpreter:
         finally:
             pass
 
-    def resolve(self, name: str, depth: int):
-        self.locals[name] = depth
+    def resolve(self, expr: Expression, depth: int):
+        self.locals[expr] = depth
 
     def resolve_all(self, expressions: list[Expression]):
         for expr in expressions:

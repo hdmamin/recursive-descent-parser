@@ -1,7 +1,8 @@
-class Spaceship {
-  identify() {
-    print this;
+{
+  class Foo {
+    returnSelf() {
+      return Foo;
+    }
   }
+  print Foo().returnSelf();
 }
-
-Spaceship().identify();

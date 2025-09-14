@@ -1382,16 +1382,37 @@ X -stage #74: instance methods (new stage!)
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
 		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
--stage #75: this keyword (new stage!)
-	-skim ui/book to see what we need to implement
-	-ui tests pass:
-		-0 (in test_case.lox)
+-stage #75: this keyword
+	X -skim ui/book to see what we need to implement
+	X -ui tests pass:
+		X -0 (in test_case.lox)
 			> findings: error on line 4 does not occur if I just print str "this"; nonlocal env is None atm when defining the method even though I sort of expected it to be the env for the class block/body, which puts a slight wrench in my idea to define this in the nonlocal env.
 			> left off: updating Class.resolve to define this in scope. book seems to pass in a str whereas my version expects as Token 🤔
-		-1
-		-2
-		-3
+		X -1
+		X -2
+		X -3
 	-`make test_classes_w_jlox` stages pass: 5/8
+		> argh, broke stage 4 instance methods. Maybe tied to creating new nonlocal env in bind()?
+-prev rounds' tests still pass
+	-scanning
+	-parsing
+	-evaluation
+	-statements
+	-control_flow
+	-functions
+	-resolution
+
+9/14/25 sun
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
+	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
+		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+-stage #75: this keyword
+	-fix #74 instance methods (broken by sat updates, failing test case loaded in subl)
+	-`make test_classes_w_jlox` stages pass: 5/8
+		> argh, broke stage 4 instance methods. Maybe tied to creating new nonlocal env in bind()?
 -prev rounds' tests still pass
 	-scanning
 	-parsing

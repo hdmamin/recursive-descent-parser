@@ -423,22 +423,19 @@ class Token:
         if self.token_type == ReservedTokenTypes.NIL:
             return None
 
-        if self.token_type == TokenTypes.IDENTIFIER:
+        # TODO testing "this"
+        # if self.token_type == TokenTypes.IDENTIFIER:
+        if self.token_type in (TokenTypes.IDENTIFIER, ReservedTokenTypes.THIS):
             interpreter = get_interpreter()
             try:
-                # TODO: trying to replace w/ scope-based resolution
-                # value = interpreter.env.read_state(self.lexeme)
-
-                # TODO testing using new locals version where keys are strings
-                # depth = interpreter.locals.get(self, None)
                 depth = interpreter.locals.get(kwargs["expr"], None)
                 # TODO rm
-                # if self.lexeme == 'baz':
-                    # print('[lexer]')
-                    # print("\tenv lookup depth:", self.lexeme, depth)
-                    # print("\tglobal env state:", id(interpreter.global_env), interpreter.global_env.state,
-                    #     "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
-                    #     "\n\tparent env state:", id(interpreter.env.parent), getattr(interpreter.env.parent, 'state', 'null')) # TODO rm
+                # if self.lexeme == 'this':
+                #     print('[lexer]')
+                #     print("\tenv lookup depth:", self.lexeme, depth)
+                #     print("\tglobal env state:", id(interpreter.global_env), interpreter.global_env.state,
+                #         "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
+                #         "\n\tparent env state:", id(interpreter.env.parent), getattr(interpreter.env.parent, 'state', 'null')) # TODO rm
                 # TODO end
                 if depth is None:
                     value = interpreter.global_env.read_state(self.lexeme)
