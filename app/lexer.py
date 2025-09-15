@@ -436,7 +436,7 @@ class Token:
                     print("\tglobal env state:", id(interpreter.global_env), interpreter.global_env.state,
                         "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
                         "\n\tparent env state:", id(interpreter.env.parent), getattr(interpreter.env.parent, 'state', 'null'),
-                        # "\n\tgrandparent env state:", id(interpreter.env.parent.parent), getattr(interpreter.env.parent.parent, 'state', 'null'),
+                        "\n\tgrandparent env state:", id(interpreter.env.parent.parent), getattr(interpreter.env.parent.parent, 'state', 'null'),
                         ) # TODO rm
                 # TODO end
                 if depth is None:

@@ -569,7 +569,7 @@ class Class(Statement):
 
     def evaluate(self, *args, **kwargs):
         print('>>> kwargs env:', kwargs.get('env', None), id(kwargs.get('env', None)))
-        methods = {method.name.lexeme: LoxFunction(method, INTERPRETER.env)
+        methods = {method.name.lexeme: method.evaluate() # TODO maybe need to use Interpreter.env here?
                    for method in self.methods}
         cls = LoxClass(self, methods)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
@@ -804,8 +804,7 @@ class Function(Statement):
         self.name = name
         self.params = params
         self.body = body
-        self.definition_env = INTERPRETER.env
-        print('>>> [FunctionDecl]', name.lexeme, id(self.definition_env)) # TODO
+        self.definition_env = None
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
         # Returns a LoxFunction object, NOT the result of calling the function.
@@ -817,6 +816,7 @@ class Function(Statement):
         # new env, certainly creates a new scope). Also maybe this is unneeded entirely with
         # resolution?
         print('>>> [FunctionDecl] eval', id(INTERPRETER.env)) # TODO rm
+        self.definition_env = INTERPRETER.env
         func = LoxFunction(self, kwargs.get("env", None))
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func
