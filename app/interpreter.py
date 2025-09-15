@@ -542,6 +542,8 @@ class Block(Statement):
         # "env=" in this project...
         context_manager = INTERPRETER.new_env if _new_env else INTERPRETER.existing_env
         with context_manager(**kwargs) as env:
+            print('[block] new env:', id(env), 'global env:', id(INTERPRETER.global_env),
+                  '\n', self.statements, '\n', _new_env) # TODO
             for statement in self.statements:
                 try:
                     statement.evaluate(env=env)
@@ -566,6 +568,7 @@ class Class(Statement):
         return f"{type(self).__name__}(name={self.name}, methods={self.methods})"
 
     def evaluate(self, *args, **kwargs):
+        print('>>> kwargs env:', kwargs.get('env', None), id(kwargs.get('env', None)))
         methods = {method.name.lexeme: LoxFunction(method, kwargs.get("env", None))
                    for method in self.methods}
         cls = LoxClass(self, methods)
@@ -732,6 +735,12 @@ class LoxFunction(LoxCallable):
     def bind(self, instance: "LoxInstance") -> "LoxFunction":
         # TODO don't fully understand whether to pick definition_env or nonlocal_env here, need to
         # refresh my memory of what purpose each serves.
+        print(
+            '[bind]',
+             '\n\tnonlocal:', id(self.nonlocal_env), getattr(self.nonlocal_env, 'state', {}),
+             '\n\tdefinition:', id(self.func.definition_env),  self.func.definition_env.state,
+             '\n\tglobal:', id(INTERPRETER.global_env), INTERPRETER.global_env.state
+        ) # TODO
         with INTERPRETER.new_env(parent=self.func.definition_env) as env:
             env.update_state("this", instance, is_declaration=True)
             return LoxFunction(func=self.func, nonlocal_env=env)
@@ -796,6 +805,7 @@ class Function(Statement):
         self.params = params
         self.body = body
         self.definition_env = INTERPRETER.env
+        print('>>> [FunctionDecl]', name.lexeme, id(self.definition_env)) # TODO
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
         # Returns a LoxFunction object, NOT the result of calling the function.
@@ -806,11 +816,13 @@ class Function(Statement):
         # the func was defined inside a different func (need to confirm but I assume this creates a
         # new env, certainly creates a new scope). Also maybe this is unneeded entirely with
         # resolution?
+        print('>>> [FunctionDecl] eval', id(INTERPRETER.env)) # TODO rm
         func = LoxFunction(self, kwargs.get("env", None))
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func
 
     def resolve(self):
+        print(">>> Function.resolve")
         INTERPRETER.resolver.declare(self.name)
         INTERPRETER.resolver.define(self.name)
         INTERPRETER.resolver.resolve_function(self)

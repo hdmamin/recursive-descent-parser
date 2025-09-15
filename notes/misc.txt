@@ -98,4 +98,19 @@ var baz = "after";
   }
 }
 
+9/14/25 sun
+-----------
+investigating broken instance methods
 
+Undefined variable Foo when a method tries to reference Foo (error msg corresponds to the line where Foo is referenced in the method, but it's only triggered if we call that method. So method execution vs definition seems to be the issue, at least the point where the error gets raised.)
+Error goes away if we move the class out of a block.
+
+-definition_env is the same as the global_env but we expect it to be the block env
+-execution env is child of the "this" env which is child of definition env. All this is correct I believe, it's just that the definition env is wrong here. 
+-definition_env is defined based on what the env is at Function.init time, which seems expected (recall function is basically functionDeclaration).
+-Block.evaluate creates a new env. But I think exec order goes:
+	Block.init
+	Function.init
+	Block.evaluate
+	Function.evaluate
+and Function.definition_env is set in init.

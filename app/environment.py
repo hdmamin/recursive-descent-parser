@@ -115,7 +115,7 @@ class Environment:
         parent's parent.
         """
         env = self
-        for i in range(depth):
+        for _ in range(depth):
             env = env.parent
         return env
 
