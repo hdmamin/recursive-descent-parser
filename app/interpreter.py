@@ -6,7 +6,7 @@ from typing import Any, Optional, Union
 from app.environment import GLOBAL_ENV, Environment
 from app.exceptions import ParsingError
 from app.lexer import TokenTypes, ReservedTokenTypes, Token
-from app.resolution import Resolver, FunctionType
+from app.resolution import Resolver, FunctionType, ClassType
 from app.utils import truthy, is_number, SENTINEL, maybe_context_manager
 
 
@@ -271,6 +271,11 @@ class This(Expression):
         self.this = this
 
     def resolve(self):
+        if INTERPRETER.resolver.current_class != ClassType.CLASS:
+            raise RuntimeError(
+                f"[line {self.this.line}] Error at 'this': Can't use 'this' outside of a class."
+            )
+
         INTERPRETER.resolver.resolve_local(self, "this")
     
     def evaluate(self):
@@ -575,13 +580,14 @@ class Class(Statement):
         return cls
 
     def resolve(self):
-        INTERPRETER.resolver.declare(self.name)
-        INTERPRETER.resolver.define(self.name)
-        with INTERPRETER.resolver.scope():
-            # We don't actually use the line number, this is a dummy value.
-            INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))
-            for method in self.methods:
-                INTERPRETER.resolver.resolve_function(method, FunctionType.METHOD)
+        with INTERPRETER.resolver.inside_class(ClassType.CLASS):
+            INTERPRETER.resolver.declare(self.name)
+            INTERPRETER.resolver.define(self.name)
+            with INTERPRETER.resolver.scope():
+                # We don't actually use the line number, this is a dummy value.
+                INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))
+                for method in self.methods:
+                    INTERPRETER.resolver.resolve_function(method, FunctionType.METHOD)
 
     
 class While(Statement):
@@ -786,7 +792,7 @@ class LoxInstance:
         if method:
             return method.bind(self)
 
-        raise RuntimeError(f"Undefined property {name.lexeme!r}.")
+        raise RuntimeError(f"Undefined property {name!r}.")
     
     def set(self, name: str, val: Any):
         self.attrs[name] = val

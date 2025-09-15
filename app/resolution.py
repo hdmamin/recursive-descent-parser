@@ -11,12 +11,18 @@ class FunctionType:
     NONE = "NONE"
 
 
+class ClassType:
+    CLASS = "CLASS"
+    NONE = "NONE"
+
+
 class Resolver:
 
     # Type hint is str to avoid circular import.
     def __init__(self, interpreter: "Interpreter"):
         self.interpreter = interpreter
         self.current_function = FunctionType.NONE
+        self.current_class = ClassType.NONE
         # Stack of dict[str, bool] containing (varname, has_been_defined)
         self.scopes = deque()
 
@@ -39,6 +45,18 @@ class Resolver:
             yield
         finally:
             self.current_function = prev
+
+    @contextmanager
+    def inside_class(self, class_type: ClassType):
+        """Set current_class attr temporarily so other code can check if we're currently
+        resolving a class.
+        """
+        prev = self.current_class
+        try:
+            self.current_class = class_type
+            yield
+        finally:
+            self.current_class = prev
 
     def resolve(self, obj: Any):
         obj.resolve()

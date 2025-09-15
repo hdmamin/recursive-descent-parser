@@ -1,1 +1,8 @@
-print this;
+class Default {
+  init() {
+    this.x = "bar";
+    this.y = 91;
+  }
+}
+print Default().x;
+print Default().y;
