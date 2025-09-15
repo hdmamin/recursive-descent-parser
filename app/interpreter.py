@@ -569,7 +569,7 @@ class Class(Statement):
 
     def evaluate(self, *args, **kwargs):
         print('>>> kwargs env:', kwargs.get('env', None), id(kwargs.get('env', None)))
-        methods = {method.name.lexeme: LoxFunction(method, kwargs.get("env", None))
+        methods = {method.name.lexeme: LoxFunction(method, INTERPRETER.env)
                    for method in self.methods}
         cls = LoxClass(self, methods)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
