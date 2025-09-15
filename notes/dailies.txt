@@ -1409,10 +1409,35 @@ X -stage #74: instance methods (new stage!)
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
 		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
--stage #75: this keyword
-	-fix #74 instance methods (broken by sat updates, failing test case loaded in subl)
-	-`make test_classes_w_jlox` stages pass: 5/8
+X -stage #75: this keyword
+	X -fix #74 instance methods (broken by sat updates, failing test case loaded in subl)
+	X -`make test_classes_w_jlox` stages pass: 5/8
 		> argh, broke stage 4 instance methods. Maybe tied to creating new nonlocal env in bind()?
+~ -prev rounds' tests still pass
+	> technically didn't test all of these (will do that at end of macro stage) but did at least confirm functions still passes.
+	-scanning
+	-parsing
+	-evaluation
+	-statements
+	-control_flow
+	X -functions
+	-resolution
+
+9/15/25 mon
+-----------
+-low effort tasks:
+    -add more low effort task bullets
+	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
+	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
+		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+-stage #76: invalid usages of 'this' (new stage!)
+	-skim ui/book to see what we need to implement
+	-ui tests pass:
+		-0 (in test_case.lox)
+		-1
+		-2
+		-3
+	-`make test_classes_w_jlox` stages pass: 6/8
 -prev rounds' tests still pass
 	-scanning
 	-parsing
