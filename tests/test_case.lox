@@ -1,8 +1,24 @@
-class Default {
-  init() {
-    this.x = "bar";
-    this.y = 91;
+class Vehicle {
+  init(type) {
+    this.type = type;
   }
 }
-print Default().x;
-print Default().y;
+
+class Car {
+  init(make, model) {
+    this.make = make;
+    this.model = model;
+    this.wheels = "four";
+  }
+
+  describe() {
+    print this.make + " " + this.model +
+    " with " + this.wheels + " wheels";
+  }
+}
+
+var vehicle = Vehicle("Generic");
+print "Generic " + vehicle.type;
+
+var myCar = Car("Toyota", "Corolla");
+myCar.describe();

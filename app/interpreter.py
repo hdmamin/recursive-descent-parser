@@ -244,6 +244,14 @@ class Get(Expression):
 class Set(Expression):
 
     def __init__(self, obj: Expression, attr: Token, val: Expression):
+        """
+        Parameters
+        ----------
+        obj : LoxInstance
+            The instance the attribute should be attached to.
+            # TODO: seems like this is actually This at leas in some cases? It's obj.evaluate() that
+            should return a LoxInstance.
+        """
         self.obj = obj
         self.attr = attr
         self.val = val
@@ -572,9 +580,11 @@ class Class(Statement):
         return f"{type(self).__name__}(name={self.name}, methods={self.methods})"
 
     def evaluate(self, *args, **kwargs):
-        # print('>>> kwargs env:', kwargs.get('env', None), id(kwargs.get('env', None)))
-        methods = {method.name.lexeme: LoxFunction(method, INTERPRETER.env)
-                   for method in self.methods}
+        methods = {
+            method.name.lexeme:
+            LoxFunction(method, INTERPRETER.env, is_init=method.name.lexeme == "init")
+            for method in self.methods
+        }
         cls = LoxClass(self, methods)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
         return cls
@@ -720,11 +730,13 @@ class LoxFunction(LoxCallable):
     function definitions rather than calls.)
     """
 
-    def __init__(self, func: "Function", nonlocal_env: Optional[Environment] = None):
+    def __init__(self, func: "Function", nonlocal_env: Optional[Environment] = None,
+                 is_init: bool = False):
         # func typehint is in quotes because we haven't defined Function yet, and Function also uses
         # LoxFunction as a type hint so moving this class down wouldn't resolve the issue.
         self.func = func
         self.nonlocal_env = nonlocal_env
+        self.is_init = is_init
         self.arity = len(self.func.params)
 
     def evaluate(self, *args, **kwargs):
@@ -733,11 +745,15 @@ class LoxFunction(LoxCallable):
         with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
-                return self.func.body.evaluate(**py_kwargs, _new_env=False)
+                result = self.func.body.evaluate(**py_kwargs, _new_env=False)
+                if self.is_init:
+                    return INTERPRETER.env.read_state_at("this", 1)
+                return result
             except Return as e:
                 return e.value
 
     def bind(self, instance: "LoxInstance") -> "LoxFunction":
+        """Attach a method to a class instance, making the instance available via `this`."""
         # TODO don't fully understand whether to pick definition_env or nonlocal_env here, need to
         # refresh my memory of what purpose each serves.
         # print(
@@ -748,7 +764,7 @@ class LoxFunction(LoxCallable):
         # ) # TODO
         with INTERPRETER.new_env(parent=self.func.definition_env) as env:
             env.update_state("this", instance, is_declaration=True)
-            return LoxFunction(func=self.func, nonlocal_env=env)
+            return LoxFunction(func=self.func, nonlocal_env=env, is_init=self.is_init)
 
     def __str__(self) -> str:
         return f"<fn {self.func.name.lexeme}>"
@@ -762,13 +778,25 @@ class LoxClass(LoxCallable):
     def __init__(self, cls_declaration: "Class", methods: dict[str, LoxFunction]):
         self.cls_declaration = cls_declaration
         self.methods = methods
-        self.arity = 0
+        self.arity = self._set_arity()
+        
+    
+    def _set_arity(self):
+        init = self.get_method("init")
+        if init:
+            return init.arity
+        return 0
 
     def evaluate(self, *args, **kwargs):
-        # TODO flesh out
-        return LoxInstance(self)
+        instance = LoxInstance(self)
+        init = self.get_method("init")
+        if init:
+            # Need to bind init manually here because it won't be invoked like other methods, i.e.
+            # the user will not call MyClass.init().
+            init.bind(instance).evaluate(*args)
+        return instance
 
-    def get_method(self, name: str):
+    def get_method(self, name: str) -> LoxFunction:
         return self.methods.get(name, None)
 
     def __str__(self) -> str:
@@ -820,9 +848,8 @@ class Function(Statement):
         # the func was defined inside a different func (need to confirm but I assume this creates a
         # new env, certainly creates a new scope). Also maybe this is unneeded entirely with
         # resolution?
-        # print('>>> [FunctionDecl] eval', id(INTERPRETER.env)) # TODO rm
         self.definition_env = INTERPRETER.env
-        func = LoxFunction(self, kwargs.get("env", None))
+        func = LoxFunction(self, kwargs.get("env", None), is_init=False)
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)
         return func
 
