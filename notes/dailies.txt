@@ -1447,6 +1447,15 @@ X -stage #77: constructor calls (new stage!)
 		X -2
 		X -3
 	X -`make test_classes_w_jlox` stages pass: 7/8
+X -stage #78: returning from init (new stage!)
+	> status: finished 1 whole stage monday, start new one
+	X -skim ui/book to see what we need to implement
+	X -ui tests pass:
+		X -0 (in test_case.lox)
+		X -1
+		X -2
+		X -3
+	X -`make test_classes_w_jlox` all stages pass: 8/8
 -prev rounds' tests still pass
 	-scanning
 	-parsing
@@ -1455,3 +1464,27 @@ X -stage #77: constructor calls (new stage!)
 	-control_flow
 	-functions
 	-resolution
+
+9/16/25 tues
+------------
+> status: finished 2 whole substages to finish off classes stage. Still need to run all prev rounds tests though.
+-low effort tasks:
+    -add more low effort task bullets
+	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
+	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
+		> ideally run all stages and log which ones failed if any. Current setup isja bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+-prev rounds' tests still pass (important to run all this time, last substage of classes)
+	-scanning
+	-parsing
+	-evaluation
+	-statements
+	-control_flow
+	-functions
+	-resolution
+-stage #79: class hierarchy (new stage! new mega-stage (inheritance))
+	-skim ui/book to see what we need to implement
+	-ui tests pass:
+		-0 (in test_case.lox)
+		-1
+		-2
+	-`make test_inheritance_w_jlox` all stages pass: 1/6

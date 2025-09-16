@@ -7,6 +7,7 @@ from app.lexer import Token
 
 class FunctionType:
     FUNCTION = "FUNCTION"
+    INITIALIZER = "INITIALIZER"
     METHOD = "METHOD"
     NONE = "NONE"
 

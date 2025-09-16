@@ -597,7 +597,11 @@ class Class(Statement):
                 # We don't actually use the line number, this is a dummy value.
                 INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))
                 for method in self.methods:
-                    INTERPRETER.resolver.resolve_function(method, FunctionType.METHOD)
+                    INTERPRETER.resolver.resolve_function(
+                        method,
+                        FunctionType.INITIALIZER if method.name.lexeme == "init"
+                        else FunctionType.METHOD
+                    )
 
     
 class While(Statement):
@@ -712,12 +716,16 @@ class ReturnStatement(Statement):
         return f"Return({self.expr})"
 
     def resolve(self):
-        if INTERPRETER.resolver.current_function not in {
+        prefix = f"[line {self.line_num}] Error at 'return':"
+        if INTERPRETER.resolver.current_function == FunctionType.INITIALIZER:
+            if self.expr is not None:
+                raise RuntimeError(f"{prefix} Can't return a value from an initializer.")
+        elif INTERPRETER.resolver.current_function not in {
             FunctionType.FUNCTION,
             FunctionType.METHOD
         }:
             raise RuntimeError(
-                f"[line {self.line_num}] Error at 'return': Can't return from top-level code."
+                f"{prefix} Can't return from top-level code."
             )
 
         if self.expr:
@@ -750,6 +758,8 @@ class LoxFunction(LoxCallable):
                     return INTERPRETER.env.read_state_at("this", 1)
                 return result
             except Return as e:
+                if self.is_init:
+                    return INTERPRETER.env.read_state_at("this", 1)
                 return e.value
 
     def bind(self, instance: "LoxInstance") -> "LoxFunction":
