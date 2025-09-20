@@ -572,9 +572,10 @@ class Class(Statement):
     """Represents a class *declaration*.
     """
 
-    def __init__(self, name: Token, methods: list["Function"]):
+    def __init__(self, name: Token, methods: list["Function"], parent: Optional[Token] = None):
         self.name = name
         self.methods = methods
+        self.parent = parent
 
     def __str__(self) -> str:
         return f"{type(self).__name__}(name={self.name}, methods={self.methods})"

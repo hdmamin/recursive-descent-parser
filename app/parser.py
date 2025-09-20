@@ -632,6 +632,11 @@ class Parser:
             raise SyntaxError("Expect class name.")
 
         name = self.previous_token()
+        parent = None
+        if self.match(TokenTypes.LESS):
+            parent = self.current_token()
+            self.curr_idx += 1
+
         if not self.match(TokenTypes.LEFT_BRACE):
             raise SyntaxError("Expect '{' before class body.")
 
@@ -641,4 +646,4 @@ class Parser:
             methods.append(method)
         if self.previous_token().token_type != TokenTypes.RIGHT_BRACE:
             raise SyntaxError("Expect '}' after class body.")
-        return Class(name, methods)
+        return Class(name, methods, parent)

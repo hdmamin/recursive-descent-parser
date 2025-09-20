@@ -197,7 +197,7 @@ test_inheritance_w_jlox: build
 		{\"slug\":\"qi0\",\"tester_log_prefix\":\"stage_905\",\"title\":\"Stage #905: Inheritance: The super keyword\"}, \
 		{\"slug\":\"ib9\",\"tester_log_prefix\":\"stage_906\",\"title\":\"Stage #906: Inheritance: Invalid usages of the super keyword\"} \
 	]" \
-	$(shell pwd)/dist/main.out
+	$(shell pwd)/tests/dist/main.out
 
 test_all: test_scanning_w_jlox test_parsing_w_jlox test_evaluation_w_jlox test_statements_w_jlox test_control_flow_w_jlox test_functions_w_jlox test_resolving_w_jlox test_classes_w_jlox test_inheritance_w_jlox
 
