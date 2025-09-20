@@ -67,9 +67,16 @@ class Resolver:
         Example:
         var a;
         """
-        print('[declare]', self.scopes)
-        if self.scopes:
-            self.scopes[-1][name.lexeme] = False
+        if not self.scopes:
+            return
+
+        scope = self.scopes[-1]
+        if name.lexeme in scope:
+            raise RuntimeError(
+                f"[line {name.line}] Error at {name.lexeme}: Already a variable with this name in "
+                "this scope."
+            )
+        scope[name.lexeme] = False
 
     def define(self, name: Token):
         """Mark a previously declared variable as ready for binding.

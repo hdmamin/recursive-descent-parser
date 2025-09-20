@@ -1465,24 +1465,24 @@ X -stage #78: returning from init (new stage!)
 	-functions
 	-resolution
 
-9/16/25 tues
-------------
+9/19/25 fri
+-----------
 > status: finished 2 whole substages to finish off classes stage. Still need to run all prev rounds tests though.
 -low effort tasks:
     -add more low effort task bullets
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
 		> ideally run all stages and log which ones failed if any. Current setup isja bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
--prev rounds' tests still pass (important to run all this time, last substage of classes)
+X -prev rounds' tests still pass (important to run all this time, last substage of classes)
 	X -scanning
 	X -parsing
 	X -evaluation
 	X -statements
 	X -control_flow
 	X -functions
-	-resolution
-		> uh oh, 703.1 fails now.
-	-classes
+	X -resolution
+		> uh oh, 703.1 fails now. UPDATE: fixed, think I just inadvertently broke declare() when trying to simplify it, didn't realize my refactor changed behavior.
+	X -classes
 -stage #79: class hierarchy (new stage! new mega-stage (inheritance))
 	-skim ui/book to see what we need to implement
 	-ui tests pass:
