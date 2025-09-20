@@ -571,7 +571,8 @@ class Parser:
             "function" or "class"
 
         funDecl → "fun" function ;
-        classDecl → "class" IDENTIFIER "{" function* "}" ;
+        classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
+                 "{" function* "}" ;
 
         Example
         fun foo(bar, baz) {

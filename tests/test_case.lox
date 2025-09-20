@@ -1,6 +1,4 @@
-class Doughnut {}
-
-class BostonCream < Doughnut {}
-
-print Doughnut();
-print BostonCream();
+{
+  var a = "value";
+  var a = "other";
+}

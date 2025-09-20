@@ -1474,13 +1474,15 @@ X -stage #78: returning from init (new stage!)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
 		> ideally run all stages and log which ones failed if any. Current setup isja bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
 -prev rounds' tests still pass (important to run all this time, last substage of classes)
-	-scanning
-	-parsing
-	-evaluation
-	-statements
-	-control_flow
-	-functions
+	X -scanning
+	X -parsing
+	X -evaluation
+	X -statements
+	X -control_flow
+	X -functions
 	-resolution
+		> uh oh, 703.1 fails now.
+	-classes
 -stage #79: class hierarchy (new stage! new mega-stage (inheritance))
 	-skim ui/book to see what we need to implement
 	-ui tests pass:
