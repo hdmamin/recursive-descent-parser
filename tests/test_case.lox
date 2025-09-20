@@ -1,17 +1,34 @@
-class Vehicle {}
-
-// Car is a subclass of Vehicle
-class Car < Vehicle {}
-
-// Sedan is a subclass of Car
-class Sedan < Car {}
-
-print Vehicle();
-print Car();
-print Sedan();
-
-{
-  // Truck is a subclass of Vehicle
-  class Truck < Vehicle {}
-  print Truck();
+class Root {
+  getName() {
+    print "Root class";
+  }
 }
+
+class Parent < Root {
+  parentMethod() {
+    print "Method defined in Parent";
+  }
+}
+
+class Child < Parent {
+  childMethod() {
+    print "Method defined in Child";
+  }
+}
+
+var root = Root();
+var parent = Parent();
+var child = Child();
+
+// Root methods are available to all
+root.getName();
+parent.getName();
+child.getName();
+
+// Parent methods are available to Parent and Child
+parent.parentMethod();
+child.parentMethod();
+
+// Child methods are only available to Child
+child.childMethod();
+

@@ -586,11 +586,15 @@ class Class(Statement):
             LoxFunction(method, INTERPRETER.env, is_init=method.name.lexeme == "init")
             for method in self.methods
         }
-        cls = LoxClass(self, methods)
+        parent_cls = None
+        if self.parent:
+            parent_cls = self.parent.evaluate(expr=self.parent)
+        cls = LoxClass(self, methods, parent_cls=parent_cls)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
         return cls
 
     def resolve(self):
+        # TODO: maybe need to resolve parent too?
         with INTERPRETER.resolver.inside_class(ClassType.CLASS):
             INTERPRETER.resolver.declare(self.name)
             INTERPRETER.resolver.define(self.name)
@@ -786,9 +790,11 @@ class LoxClass(LoxCallable):
     class *definitions*.)
     """
 
-    def __init__(self, cls_declaration: "Class", methods: dict[str, LoxFunction]):
+    def __init__(self, cls_declaration: "Class", methods: dict[str, LoxFunction],
+                 parent_cls: Optional["LoxClass"] = None):
         self.cls_declaration = cls_declaration
         self.methods = methods
+        self.parent_cls = parent_cls
         self.arity = self._set_arity()
         
     
@@ -808,7 +814,10 @@ class LoxClass(LoxCallable):
         return instance
 
     def get_method(self, name: str) -> LoxFunction:
-        return self.methods.get(name, None)
+        if name in self.methods:
+            return self.methods[name]
+        if self.parent_cls:
+            return self.parent_cls.get_method(name)
 
     def __str__(self) -> str:
         return self.cls_declaration.name.lexeme

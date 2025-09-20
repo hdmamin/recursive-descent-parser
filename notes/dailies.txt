@@ -1491,18 +1491,23 @@ X -prev rounds' tests still pass (important to run all this time, last substage 
 		X -2
 	X -`make test_inheritance_w_jlox` all stages pass: 1/6
 		> had to fix path in makefile command first.
+~ -stage #80: inheriting methods (new stage!)
+	~ -skim ui/book to see what we need to implement
+	X -ui tests pass:
+		X -0 (in test_case.lox)
+		X -1
+	-`make test_inheritance_w_jlox` all stages pass: 2/6
+		> ack, stage 1 fails now. Fix tomorrow.
 
 9/20/25 sat
 -----------
-> status: fixed 1 broken stage and finished 1 new substage.
+> status: fixed 1 broken stage and finished 1 new substage, started new stage 80 but didn't finish.
 -low effort tasks:
     -add more low effort task bullets
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
 		> ideally run all stages and log which ones failed if any. Current setup isja bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
--stage #80: inheriting methods (new stage!)
-	-skim ui/book to see what we need to implement
-	-ui tests pass:
-		-0 (in test_case.lox)
-		-1
+-stage #80: inheriting methods
 	-`make test_inheritance_w_jlox` all stages pass: 2/6
+		-fix stage 1
+		-stage 2 passes
