@@ -67,6 +67,7 @@ class Resolver:
         Example:
         var a;
         """
+        print('[declare]', self.scopes)
         if self.scopes:
             self.scopes[-1][name.lexeme] = False
 

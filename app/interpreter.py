@@ -72,6 +72,7 @@ class Variable(Expression):
         #   var a = a;
         # }
         # ```
+        print(">>>", INTERPRETER.resolver.scopes, self.identifier.lexeme) # TODO
         if (
             INTERPRETER.resolver.scopes
             and not INTERPRETER.resolver.scopes[-1].get(self.identifier.lexeme, True)
@@ -565,7 +566,9 @@ class Block(Statement):
     def resolve(self, is_function_body: bool = False):
         with maybe_context_manager(INTERPRETER.resolver.scope, enable=not is_function_body):
             for statement in self.statements:
+                print('stmt:', statement, type(statement), 'is_function_body:', is_function_body) # TODO rm
                 statement.resolve()
+                print('\tpost resolve')
 
 
 class Class(Statement):
