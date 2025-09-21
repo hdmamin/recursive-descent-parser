@@ -572,13 +572,14 @@ class Class(Statement):
     """Represents a class *declaration*.
     """
 
-    def __init__(self, name: Token, methods: list["Function"], parent: Optional[Token] = None):
+    def __init__(self, name: Token, methods: list["Function"], parent: Optional[Variable] = None):
         self.name = name
         self.methods = methods
         self.parent = parent
 
     def __str__(self) -> str:
-        return f"{type(self).__name__}(name={self.name}, methods={self.methods})"
+        return f"{type(self).__name__}(name={self.name}, methods={self.methods}, " \
+               f"parent={self.parent})"
 
     def evaluate(self, *args, **kwargs):
         methods = {
@@ -588,7 +589,8 @@ class Class(Statement):
         }
         parent_cls = None
         if self.parent:
-            parent_cls = self.parent.evaluate(expr=self.parent)
+            # parent_cls = self.parent.evaluate(expr=self.parent)
+            parent_cls = self.parent.evaluate()
         cls = LoxClass(self, methods, parent_cls=parent_cls)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
         return cls
@@ -598,6 +600,8 @@ class Class(Statement):
         with INTERPRETER.resolver.inside_class(ClassType.CLASS):
             INTERPRETER.resolver.declare(self.name)
             INTERPRETER.resolver.define(self.name)
+            if self.parent:
+                self.parent.resolve()
             with INTERPRETER.resolver.scope():
                 # We don't actually use the line number, this is a dummy value.
                 INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))

@@ -634,7 +634,7 @@ class Parser:
         name = self.previous_token()
         parent = None
         if self.match(TokenTypes.LESS):
-            parent = self.current_token()
+            parent = Variable(self.current_token())
             self.curr_idx += 1
 
         if not self.match(TokenTypes.LEFT_BRACE):
