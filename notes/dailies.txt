@@ -1501,7 +1501,7 @@ X -prev rounds' tests still pass (important to run all this time, last substage 
 
 9/20/25 sat
 -----------
-> status: fixed 1 broken stage and finished 1 new substage, started new stage 80 but didn't finish.
+> status: fixed 1 old broken stage and finished 1 new substage, started new stage 80 but didn't finish (broke old stage again)
 -low effort tasks:
     -add more low effort task bullets
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
