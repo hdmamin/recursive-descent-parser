@@ -4,7 +4,7 @@ from functools import wraps
 from typing import Any, Optional, Union
 
 from app.environment import GLOBAL_ENV, Environment
-from app.exceptions import ParsingError
+from app.exceptions import ParsingError, ResolutionError
 from app.lexer import TokenTypes, ReservedTokenTypes, Token
 from app.resolution import Resolver, FunctionType, ClassType
 from app.utils import truthy, is_number, SENTINEL, maybe_context_manager
@@ -589,14 +589,19 @@ class Class(Statement):
         }
         parent_cls = None
         if self.parent:
-            # parent_cls = self.parent.evaluate(expr=self.parent)
             parent_cls = self.parent.evaluate()
+            if not isinstance(parent_cls, LoxClass):
+                raise RuntimeError(f"Superclass must be a class.\n[line {self.name.line}]")
+
         cls = LoxClass(self, methods, parent_cls=parent_cls)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
         return cls
 
     def resolve(self):
-        # TODO: maybe need to resolve parent too?
+        if self.name.lexeme == getattr(getattr(self.parent, "identifier", None), "lexeme", None):
+            raise ResolutionError(f"[line {self.name.line}] Error at {self.name.lexeme!r}: "
+                                  "A class can't inherit from itself.")
+
         with INTERPRETER.resolver.inside_class(ClassType.CLASS):
             INTERPRETER.resolver.declare(self.name)
             INTERPRETER.resolver.define(self.name)

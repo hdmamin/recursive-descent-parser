@@ -72,6 +72,8 @@ class Resolver:
 
         scope = self.scopes[-1]
         if name.lexeme in scope:
+            # TODO prob should replace w ResolutionError? just need to test that that doesn't break
+            # anything.
             raise RuntimeError(
                 f"[line {name.line}] Error at {name.lexeme}: Already a variable with this name in "
                 "this scope."
