@@ -3,11 +3,11 @@ from datetime import datetime
 from functools import wraps
 from typing import Any, Optional, Union
 
-from app.environment import GLOBAL_ENV, Environment
-from app.exceptions import ParsingError, ResolutionError
-from app.lexer import TokenTypes, ReservedTokenTypes, Token
-from app.resolution import Resolver, FunctionType, ClassType
-from app.utils import truthy, is_number, SENTINEL, maybe_context_manager
+from lox.environment import GLOBAL_ENV, Environment
+from lox.exceptions import ParsingError, ResolutionError
+from lox.lexer import TokenTypes, ReservedTokenTypes, Token
+from lox.resolution import Resolver, FunctionType, ClassType
+from lox.utils import truthy, is_number, SENTINEL, maybe_context_manager
 
 
 class Return(Exception):

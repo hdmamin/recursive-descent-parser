@@ -20,6 +20,8 @@ codecrafters test --previous
 ```
 (This tests both previous rounds and the current round.)
 
+**Note on dir names:** codecrafters originally had me place my code in a dir called `app` but I ended up changing this to `lox` since I wanted to use `app` to house a streamlit app. If I ever want to submit this code to the course again (or if it turns out this breaks tests), I imagine I will need to change that back. Mostly this would consist of changing imports but there are a couple gotchas: the commands in `your_program.sh` and my hack in `lox.utils.get_interpreter`.
+
 ### Local Testing
 
 Codecrafters published all test cases in https://github.com/codecrafters-io/interpreter-tester so we can also run tests without a subscription. I pulled this repo and copied files into `tests`, pulling the Makefile into my project root and modifying it slightly. I can now run test cases like `make test_scanning_w_jlox`.

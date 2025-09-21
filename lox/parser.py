@@ -1,17 +1,17 @@
 from typing import Union
 
-from app.exceptions import ParsingError
-from app.interpreter import (
+from lox.exceptions import ParsingError
+from lox.interpreter import (
     Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping,
     Statement, IfStatement, PrintStatement, ExpressionStatement, ReturnStatement,
     VariableDeclaration, Block, While, For, Function, Class, Get, Set, This
 )
-from app.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
+from lox.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
 
 
 # TODO: rm decorator once done debugging. For now leave it so can easily comment it on/off.
-from app.debugging import decorate_methods, verbose
+from lox.debugging import decorate_methods, verbose
 # @decorate_methods(verbose)
 class Parser:
     """

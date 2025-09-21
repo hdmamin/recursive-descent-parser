@@ -17,6 +17,6 @@ export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
 #
 # - Edit this to change how your program runs locally
 # - Edit .codecrafters/run.sh to change how your program runs remotely
-exec pipenv run python3 -m app.main "$@"
+exec pipenv run python3 -m lox.main "$@"
 # TODO reenable original version at some point, want to run in interactive mode for now
-# exec pipenv run ipython3 -i -m app.main "$@"
+# exec pipenv run ipython3 -i -m lox.main "$@"

@@ -14,7 +14,7 @@ class TrieNode:
     # Out[]: TrieNode(value='I am a leaf', edges={})
     """
 
-    def __init__(self, value: Optional[Any] = None, edges: dict[str, "TrieNode"] = None):
+    def __init__(self, value: Optional[Any] = None, edges: Optional[dict[str, "TrieNode"]] = None):
         """
         Parameters
         ----------

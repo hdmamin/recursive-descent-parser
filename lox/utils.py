@@ -36,7 +36,7 @@ def get_interpreter() -> "Interpreter":
     Otherwise would need a larger and kind of tricky refactor to avoid circular imports.
     """
     try:
-        return sys.modules["app.interpreter"].INTERPRETER
+        return sys.modules["lox.interpreter"].INTERPRETER
     except (KeyError, AttributeError):
         raise RuntimeError("Interpreter object is not available.")
 

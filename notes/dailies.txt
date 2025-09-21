@@ -1541,3 +1541,8 @@ X -stage #82: inheritance errors
 		-0
 		-1
 	-`make test_inheritance_w_jlox` all stages pass: 5/6
+-followup tasks (for after all 84 stages pass)
+	-go through all remaining todos (many 😬)
+	-polish up readmes/instructions for running a bit
+	-maybe a simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
+	-postmortem (whoops, think I forgot to do premortem this time)

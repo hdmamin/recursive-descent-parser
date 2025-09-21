@@ -6,9 +6,9 @@ from string import ascii_letters
 from typing import Any, Union, Callable, Optional
 import logging
 
-from app.data_structures import Trie
-from app.exceptions import UnterminatedLexeme
-from app.utils import get_interpreter
+from lox.data_structures import Trie
+from lox.exceptions import UnterminatedLexeme
+from lox.utils import get_interpreter
 
 
 logger = logging.getLogger(__name__)

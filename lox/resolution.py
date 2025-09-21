@@ -2,7 +2,7 @@ from collections import deque
 from contextlib import contextmanager
 from typing import Any
 
-from app.lexer import Token
+from lox.lexer import Token
 
 
 class FunctionType:
