@@ -279,6 +279,7 @@ class This(Expression):
         self.this = this
 
     def resolve(self):
+        # TODO: isn't INITIALIZER also a valid class type here?
         if INTERPRETER.resolver.current_class != ClassType.CLASS:
             raise RuntimeError(
                 f"[line {self.this.line}] Error at 'this': Can't use 'this' outside of a class."
@@ -288,6 +289,28 @@ class This(Expression):
     
     def evaluate(self):
         return self.this.evaluate(expr=self)
+
+
+class Super(Expression):
+
+    def __init__(self, super: Token, method: Token):
+        self.super = super
+        self.method = method
+
+    def resolve(self):
+        # TODO: isn't INITIALIZER also a valid class type here?
+        if INTERPRETER.resolver.current_class != ClassType.CLASS:
+            raise RuntimeError(
+                f"[line {self.super.line}] Error at 'super': Can't use 'super' outside of a class."
+            )
+
+        INTERPRETER.resolver.resolve_local(self, "super")
+    
+    def evaluate(self):
+        # super is a LoxClass and get_method will retrieve the relevant LoxFunction.
+        # We don't want to execut the method yet so we don't call evaluate on LoxFunction.
+        super = self.super.evaluate(expr=self)
+        return super.get_method(self.method.lexeme)
 
 
 def clock() -> int:
@@ -610,6 +633,7 @@ class Class(Statement):
             with INTERPRETER.resolver.scope():
                 # We don't actually use the line number, this is a dummy value.
                 INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))
+                INTERPRETER.resolver.define(Token("super", -1, token_type=ReservedTokenTypes.SUPER))
                 for method in self.methods:
                     INTERPRETER.resolver.resolve_function(
                         method,
@@ -788,6 +812,7 @@ class LoxFunction(LoxCallable):
         # ) # TODO
         with INTERPRETER.new_env(parent=self.func.definition_env) as env:
             env.update_state("this", instance, is_declaration=True)
+            env.update_state("super", instance.cls.parent_cls, is_declaration=True) # TODO testing
             return LoxFunction(func=self.func, nonlocal_env=env, is_init=self.is_init)
 
     def __str__(self) -> str:

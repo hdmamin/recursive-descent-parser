@@ -1,4 +1,3 @@
-from __future__ import annotations
 import streamlit as st
 
 # TODO: tmp hack to import lox code, should switch to editable install or something
@@ -17,5 +16,10 @@ if source:
     # TODO: main is never returning (also, raelized it only prints stuff, doesn't return, per
     # codecrafters requirments. But seems like we need to first figure out why it's not even
     # finishing running.)
-    result = main(command="run", source_code=source)
-    st.text(result)
+    try:
+        result = main(codecrafters_test=False, command="run", source_code=source)
+        for line in result:
+            st.text(line)
+    except Exception as e:
+        for error in e.args:
+            st.error(str(error))

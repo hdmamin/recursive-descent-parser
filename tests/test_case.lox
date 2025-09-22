@@ -1,15 +1,22 @@
-class Doughnut {
-  cook() {
-    print "Fry until golden brown.";
+class Base {
+  method() {
+    print "Base.method()";
   }
 }
 
-// Super can be used to call the overridden method
-// of the parent class
-class BostonCream < Doughnut {
-  cook() {
-    super.cook();
+class Parent < Base {
+  method() {
+    super.method();
   }
 }
 
-BostonCream().cook();
+class Child < Parent {
+  method() {
+    super.method();
+  }
+}
+
+var parent = Parent();
+parent.method();
+var child = Child();
+child.method();

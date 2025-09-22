@@ -425,18 +425,18 @@ class Token:
 
         # TODO testing "this"
         # if self.token_type == TokenTypes.IDENTIFIER:
-        if self.token_type in (TokenTypes.IDENTIFIER, ReservedTokenTypes.THIS):
+        if self.token_type in (TokenTypes.IDENTIFIER, ReservedTokenTypes.THIS, ReservedTokenTypes.SUPER):
             interpreter = get_interpreter()
             try:
                 depth = interpreter.locals.get(kwargs["expr"], None)
                 # TODO rm
-                # if self.lexeme:
-                #     print('[lexer]', self.line)
+                # if self.lexeme == "super":
+                #     print('[lexer]', self.line, repr(self.lexeme))
                 #     print("\tenv lookup depth:", self.lexeme, depth)
                 #     print("\tglobal env state:", id(interpreter.global_env), interpreter.global_env.state,
                 #         "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
                 #         "\n\tparent env state:", id(interpreter.env.parent), getattr(interpreter.env.parent, 'state', 'null'),
-                #         "\n\tgrandparent env state:", id(interpreter.env.parent.parent), getattr(interpreter.env.parent.parent, 'state', 'null'),
+                #         # "\n\tgrandparent env state:", id(interpreter.env.parent.parent), getattr(interpreter.env.parent.parent, 'state', 'null'),
                 #         )
                 # TODO end
                 if depth is None:

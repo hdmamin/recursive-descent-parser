@@ -4,7 +4,7 @@ from lox.exceptions import ParsingError
 from lox.interpreter import (
     Expression, Literal, Variable, Unary, Binary, Assign, Logical, Call, Grouping,
     Statement, IfStatement, PrintStatement, ExpressionStatement, ReturnStatement,
-    VariableDeclaration, Block, While, For, Function, Class, Get, Set, This
+    VariableDeclaration, Block, While, For, Function, Class, Get, Set, This, Super
 )
 from lox.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
@@ -154,9 +154,9 @@ class Parser:
         "foo"
 
         Rule:
-        primary        → "true" | "false" | "nil" | NUMBER | STRING
-               | "(" expression ")"
-               | IDENTIFIER ;
+        primary        → "true" | "false" | "nil" | "this"
+               | NUMBER | STRING | IDENTIFIER | "(" expression ")"
+               | "super" "." IDENTIFIER ;
         """
         token = self.current_token()
         reserved_types = (ReservedTokenTypes.FALSE, ReservedTokenTypes.TRUE, ReservedTokenTypes.NIL)
@@ -179,6 +179,14 @@ class Parser:
         if self.match(TokenTypes.IDENTIFIER):
             return Variable(token)
 
+        if self.match(ReservedTokenTypes.SUPER):
+            if not self.match(TokenTypes.DOT):
+                raise SyntaxError("Expect '.' after 'super'.")
+            if not self.match(TokenTypes.IDENTIFIER):
+                raise SyntaxError("Expect superclass method name.")
+
+            return Super(token, self.previous_token())
+
         # TODO: in parse mode, func call is hitting this error at the semicolon after the func call.
         # Think the primary call is triggered by self.call() and should be matching IDENTIFIER.
         # Looks like we are matching identifier, see below with idx-3, but for some reason we must
@@ -196,7 +204,6 @@ class Parser:
         call → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
         """
         expr = self.primary()
-        print('call:', expr) # TODO rm
         while True:
             if self.match(TokenTypes.LEFT_PAREN):
                 args = self._get_call_args()
@@ -527,7 +534,6 @@ class Parser:
         # here.
         custom_error = False
         try:
-            print('declare:', self.current_token())
             if self.match(ReservedTokenTypes.FUN):
                 custom_error = True
                 return self.function_declaration(kind="function")

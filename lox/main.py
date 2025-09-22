@@ -1,3 +1,4 @@
+from contextlib import redirect_stdout
 import logging
 import sys
 from typing import Optional
@@ -6,6 +7,7 @@ from lox.data_structures import ASTNode
 from lox.interpreter import to_lox_dtype, INTERPRETER
 from lox.lexer import lex
 from lox.parser import Parser
+from lox.utils import maybe_redirect
 
 
 logger = logging.getLogger()
@@ -32,12 +34,45 @@ class ASTPrinter:
         print(nodes)
 
 
+def raise_error(codecrafters_test: bool, errors: list, exit_code: int):
+    """Codecrafters tests make us surface errors in a specific way which is not ideal for
+    other contexts, e.g. streamlit (discards some info). In codecrafters_test mode we print to
+    stderr and sys.exit. Otherwise, we raise an Exception with the same message.
+    """
+    if codecrafters_test:
+        for error in errors:
+            print(error, file=sys.stderr)
+        exit(exit_code)
+    raise Exception(*errors)
+
+
+class ListWriter:
+
+    def __init__(self):
+        self._items = []
+
+    def write(self, val: str):
+        # Otherwise we get extra items from print default `end` arg.
+        if val.rstrip("\n"):
+            self._items.append(val)
+
+    def flush(self):
+        pass
+
+    def items(self):
+        return self.items
+
+
 # TODO: revamp to better support streamlit? All these prints and exit codes don't play nicely with
 # streamlit.
-def main(*, command=None, source_code: Optional[str] = None):
+@maybe_redirect("codecrafters_test", inverse=True)
+def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[str] = None):
     if not (command and source_code) and len(sys.argv) < 3:
-        print("Usage: ./your_program.sh tokenize <filename>", file=sys.stderr)
-        exit(1)
+        raise_error(
+            codecrafters_test,
+            ["Usage: ./your_program.sh tokenize <filename>"],
+            1
+        )
 
     command = command or sys.argv[1]
     if command is None:
@@ -57,7 +92,7 @@ def main(*, command=None, source_code: Optional[str] = None):
         for row in lexed["lexed"]:
             print(row, file=sys.stderr if row.startswith("[line") else sys.stdout)
         if not lexed["success"]:
-            exit(65)
+            raise_error(codecrafters_test, "", 65)
 
         return
 
@@ -73,16 +108,14 @@ def main(*, command=None, source_code: Optional[str] = None):
         # When tokenizer catches some errors before we reach the parsing stage, Codecrafters
         # wants us to exit early.
         if not lexed["success"]:
-            exit(65)
+            raise_error(codecrafters_test, [], 65)
 
         # At this point we know `parsed` exists.
         if parsed["success"]:
             for expr in parsed["parsed"]:
                 print(expr)
         else:
-            for row in parsed["errors"]:
-                print(row, file=sys.stderr)
-            exit(65)
+            raise_error(codecrafters_test, parsed["errors"], 65)
 
         return
 
@@ -91,8 +124,7 @@ def main(*, command=None, source_code: Optional[str] = None):
     try:
         INTERPRETER.resolve_all(parsed["parsed"])
     except Exception as e:
-        print(e, file=sys.stderr)
-        exit(65)
+        raise_error(codecrafters_test, [e], 65)
     parser.reset_index()
     # TODO testing (noticed parse and run use same mode, eval will prob break but will get to that)
     # res = parser.parse(mode=command)
@@ -101,18 +133,15 @@ def main(*, command=None, source_code: Optional[str] = None):
         # TODO: again, would like to consolidate and raise this only once instead of in each
         # command, but codecrafters is picky about when/where errors are raised. Clean up later.
         if not lexed["success"]:
-            exit(65)
+            raise_error(codecrafters_test, [], 65)
 
         # if parsed["success"]:
         # TODO: may need to change key back to declarations, depending
         for expr in res["parsed"]:
             try:
-                # TODO rm one of these?
                 print(to_lox_dtype(expr.evaluate()))
-                # expr.evaluate()
             except RuntimeError as e:
-                print(e, file=sys.stderr)
-                exit(70)
+                raise_error(codecrafters_test, [e], 70)
     elif command == "run":
         # TODO: not sure if this is valid, just treating any error here like a syntax error.
         # Might need to modify parser to better distinguish between parsing and syntax errors.
@@ -121,21 +150,17 @@ def main(*, command=None, source_code: Optional[str] = None):
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
         if not res["success"]:
-            for row in res["errors"]:
-                print(row, file=sys.stderr)
-            exit(65)
+            raise_error(codecrafters_test, res["errors"], 65)
 
         for statement in res["parsed"]:
             try:
                 statement.evaluate()
             except RuntimeError as e:
-                print(e, file=sys.stderr)
-                exit(70)
+                raise_error(codecrafters_test, [e], 70)
     else:
-        print(f"Unknown command: {command}", file=sys.stderr)
-        exit(1)
+        raise_error(codecrafters_test, f"Unknown command: {command}", 1)
 
-    return {"foo": "bar"} # TODO testing streamlit, think some obj in locals must be breaking streamlit
+    return res # TODO testing streamlit, think some obj in locals must be breaking streamlit
     # TODO for easier debugging
     # return locals()
 
