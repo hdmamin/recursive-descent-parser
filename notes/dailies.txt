@@ -1526,6 +1526,7 @@ X -stage #82: inheritance errors
 		X -1
 		X -2
 	X -`make test_inheritance_w_jlox` all stages pass: 4/6
+X -start streamlit app
 
 9/21/25 sun
 -----------
@@ -1545,4 +1546,7 @@ X -stage #82: inheritance errors
 	-go through all remaining todos (many 😬)
 	-polish up readmes/instructions for running a bit
 	-maybe a simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
+		-refactor to use editable install instead of sys.path hack
+		-maybe see if I can insert a repl that I build with prompt_toolkit or cmd?
+			>  looks like it may be hard to insert into streamlit, can make custom component but maybe not using those high level py libs. Would be fun if possible though.
 	-postmortem (whoops, think I forgot to do premortem this time)

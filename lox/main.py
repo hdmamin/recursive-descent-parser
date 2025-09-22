@@ -32,12 +32,16 @@ class ASTPrinter:
         print(nodes)
 
 
-def main(command=None, source_code: Optional[str] = None):
-    if len(sys.argv) < 3:
+# TODO: revamp to better support streamlit? All these prints and exit codes don't play nicely with
+# streamlit.
+def main(*, command=None, source_code: Optional[str] = None):
+    if not (command and source_code) and len(sys.argv) < 3:
         print("Usage: ./your_program.sh tokenize <filename>", file=sys.stderr)
         exit(1)
 
     command = command or sys.argv[1]
+    if command is None:
+        raise ValueError("Command must not be None.")
 
     if source_code is None:
         filename = sys.argv[2]
@@ -131,8 +135,9 @@ def main(command=None, source_code: Optional[str] = None):
         print(f"Unknown command: {command}", file=sys.stderr)
         exit(1)
 
+    return {"foo": "bar"} # TODO testing streamlit, think some obj in locals must be breaking streamlit
     # TODO for easier debugging
-    return locals()
+    # return locals()
 
 
 if __name__ == "__main__":

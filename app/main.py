@@ -7,11 +7,15 @@ import sys
 project_path = str(Path(__file__).parent.parent)
 if project_path not in sys.path:
     sys.path.insert(0, project_path)
-print(sys.path)
 
 from lox.main import main
 
 
 source = st.text_area("Lox Program")
-result = main(source)
-st.text(result)
+if source:
+    print('source:', source)
+    # TODO: main is never returning (also, raelized it only prints stuff, doesn't return, per
+    # codecrafters requirments. But seems like we need to first figure out why it's not even
+    # finishing running.)
+    result = main(command="run", source_code=source)
+    st.text(result)

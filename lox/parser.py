@@ -196,6 +196,7 @@ class Parser:
         call → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
         """
         expr = self.primary()
+        print('call:', expr) # TODO rm
         while True:
             if self.match(TokenTypes.LEFT_PAREN):
                 args = self._get_call_args()
@@ -526,6 +527,7 @@ class Parser:
         # here.
         custom_error = False
         try:
+            print('declare:', self.current_token())
             if self.match(ReservedTokenTypes.FUN):
                 custom_error = True
                 return self.function_declaration(kind="function")

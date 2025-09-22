@@ -888,7 +888,7 @@ class Function(Statement):
         INTERPRETER.resolver.resolve_function(self)
 
     def __str__(self) -> str:
-        return f"Function({self.name=})"
+        return f"Function(name={self.name})"
 
 
 def boolean_lexeme(val: bool) -> str:
