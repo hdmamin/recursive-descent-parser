@@ -1,4 +1,4 @@
-.PHONY: release build test test_with_bash copy_course_file
+.PHONY: release build test test_with_bash copy_course_file run
 
 current_version_number := $(shell git tag --list "v*" | sort -V | tail -n 1 | cut -c 2-)
 next_version_number := $(shell echo $$(($(current_version_number)+1)))
@@ -32,6 +32,7 @@ evaluate:
 	./your_program.sh evaluate ./tests/test_case.lox
 
 run:
+	rm -rf lox/__pycache__/
 	./your_program.sh run ./tests/test_case.lox
 
 test_and_watch:

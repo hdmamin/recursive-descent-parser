@@ -1,5 +1,6 @@
 from contextlib import contextmanager, redirect_stdout
 from functools import wraps
+import inspect
 import sys
 from typing import Any
 
@@ -128,9 +129,12 @@ def maybe_redirect(param: str, inverse: bool = False):
     ["foo", "bar"]
     """
     def decorator(func):
+        signature = inspect.signature(func)
         @wraps(func)
         def wrapper(*args, **kwargs):
-            do_redirect = kwargs[param] != inverse
+            bound_args = signature.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+            do_redirect = bound_args.arguments[param] != inverse
             redirect = ConditionalRedirect(do_redirect)
             with redirect_stdout(redirect):
                 res = func(*args, **kwargs)

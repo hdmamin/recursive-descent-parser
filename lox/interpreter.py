@@ -605,19 +605,29 @@ class Class(Statement):
                f"parent={self.parent})"
 
     def evaluate(self, *args, **kwargs):
-        methods = {
-            method.name.lexeme:
-            LoxFunction(method, INTERPRETER.env, is_init=method.name.lexeme == "init")
-            for method in self.methods
-        }
         parent_cls = None
         if self.parent:
             parent_cls = self.parent.evaluate()
             if not isinstance(parent_cls, LoxClass):
                 raise RuntimeError(f"Superclass must be a class.\n[line {self.name.line}]")
 
+        # Placeholder value so that `this` and class itself can be referenced inside init.
+        INTERPRETER.env.update_state(self.name.lexeme, None, is_declaration=True)
+
+        # Looks tempting to consolidate this with the `if` block above that checks the same
+        # condition but definition order is important here.
+        with maybe_context_manager(INTERPRETER.new_env, enable=bool(parent_cls)) as env:
+            if self.parent:
+                env.update_state("super", parent_cls, is_declaration=True) # TODO testing
+                print('>>> env super:', id(env), env.state)
+            methods = {
+                method.name.lexeme:
+                LoxFunction(method, INTERPRETER.env, is_init=method.name.lexeme == "init")
+                for method in self.methods
+            }
         cls = LoxClass(self, methods, parent_cls=parent_cls)
         INTERPRETER.env.update_state(self.name.lexeme, cls, is_declaration=True)
+
         return cls
 
     def resolve(self):
@@ -630,16 +640,21 @@ class Class(Statement):
             INTERPRETER.resolver.define(self.name)
             if self.parent:
                 self.parent.resolve()
-            with INTERPRETER.resolver.scope():
-                # We don't actually use the line number, this is a dummy value.
-                INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))
-                INTERPRETER.resolver.define(Token("super", -1, token_type=ReservedTokenTypes.SUPER))
-                for method in self.methods:
-                    INTERPRETER.resolver.resolve_function(
-                        method,
-                        FunctionType.INITIALIZER if method.name.lexeme == "init"
-                        else FunctionType.METHOD
-                    )
+
+            with maybe_context_manager(INTERPRETER.resolver.scope, enable=bool(self.parent)):
+                # Tempting to try to combine this with the if block above given that the condition
+                # is the same, but it's actually clearner this way.
+                if self.parent:
+                    INTERPRETER.resolver.define(Token("super", -1, token_type=ReservedTokenTypes.SUPER))
+                with INTERPRETER.resolver.scope():
+                    # We don't actually use the line number, this is a dummy value.
+                    INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))
+                    for method in self.methods:
+                        INTERPRETER.resolver.resolve_function(
+                            method,
+                            FunctionType.INITIALIZER if method.name.lexeme == "init"
+                            else FunctionType.METHOD
+                        )
 
     
 class While(Statement):
@@ -812,7 +827,7 @@ class LoxFunction(LoxCallable):
         # ) # TODO
         with INTERPRETER.new_env(parent=self.func.definition_env) as env:
             env.update_state("this", instance, is_declaration=True)
-            env.update_state("super", instance.cls.parent_cls, is_declaration=True) # TODO testing
+            # env.update_state("super", instance.cls.parent_cls, is_declaration=True) # TODO testing
             return LoxFunction(func=self.func, nonlocal_env=env, is_init=self.is_init)
 
     def __str__(self) -> str:
@@ -843,7 +858,8 @@ class LoxClass(LoxCallable):
         init = self.get_method("init")
         if init:
             # Need to bind init manually here because it won't be invoked like other methods, i.e.
-            # the user will not call MyClass.init().
+            # the user will not call MyClass.init(). IRC we only pass in args here because Lox
+            # seemingly only supports positional args.
             init.bind(instance).evaluate(*args)
         return instance
 
