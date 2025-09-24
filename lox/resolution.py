@@ -14,6 +14,7 @@ class FunctionType:
 
 class ClassType:
     CLASS = "CLASS"
+    SUBCLASS = "SUBCLASS"
     NONE = "NONE"
 
 

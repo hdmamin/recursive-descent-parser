@@ -280,7 +280,7 @@ class This(Expression):
 
     def resolve(self):
         # TODO: isn't INITIALIZER also a valid class type here?
-        if INTERPRETER.resolver.current_class != ClassType.CLASS:
+        if INTERPRETER.resolver.current_class not in (ClassType.CLASS, ClassType.SUBCLASS):
             raise RuntimeError(
                 f"[line {self.this.line}] Error at 'this': Can't use 'this' outside of a class."
             )
@@ -299,7 +299,12 @@ class Super(Expression):
 
     def resolve(self):
         # TODO: isn't INITIALIZER also a valid class type here?
-        if INTERPRETER.resolver.current_class != ClassType.CLASS:
+        if INTERPRETER.resolver.current_class == ClassType.CLASS:
+            raise ResolutionError(
+                f"[line {self.super.line}] Error at 'super': Can't use 'super' in a class "
+                "with no superclass."
+            )
+        if INTERPRETER.resolver.current_class == ClassType.NONE:
             raise RuntimeError(
                 f"[line {self.super.line}] Error at 'super': Can't use 'super' outside of a class."
             )
@@ -312,6 +317,7 @@ class Super(Expression):
         super = self.super.evaluate(expr=self)
         lox_function = super.get_method(self.method.lexeme)
         # TODO: handle case where super_depth is None?
+        # We know `this` is always in env nested within `super` env.
         super_depth = INTERPRETER.locals.get(self, None)
         this = INTERPRETER.env.read_state_at("this", super_depth - 1)
         return lox_function.bind(this)
@@ -626,7 +632,6 @@ class Class(Statement):
         with maybe_context_manager(INTERPRETER.new_env, enable=bool(parent_cls)) as env:
             if self.parent:
                 env.update_state("super", parent_cls, is_declaration=True) # TODO testing
-                # print('>>> env super:', id(env), env.state, 'parent:', id(env.parent))
             # Reference INTERPRETER.env below because env could be None. Ok to reference env
             # when updating state above because tha's nested inside an additional check for parent.
             methods = {
@@ -644,7 +649,9 @@ class Class(Statement):
             raise ResolutionError(f"[line {self.name.line}] Error at {self.name.lexeme!r}: "
                                   "A class can't inherit from itself.")
 
-        with INTERPRETER.resolver.inside_class(ClassType.CLASS):
+        with INTERPRETER.resolver.inside_class(
+                ClassType.SUBCLASS if self.parent else ClassType.CLASS
+        ):
             INTERPRETER.resolver.declare(self.name)
             INTERPRETER.resolver.define(self.name)
             if self.parent:
@@ -654,10 +661,14 @@ class Class(Statement):
                 # Tempting to try to combine this with the if block above given that the condition
                 # is the same, but it's actually clearner this way.
                 if self.parent:
-                    INTERPRETER.resolver.define(Token("super", -1, token_type=ReservedTokenTypes.SUPER))
+                    INTERPRETER.resolver.define(
+                        Token("super", -1, token_type=ReservedTokenTypes.SUPER)
+                    )
                 with INTERPRETER.resolver.scope():
                     # We don't actually use the line number, this is a dummy value.
-                    INTERPRETER.resolver.define(Token("this", -1, token_type=ReservedTokenTypes.THIS))
+                    INTERPRETER.resolver.define(
+                        Token("this", -1, token_type=ReservedTokenTypes.THIS)
+                    )
                     for method in self.methods:
                         INTERPRETER.resolver.resolve_function(
                             method,
@@ -826,18 +837,8 @@ class LoxFunction(LoxCallable):
 
     def bind(self, instance: "LoxInstance") -> "LoxFunction":
         """Attach a method to a class instance, making the instance available via `this`."""
-        # TODO don't fully understand whether to pick definition_env or nonlocal_env here, need to
-        # refresh my memory of what purpose each serves.
-        # print(
-        #     '[bind]',
-        #      '\n\tnonlocal:', id(self.nonlocal_env), getattr(self.nonlocal_env, 'state', {}),
-        #      '\n\tdefinition:', id(self.func.definition_env),  getattr(self.func.definition_env, 'state', {}),
-        #      '\n\tglobal:', id(INTERPRETER.global_env), INTERPRETER.global_env.state
-        # ) # TODO
         with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
-            # print('>>> bind env:', id(env), env.state, '\n\tparent:', id(env.parent), '\n\tnonlocal:', id(self.nonlocal_env), '\n\tdefinition:', id(self.func.definition_env))
             env.update_state("this", instance, is_declaration=True)
-            # env.update_state("super", instance.cls.parent_cls, is_declaration=True) # TODO testing
             return LoxFunction(func=self.func, nonlocal_env=env, is_init=self.is_init)
 
     def __str__(self) -> str:

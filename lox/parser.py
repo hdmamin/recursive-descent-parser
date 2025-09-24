@@ -121,6 +121,7 @@ class Parser:
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
+                print('parse error:', e, type(e)) # TODO rm
                 res["success"] = False
                 res["errors"].append(e)
                 # Avoid getting stuck in infinite loop on parsing errors that don't hit
@@ -494,11 +495,8 @@ class Parser:
         
     def synchronize(self, error_suffix: str = "Expect expression."):
         """Error handling for when we hit a parsing error."""
-        # TODO: raising an error for now bc tests do want this for parsing errors, e.g. for `print;`
-        # but eventually may need to recover and keep going. Remember parse() has try/except error
-        # handling, as does declaration(), but expression() does not - so need to figure out a
-        # consistent solution.
         token = self.current_token()
+        print('>>> 1 synchronize:', repr(error_suffix), token, token.line) # TODO rm
         # Added this to avoid inf loop in else clause in declaration(), I think because
         # otherwise there's no way to increment curr_idx and we'd just keep hitting the same error
         # again and again.
@@ -524,6 +522,7 @@ class Parser:
             if curr.token_type in start_types:
                 break
             self.curr_idx += 1
+        print('>>> 2 synchronize:', repr(error_suffix), token, token.line) # TODO rm
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: {error_suffix}")
 
     def declaration(self):
@@ -542,9 +541,16 @@ class Parser:
             elif self.match(ReservedTokenTypes.CLASS):
                 return self.class_declaration()
             else:
+                # TODO: testing setting custom_error True here to try to fix super error message,
+                 # but this might break other tests that expect standard message. Another option is
+                 # to maybe do special case for super error message? Regardless, this is still not
+                 # producing the right error somehow - kwargs look right but error suffix still
+                 # comes out wrong
+                custom_error = True
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
+            print('>>> declaration error:', e, kwargs) # TODO rm
             self.synchronize(**kwargs)
         
     def variable_declaration(self) -> VariableDeclaration:
