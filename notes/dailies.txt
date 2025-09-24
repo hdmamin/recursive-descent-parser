@@ -1587,13 +1587,13 @@ X -start streamlit app
     -add more low effort task bullets
 	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
-		> ideally run all stages and log which ones failed if any. Current setup isja bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
 	-can we add a better error message when using single quotes? (need to make sure this doesn't break lox test suite, they're picky about error messages)
 -stage #83: super keyword (new stage!)
-	-finish reading how book handles super for nested inheritance.
+	X -finish reading how book handles super for nested inheritance.
 		> working through it, depth now correctly resolves I think but we seem to discard the env containing super (notice IDs in test case output ">>> env super:" lines don't appear below in lexer.Token lookup). Need to investigate why.
-	-ui tests pass: 1
-	-`make test_inheritance_w_jlox` all stages pass: 5/6
+	X -ui tests pass: 1
+	X -`make test_inheritance_w_jlox` all stages pass: 5/6
 -simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
 	-maybe button for different modes? (currently only run; but be mindful of scope creep; but also this is fun so who cares)
 	-refactor to use editable install instead of sys.path hack

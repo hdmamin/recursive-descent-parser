@@ -310,7 +310,11 @@ class Super(Expression):
         # super is a LoxClass and get_method will retrieve the relevant LoxFunction.
         # We don't want to execut the method yet so we don't call evaluate on LoxFunction.
         super = self.super.evaluate(expr=self)
-        return super.get_method(self.method.lexeme)
+        lox_function = super.get_method(self.method.lexeme)
+        # TODO: handle case where super_depth is None?
+        super_depth = INTERPRETER.locals.get(self, None)
+        this = INTERPRETER.env.read_state_at("this", super_depth - 1)
+        return lox_function.bind(this)
 
 
 def clock() -> int:
@@ -380,6 +384,9 @@ class NativeClock(LoxCallable):
     def __str__(self) -> str:
         # TODO: idk if this is book's desired format.
         return "<NativeClock>"
+
+    def __repr__(self) -> str:
+        return str(self)
 
 
 class Call(Expression):
@@ -619,7 +626,9 @@ class Class(Statement):
         with maybe_context_manager(INTERPRETER.new_env, enable=bool(parent_cls)) as env:
             if self.parent:
                 env.update_state("super", parent_cls, is_declaration=True) # TODO testing
-                print('>>> env super:', id(env), env.state)
+                # print('>>> env super:', id(env), env.state, 'parent:', id(env.parent))
+            # Reference INTERPRETER.env below because env could be None. Ok to reference env
+            # when updating state above because tha's nested inside an additional check for parent.
             methods = {
                 method.name.lexeme:
                 LoxFunction(method, INTERPRETER.env, is_init=method.name.lexeme == "init")
@@ -825,7 +834,8 @@ class LoxFunction(LoxCallable):
         #      '\n\tdefinition:', id(self.func.definition_env),  getattr(self.func.definition_env, 'state', {}),
         #      '\n\tglobal:', id(INTERPRETER.global_env), INTERPRETER.global_env.state
         # ) # TODO
-        with INTERPRETER.new_env(parent=self.func.definition_env) as env:
+        with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
+            # print('>>> bind env:', id(env), env.state, '\n\tparent:', id(env.parent), '\n\tnonlocal:', id(self.nonlocal_env), '\n\tdefinition:', id(self.func.definition_env))
             env.update_state("this", instance, is_declaration=True)
             # env.update_state("super", instance.cls.parent_cls, is_declaration=True) # TODO testing
             return LoxFunction(func=self.func, nonlocal_env=env, is_init=self.is_init)
@@ -872,12 +882,18 @@ class LoxClass(LoxCallable):
     def __str__(self) -> str:
         return self.cls_declaration.name.lexeme
 
+    def __repr__(self) -> str:
+        return str(self)
+
 
 class LoxInstance:
 
     def __init__(self, cls: LoxClass):
         self.cls = cls
         self.attrs = {}
+
+    def __repr__(self) -> str:
+        return str(self)
 
     def __str__(self) -> str:
         return f"{self.cls.cls_declaration.name.lexeme} instance"

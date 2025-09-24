@@ -1,22 +1,5 @@
-class Base {
-  method() {
-    print "Base.method()";
+class Foo {
+  cook() {
+    super.cook();
   }
 }
-
-class Parent < Base {
-  method() {
-    super.method();
-  }
-}
-
-class Child < Parent {
-  method() {
-    super.method();
-  }
-}
-
-var parent = Parent();
-parent.method();
-var child = Child();
-child.method();
