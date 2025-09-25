@@ -114,3 +114,12 @@ Error goes away if we move the class out of a block.
 	Block.evaluate
 	Function.evaluate
 and Function.definition_env is set in init.
+
+9/24/25 wed
+-----------
+debugging wrong error message for super not followed by period
+-we reach block which calls declaration()
+	-we reach expression_statement. The first expression() call is what raises an error and never completes.
+	-zooming into expression call, we eventually reach primary which triggers the error (Super clause with intended error message)
+	-this seemingly triggers declaration -> synchronize -> declaration -> synchronize
+-and only the last synchronize error gets raised, whereas we want the first error message

@@ -114,6 +114,7 @@ class Parser:
             "errors": [],
         }
         while self.curr_idx <= self.max_idx:
+            print('\t parse loop:', self.curr_idx, res) # TODO rm
             prev_idx = self.curr_idx 
 
             try:
@@ -182,6 +183,7 @@ class Parser:
 
         if self.match(ReservedTokenTypes.SUPER):
             if not self.match(TokenTypes.DOT):
+                print("SUPER ERORR") # TODO rm
                 raise SyntaxError("Expect '.' after 'super'.")
             if not self.match(TokenTypes.IDENTIFIER):
                 raise SyntaxError("Expect superclass method name.")
@@ -451,13 +453,19 @@ class Parser:
         return For(initializer, condition, incrementer, body)
 
     def block(self) -> list[Statement]:
+        print('[block] 1') # TODO rm
         statements = []
         while self.curr_idx < self.max_idx and \
                 self.current_token().token_type != TokenTypes.RIGHT_BRACE:
+            print('[block]', 2)
             statements.append(self.declaration())
+            print('[block]', 3)
 
+        print('[block]', 4)
         if not self.match(TokenTypes.RIGHT_BRACE):
+            print('[block]', 5)
             raise ParsingError("Expect '}' after block.")
+        print('[block] 6', self.curr_idx, statements) # TODO rm
         return statements
 
     def expression_statement(self) -> Union[ExpressionStatement, Expression]:
@@ -470,6 +478,7 @@ class Parser:
         ExpressionStatement if mode is "run" or "evaluate"
         Expression if mode is "parse"
         """
+        print('expression_statement')
         expr = self.expression()
 
         # Only 'run' mode enforces the semicolon but we should still check when in the other modes 
@@ -496,7 +505,6 @@ class Parser:
     def synchronize(self, error_suffix: str = "Expect expression."):
         """Error handling for when we hit a parsing error."""
         token = self.current_token()
-        print('>>> 1 synchronize:', repr(error_suffix), token, token.line) # TODO rm
         # Added this to avoid inf loop in else clause in declaration(), I think because
         # otherwise there's no way to increment curr_idx and we'd just keep hitting the same error
         # again and again.
@@ -522,7 +530,7 @@ class Parser:
             if curr.token_type in start_types:
                 break
             self.curr_idx += 1
-        print('>>> 2 synchronize:', repr(error_suffix), token, token.line) # TODO rm
+        print('\t synchronize (about to raise parsing err):', repr(error_suffix), token, token.line) # TODO rm
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: {error_suffix}")
 
     def declaration(self):
@@ -550,8 +558,9 @@ class Parser:
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
-            print('>>> declaration error:', e, kwargs) # TODO rm
+            print('\t declaration (about to synchronize):', e, kwargs) # TODO rm
             self.synchronize(**kwargs)
+            print('after synchronize')
         
     def variable_declaration(self) -> VariableDeclaration:
         """Called *after* we've already confirmed there was a preceding VAR token and current_token
