@@ -1625,7 +1625,33 @@ X -stage #83: super keyword (new stage!)
 -stage #84: invalid uses of super (new stage! last stage!)
 	-ui tests pass: 2
 		> error message is wrong. Can see we're hitting the correct one but it's somehow getting swallowed and only a later error is getting raised. Must be caught by some error handling or something? Need to investigate more. Remember to remove `custom_error=True` in `declaration else clause` if end up not using it.
+		> update: made some progress diagnosing. Key is that the innermost synchronize is the only one we want to execute, but determining what the innermost one is is a bit tricky. See misct.txt notes, prob can ignore most but the enter/exit lines with expected depths is helpful. Need to either figure out logic to make that work (notice the last step makes the decrement rule quite tricky) or perhaps can accumulate some sort of of queue/stack of open calls and close them in parse except.
+		> update 2: tried implementing that last idea of resetting depth in parse except, feels close but now getting inf loop of returning Nones - thinking exiting early from synchronize means that declaration is returning None now. Though now I notice it seems odd that previously, an error in the nested declaration call was not bubbling up to the outer one 🤔.
 	-`make test_inheritance_w_jlox` all stages pass: 6/6
+-`make test_all` passes (9 stages)
+-simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
+	-maybe button for different modes? (currently only run; but be mindful of scope creep; but also this is fun so who cares)
+	-refactor to use editable install instead of sys.path hack
+	-maybe see if I can insert a repl that I build with prompt_toolkit or cmd?
+		>  looks like it may be hard to insert into streamlit, can make custom component but maybe not using those high level py libs. Would be fun if possible though.
+	-deploy to streamlit spaces (prob start with clicking the "deploy" button that now shows up when running locally?)
+-followup tasks (for after all 84 stages pass)
+	-go through all remaining todos (many 😬)
+	-polish up readmes/instructions for running a bit
+	-postmortem (whoops, think I forgot to do premortem this time)
+
+9/25/25 thurs
+-------------
+> status: still debugging gnarly synchronization depth issues.
+-low effort tasks:
+    -add more low effort task bullets
+	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
+	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
+		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+	-can we add a better error message when using single quotes? (need to make sure this doesn't break lox test suite, they're picky about error messages)
+-stage #84: invalid uses of super (new stage! last stage!)
+	-ui tests pass: 2
+		> see misc.txt for notes to self on eod wed status.
 -`make test_all` passes (9 stages)
 -simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
 	-maybe button for different modes? (currently only run; but be mindful of scope creep; but also this is fun so who cares)

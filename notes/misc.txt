@@ -123,3 +123,27 @@ debugging wrong error message for super not followed by period
 	-zooming into expression call, we eventually reach primary which triggers the error (Super clause with intended error message)
 	-this seemingly triggers declaration -> synchronize -> declaration -> synchronize
 -and only the last synchronize error gets raised, whereas we want the first error message
+
+-declaration is called to parse class (B). And in the course of parsing B we get a nested declaration call to parse super or maybe method(). and so I think we want to only raise the error from the innermost synchronize call but currently we're raising all of them, and this seemingly results in only the last one (?) actually getting raised.
+
+enter outer declaration 0
+enter inner declaration 0
+enter inner synchronize 0
+exit inner synchronize 1
+exit inner declaration 1
+enter outer synchronize 1
+exit outer synchronize 1
+exit outer declaration 0
+
+we want inner synchronize to execut
+we do NOT want outer synchronize to execute
+so seems like inner synchronize should trigger panic mode
+and outer declaration should end it
+but how do we know when we're in inner/outer for either? inner declaration will exit before inner synchronize, so declaration can't just always end panic mode
+maybe coudl maintain some kind of queue of synchronize errors and only raise the first one? but still need to figure out when to clear it
+
+notes to self for where I left off end of 9/24 wed:
+		> error message is wrong. Can see we're hitting the correct one but it's somehow getting swallowed and only a later error is getting raised. Must be caught by some error handling or something? Need to investigate more. Remember to remove `custom_error=True` in `declaration else clause` if end up not using it.
+		> update: made some progress diagnosing. Key is that the innermost synchronize is the only one we want to execute, but determining what the innermost one is is a bit tricky. See misct.txt notes, prob can ignore most but the enter/exit lines with expected depths is helpful. Need to either figure out logic to make that work (notice the last step makes the decrement rule quite tricky) or perhaps can accumulate some sort of of queue/stack of open calls and close them in parse except.
+		> update 2: tried implementing that last idea of resetting depth in parse except, feels close but now getting inf loop of returning Nones - thinking exiting early from synchronize means that declaration is returning None now. Though now I notice it seems odd that previously, an error in the nested declaration call was not bubbling up to the outer one 🤔.
+	-`make test_inheritance_w_jlox` all stages pass: 6/6

@@ -46,6 +46,7 @@ class Parser:
         self.max_idx = len(self.tokens) - 1
         self.curr_idx = 0
         self.mode = None
+        self.synchronize_depth = 0
 
     def reset_index(self):
         """After parsing, we need to reset the index back to 0 before we run."""
@@ -123,6 +124,7 @@ class Parser:
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
                 print('parse error:', e, type(e)) # TODO rm
+                self.synchronize_depth = 0
                 res["success"] = False
                 res["errors"].append(e)
                 # Avoid getting stuck in infinite loop on parsing errors that don't hit
@@ -502,8 +504,14 @@ class Parser:
             raise SyntaxError("Expect ';' after expression.")
         return PrintStatement(expr)
         
-    def synchronize(self, error_suffix: str = "Expect expression."):
+    def synchronize(self, error_suffix: str = "Expect expression.", start: int = None): # TODO rm start
         """Error handling for when we hit a parsing error."""
+        # TODO
+        if self.synchronize_depth > 0:
+            return
+        print("ENTER SYNCHRONIZE", start, self.synchronize_depth) # TODO
+        self.synchronize_depth += 1
+
         token = self.current_token()
         # Added this to avoid inf loop in else clause in declaration(), I think because
         # otherwise there's no way to increment curr_idx and we'd just keep hitting the same error
@@ -530,7 +538,8 @@ class Parser:
             if curr.token_type in start_types:
                 break
             self.curr_idx += 1
-        print('\t synchronize (about to raise parsing err):', repr(error_suffix), token, token.line) # TODO rm
+        print('\t synchronize 2 (about to raise parsing err):', repr(error_suffix), token, token.line) # TODO rm
+        print("EXIT SYNCHRONIZE", start, self.synchronize_depth) # TODO
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: {error_suffix}")
 
     def declaration(self):
@@ -539,16 +548,22 @@ class Parser:
         # TODO: trying to match book's expected error messages for function_declaration without
         # breaking prev stages. Maybe can go back after confirming this works and always use custom
         # here.
+        import time; start = hash(time.time()); print("ENTER DECLARATION", start) # TODO
         custom_error = False
         try:
+            print("TRY", self.curr_idx)
             if self.match(ReservedTokenTypes.FUN):
+                print("FUN")
                 custom_error = True
                 return self.function_declaration(kind="function")
             elif self.match(ReservedTokenTypes.VAR):
+                print("VAR")
                 return self.variable_declaration()
             elif self.match(ReservedTokenTypes.CLASS):
+                print("CLASS")
                 return self.class_declaration()
             else:
+                print("ELSE")
                 # TODO: testing setting custom_error True here to try to fix super error message,
                  # but this might break other tests that expect standard message. Another option is
                  # to maybe do special case for super error message? Regardless, this is still not
@@ -558,9 +573,14 @@ class Parser:
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
-            print('\t declaration (about to synchronize):', e, kwargs) # TODO rm
-            self.synchronize(**kwargs)
-            print('after synchronize')
+            current_token = self.current_token()
+            self.synchronize(**kwargs, start=start) # TODO rm start
+            # error_suffix = str(e) if custom_error else "Expect expression."
+            # print('declaration (after synchronize):', f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}") # TODO rm
+            # raise type(e)(f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}")
+        # TODO rm
+        finally:
+            print("EXIT DECLARATION", start, self.synchronize_depth) # TODO
         
     def variable_declaration(self) -> VariableDeclaration:
         """Called *after* we've already confirmed there was a preceding VAR token and current_token
