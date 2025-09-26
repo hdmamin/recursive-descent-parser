@@ -123,7 +123,7 @@ class Parser:
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
-                print('parse error:', e, type(e)) # TODO rm
+                print('parse error:', self.curr_idx, e) # TODO rm
                 self.synchronize_depth = 0
                 res["success"] = False
                 res["errors"].append(e)
@@ -451,19 +451,25 @@ class Parser:
         return For(initializer, condition, incrementer, body)
 
     def block(self) -> list[Statement]:
-        print('[block] 1') # TODO rm
         statements = []
+        error = None
         while self.curr_idx < self.max_idx and \
                 self.current_token().token_type != TokenTypes.RIGHT_BRACE:
-            print('[block]', 2)
-            statements.append(self.declaration(custom_error=True))
-            print('[block]', 3)
+            try:
+                declaration = self.declaration(custom_error=True)
+            except (ParsingError, SyntaxError) as e:
+                error = e
+                # break # TODO rm
+            else:
+                statements.append(declaration)
 
-        print('[block]', 4)
+        # Finish block parsing regardless of whether we encountered an error, otherwise we'll try
+        # to parse the remainder as a new declaration in the next iteration of the `parse` while
+        # loop.
         if not self.match(TokenTypes.RIGHT_BRACE):
-            print('[block]', 5)
             raise ParsingError("Expect '}' after block.")
-        print('[block] 6', self.curr_idx, statements) # TODO rm
+        if error:
+            raise error
         return statements
 
     def expression_statement(self) -> Union[ExpressionStatement, Expression]:
@@ -565,10 +571,12 @@ class Parser:
             # This means we return early due to being in panic mode and should re-raise the
             # original error.
             if result is None:
-                print("RE RAISING ERROR", self.current_token(), self.curr_idx, e)
+                print(">>> RE RAISING ERROR", self.current_token(), self.curr_idx, e)
                 raise e
             # raise type(e)(f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}")
         # TODO rm
+        else:
+            print("DECLARATION SUCCESS", start, self.synchronize_depth)
         finally:
             print("EXIT DECLARATION", start, self.synchronize_depth) # TODO
         
@@ -674,9 +682,23 @@ class Parser:
             raise SyntaxError("Expect '{' before class body.")
 
         methods = []
+        error = None
         while self.curr_idx <= self.max_idx and not self.match(TokenTypes.RIGHT_BRACE):
-            method = self.function_declaration(kind="function")
-            methods.append(method)
+            print('while:', self.curr_idx)
+            try:
+                print('try', self.curr_idx) # TODO rm
+                method = self.function_declaration(kind="function")
+            except (ParsingError, SyntaxError) as e:
+                print("class_decl while err:", e)
+                error = e
+            else:
+                methods.append(method)
+        
+        # Check regardless of whether we hit an error otherwise `parse` will try to re-parse this
+        # "}" on the next iteration.
         if self.previous_token().token_type != TokenTypes.RIGHT_BRACE:
             raise SyntaxError("Expect '}' after class body.")
+        if error:
+            print('class decl end error', self.curr_idx, error)
+            raise error
         return Class(name, methods, parent)

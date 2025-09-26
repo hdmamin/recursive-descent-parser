@@ -1650,8 +1650,32 @@ X -stage #83: super keyword (new stage!)
 		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
 	-can we add a better error message when using single quotes? (need to make sure this doesn't break lox test suite, they're picky about error messages)
 -stage #84: invalid uses of super (new stage! last stage!)
-	-ui tests pass: 2
-		> see misc.txt for notes to self on eod wed status.
+	~ -ui tests pass: 2
+		> solid progress, see misc.txt for notes to self on eod thurs status.
+-`make test_all` passes (9 stages)
+-simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
+	-maybe button for different modes? (currently only run; but be mindful of scope creep; but also this is fun so who cares)
+	-refactor to use editable install instead of sys.path hack
+	-maybe see if I can insert a repl that I build with prompt_toolkit or cmd?
+		>  looks like it may be hard to insert into streamlit, can make custom component but maybe not using those high level py libs. Would be fun if possible though.
+	-deploy to streamlit spaces (prob start with clicking the "deploy" button that now shows up when running locally?)
+-followup tasks (for after all 84 stages pass)
+	-go through all remaining todos (many 😬)
+	-polish up readmes/instructions for running a bit
+	-postmortem (whoops, think I forgot to do premortem this time)
+
+9/26/25 fri
+-----------
+> status: seemingly resolved nested synchronize issues, still debugging class_declaration error handling.
+-low effort tasks:
+    -add more low effort task bullets
+	-go back and review book section corresponding to resolution part 1 (kinda understand it now but stil a lil shaky)
+	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
+		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
+	-can we add a better error message when using single quotes? (need to make sure this doesn't break lox test suite, they're picky about error messages)
+-stage #84: invalid uses of super (new stage! last stage!)
+	~ -ui tests pass: 2
+		> solid progress, see misc.txt for notes to self on eod thurs status.
 -`make test_all` passes (9 stages)
 -simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
 	-maybe button for different modes? (currently only run; but be mindful of scope creep; but also this is fun so who cares)

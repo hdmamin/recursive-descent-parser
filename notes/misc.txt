@@ -154,3 +154,9 @@ debugging inf loop of Nones in parse
 -presumably method() is returning None and so we don't hit the except block and we don't hit our if block updating curr_idx
 -but why are we returning None? synchronize inner call should raise an error but apparently that is not bubbling back up.
 	-seems like prob the same issue as whatever was causing us to not surface that first error initially?
+
+debugging additional errors getting raised
+-raising the error caused the end of Block to stop executing. added try/except in there and this ensured that we consumed the "}" directly following the semicolon.
+-however, we still attempted to parse the "}" from the class definition. I tried to apply similar logic from block error handling to class_declaration, but now we somehow raise a "max index exceeded" error instead. Weirdly, the error if block at the end of class_declaration is showing the right error message, but by the time we bubble back up to parse somehow it's the max index one.
+	-clue: after fixing Block error handling, we were printing the "RE RAISING ERROR" message in declaration -> except -> if block. Now we do not.
+-think I'm very very close, just need to tune the error logic in class_declaration a little.
