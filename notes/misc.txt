@@ -144,6 +144,13 @@ maybe coudl maintain some kind of queue of synchronize errors and only raise the
 
 notes to self for where I left off end of 9/24 wed:
 		> error message is wrong. Can see we're hitting the correct one but it's somehow getting swallowed and only a later error is getting raised. Must be caught by some error handling or something? Need to investigate more. Remember to remove `custom_error=True` in `declaration else clause` if end up not using it.
-		> update: made some progress diagnosing. Key is that the innermost synchronize is the only one we want to execute, but determining what the innermost one is is a bit tricky. See misct.txt notes, prob can ignore most but the enter/exit lines with expected depths is helpful. Need to either figure out logic to make that work (notice the last step makes the decrement rule quite tricky) or perhaps can accumulate some sort of of queue/stack of open calls and close them in parse except.
+		> update: made some progress diagnosing. Key is that the innermost synchronize is the only one we want to execute, but determining what the innermost one is is a bit tricky. See misc.txt notes, prob can ignore most but the enter/exit lines with expected depths is helpful. Need to either figure out logic to make that work (notice the last step makes the decrement rule quite tricky) or perhaps can accumulate some sort of of queue/stack of open calls and close them in parse except.
 		> update 2: tried implementing that last idea of resetting depth in parse except, feels close but now getting inf loop of returning Nones - thinking exiting early from synchronize means that declaration is returning None now. Though now I notice it seems odd that previously, an error in the nested declaration call was not bubbling up to the outer one 🤔.
 	-`make test_inheritance_w_jlox` all stages pass: 6/6
+
+9/25/25 thurs
+-------------
+debugging inf loop of Nones in parse
+-presumably method() is returning None and so we don't hit the except block and we don't hit our if block updating curr_idx
+-but why are we returning None? synchronize inner call should raise an error but apparently that is not bubbling back up.
+	-seems like prob the same issue as whatever was causing us to not surface that first error initially?

@@ -115,7 +115,7 @@ class Parser:
             "errors": [],
         }
         while self.curr_idx <= self.max_idx:
-            print('\t parse loop:', self.curr_idx, res) # TODO rm
+            print('\t parse loop:', self.curr_idx, self.current_token(), res) # TODO rm
             prev_idx = self.curr_idx 
 
             try:
@@ -127,16 +127,12 @@ class Parser:
                 self.synchronize_depth = 0
                 res["success"] = False
                 res["errors"].append(e)
-                # Avoid getting stuck in infinite loop on parsing errors that don't hit
-                # synchronize().
-                if self.curr_idx == prev_idx:
-                    self.curr_idx += 1
-
-                # TODO: Previously had this working with break enabled, but was getting wrong number
-                # of errors in latest stage.
-                # Need to figure out some logic to skip ahead to the next valid expr/decl etc,
-                # right now we keep trying to parse the next token and this results in ghost errors.
-                # break
+            
+            # TODO prev this was in except block but I guess technically it's always valid/useful.
+            # Avoid getting stuck in infinite loop on parsing errors that don't hit
+            # synchronize().
+            if self.curr_idx == prev_idx:
+                self.curr_idx += 1
 
         self.mode = None
         # TODO: will need to change this logic once we implement more complex statement types.
@@ -460,7 +456,7 @@ class Parser:
         while self.curr_idx < self.max_idx and \
                 self.current_token().token_type != TokenTypes.RIGHT_BRACE:
             print('[block]', 2)
-            statements.append(self.declaration())
+            statements.append(self.declaration(custom_error=True))
             print('[block]', 3)
 
         print('[block]', 4)
@@ -508,6 +504,7 @@ class Parser:
         """Error handling for when we hit a parsing error."""
         # TODO
         if self.synchronize_depth > 0:
+            print("skip synchronize", start, self.synchronize_depth) # TODO
             return
         print("ENTER SYNCHRONIZE", start, self.synchronize_depth) # TODO
         self.synchronize_depth += 1
@@ -542,41 +539,34 @@ class Parser:
         print("EXIT SYNCHRONIZE", start, self.synchronize_depth) # TODO
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: {error_suffix}")
 
-    def declaration(self):
+    def declaration(self, custom_error: bool = False):
         """Kind of analogous to `expression` and `statement` methods.
         """
         # TODO: trying to match book's expected error messages for function_declaration without
         # breaking prev stages. Maybe can go back after confirming this works and always use custom
         # here.
         import time; start = hash(time.time()); print("ENTER DECLARATION", start) # TODO
-        custom_error = False
         try:
-            print("TRY", self.curr_idx)
             if self.match(ReservedTokenTypes.FUN):
-                print("FUN")
                 custom_error = True
                 return self.function_declaration(kind="function")
             elif self.match(ReservedTokenTypes.VAR):
-                print("VAR")
                 return self.variable_declaration()
             elif self.match(ReservedTokenTypes.CLASS):
-                print("CLASS")
                 return self.class_declaration()
             else:
-                print("ELSE")
-                # TODO: testing setting custom_error True here to try to fix super error message,
-                 # but this might break other tests that expect standard message. Another option is
-                 # to maybe do special case for super error message? Regardless, this is still not
-                 # producing the right error somehow - kwargs look right but error suffix still
-                 # comes out wrong
-                custom_error = True
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
             current_token = self.current_token()
-            self.synchronize(**kwargs, start=start) # TODO rm start
             # error_suffix = str(e) if custom_error else "Expect expression."
             # print('declaration (after synchronize):', f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}") # TODO rm
+            result = self.synchronize(**kwargs, start=start) # TODO rm start
+            # This means we return early due to being in panic mode and should re-raise the
+            # original error.
+            if result is None:
+                print("RE RAISING ERROR", self.current_token(), self.curr_idx, e)
+                raise e
             # raise type(e)(f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}")
         # TODO rm
         finally:
