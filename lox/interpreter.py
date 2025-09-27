@@ -732,12 +732,13 @@ class For(Statement):
                 self.incrementer.evaluate()
 
     def resolve(self):
-        if self.initializer:
-            self.initializer.resolve()
-        self.condition.resolve()
-        if self.incrementer:
-            self.incrementer.resolve()
-        self.statement.resolve()
+        with INTERPRETER.resolver.scope():
+            if self.initializer:
+                self.initializer.resolve()
+            self.condition.resolve()
+            if self.incrementer:
+                self.incrementer.resolve()
+            self.statement.resolve()
 
 class IfStatement(Statement):
 

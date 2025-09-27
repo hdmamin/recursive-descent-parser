@@ -163,3 +163,25 @@ debugging additional errors getting raised
 
 -class_declaration (called by outer declaration) appears to raise the correct error (see "class decl end error" in logs).
 -I expected this to fail the try and trigger the except block in declaration. However, we do NOT see "pre sync" printed next in the logs.
+
+var baz = "after";
+{
+  var baz = "before";
+
+  for (var baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+    var baz = -1;
+    print baz;
+  }
+}
+
+{
+  for (var baz = 0; baz > 0; baz = baz + 1) {}
+
+  var baz = "after";
+  print baz;
+
+  for (baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+  }
+}

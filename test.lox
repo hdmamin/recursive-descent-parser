@@ -1,1 +1,0 @@
-("foo" + "world") * ("hello" + "baz")
