@@ -1673,9 +1673,12 @@ X -stage #83: super keyword (new stage!)
 	-add (or check for existing?) test_all cmd in makefile (perhaps all preceding stage x?)
 		> ideally run all stages and log which ones failed if any. Current setup is a bit annoying where tests take just long enough to make waiting annoying but not long enough to go do something else in between.
 	-can we add a better error message when using single quotes? (need to make sure this doesn't break lox test suite, they're picky about error messages)
--stage #84: invalid uses of super (new stage! last stage!)
-	~ -ui tests pass: 2
+X -stage #84: invalid uses of super (new stage! last stage!)
+	X -ui tests pass:
 		> solid progress, see misc.txt for notes to self on eod thurs status.
+		X -2
+		X -check 0 and 1 still pass after fixing 2
+	X -`make test_inheritance_w_jlox` all stages pass: 6/6
 -`make test_all` passes (9 stages)
 -simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
 	-maybe button for different modes? (currently only run; but be mindful of scope creep; but also this is fun so who cares)

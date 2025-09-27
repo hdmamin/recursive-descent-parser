@@ -160,3 +160,6 @@ debugging additional errors getting raised
 -however, we still attempted to parse the "}" from the class definition. I tried to apply similar logic from block error handling to class_declaration, but now we somehow raise a "max index exceeded" error instead. Weirdly, the error if block at the end of class_declaration is showing the right error message, but by the time we bubble back up to parse somehow it's the max index one.
 	-clue: after fixing Block error handling, we were printing the "RE RAISING ERROR" message in declaration -> except -> if block. Now we do not.
 -think I'm very very close, just need to tune the error logic in class_declaration a little.
+
+-class_declaration (called by outer declaration) appears to raise the correct error (see "class decl end error" in logs).
+-I expected this to fail the try and trigger the except block in declaration. However, we do NOT see "pre sync" printed next in the logs.

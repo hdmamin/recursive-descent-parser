@@ -1,9 +1,6 @@
-class A {}
-
-class B < A {
-  method() {
-    // super must be followed by `.`
-    // and an expression
-    super; // expect compile error
+class Foo {
+  cook() {
+    // Foo is not a subclass
+    super.cook(); // expect compile error
   }
 }

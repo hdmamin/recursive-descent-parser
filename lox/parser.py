@@ -115,7 +115,7 @@ class Parser:
             "errors": [],
         }
         while self.curr_idx <= self.max_idx:
-            print('\t parse loop:', self.curr_idx, self.current_token(), res) # TODO rm
+            # print('\t parse loop:', self.curr_idx, self.current_token(), res) # TODO rm
             prev_idx = self.curr_idx 
 
             try:
@@ -123,7 +123,7 @@ class Parser:
             # TODO: may need to handle these differently, syntaxerrors are raised when statement
             # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
-                print('parse error:', self.curr_idx, e) # TODO rm
+                # print('parse error:', self.curr_idx, e) # TODO rm
                 self.synchronize_depth = 0
                 res["success"] = False
                 res["errors"].append(e)
@@ -181,7 +181,7 @@ class Parser:
 
         if self.match(ReservedTokenTypes.SUPER):
             if not self.match(TokenTypes.DOT):
-                print("SUPER ERORR") # TODO rm
+                # print("SUPER ERORR") # TODO rm
                 raise SyntaxError("Expect '.' after 'super'.")
             if not self.match(TokenTypes.IDENTIFIER):
                 raise SyntaxError("Expect superclass method name.")
@@ -458,17 +458,22 @@ class Parser:
             try:
                 declaration = self.declaration(custom_error=True)
             except (ParsingError, SyntaxError) as e:
+                # TODO: if multiple errors inside block, this may incorrectly overwrite error with
+                # the latest one whereas we want the first?
                 error = e
                 # break # TODO rm
             else:
                 statements.append(declaration)
 
+        # TODO: actually prob need to raise this error after the one we already caught if applicable?
+        # Not sure how that should look.
         # Finish block parsing regardless of whether we encountered an error, otherwise we'll try
         # to parse the remainder as a new declaration in the next iteration of the `parse` while
         # loop.
         if not self.match(TokenTypes.RIGHT_BRACE):
             raise ParsingError("Expect '}' after block.")
         if error:
+            # print('Block raising error:', error) # TODO rm
             raise error
         return statements
 
@@ -482,7 +487,6 @@ class Parser:
         ExpressionStatement if mode is "run" or "evaluate"
         Expression if mode is "parse"
         """
-        print('expression_statement')
         expr = self.expression()
 
         # Only 'run' mode enforces the semicolon but we should still check when in the other modes 
@@ -510,9 +514,9 @@ class Parser:
         """Error handling for when we hit a parsing error."""
         # TODO
         if self.synchronize_depth > 0:
-            print("skip synchronize", start, self.synchronize_depth) # TODO
+            # print("skip synchronize", start, self.synchronize_depth) # TODO
             return
-        print("ENTER SYNCHRONIZE", start, self.synchronize_depth) # TODO
+        # print("ENTER SYNCHRONIZE", start, self.synchronize_depth) # TODO
         self.synchronize_depth += 1
 
         token = self.current_token()
@@ -520,6 +524,7 @@ class Parser:
         # otherwise there's no way to increment curr_idx and we'd just keep hitting the same error
         # again and again.
         self.curr_idx += 1
+        # print('incremented index to', self.curr_idx) # TODO rm
         # Can't use set because these aren't hashable.
         start_types = [
             ReservedTokenTypes.CLASS,
@@ -541,8 +546,8 @@ class Parser:
             if curr.token_type in start_types:
                 break
             self.curr_idx += 1
-        print('\t synchronize 2 (about to raise parsing err):', repr(error_suffix), token, token.line) # TODO rm
-        print("EXIT SYNCHRONIZE", start, self.synchronize_depth) # TODO
+        # print('\t synchronize 2 (about to raise parsing err):', repr(error_suffix), token, token.line) # TODO rm
+        # print("EXIT SYNCHRONIZE", start, self.synchronize_depth, 'curr idx:', self.curr_idx) # TODO
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: {error_suffix}")
 
     def declaration(self, custom_error: bool = False):
@@ -551,7 +556,9 @@ class Parser:
         # TODO: trying to match book's expected error messages for function_declaration without
         # breaking prev stages. Maybe can go back after confirming this works and always use custom
         # here.
-        import time; start = hash(time.time()); print("ENTER DECLARATION", start) # TODO
+        import time; start = hash(time.time());
+        # print("ENTER DECLARATION", start) # TODO
+        # tmp = None
         try:
             if self.match(ReservedTokenTypes.FUN):
                 custom_error = True
@@ -564,21 +571,26 @@ class Parser:
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
-            current_token = self.current_token()
+            # current_token = self.current_token()
             # error_suffix = str(e) if custom_error else "Expect expression."
             # print('declaration (after synchronize):', f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}") # TODO rm
+            # tmp = e
+            # print('pre sync', e, '\ttmp:', tmp)
             result = self.synchronize(**kwargs, start=start) # TODO rm start
+            # print('post sync', e)
             # This means we return early due to being in panic mode and should re-raise the
             # original error.
             if result is None:
-                print(">>> RE RAISING ERROR", self.current_token(), self.curr_idx, e)
+                # print(">>> RE RAISING ERROR", self.curr_idx, e)
                 raise e
+            # else:
+            #     print(">>> RESULT ELSE:", result)
             # raise type(e)(f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}")
-        # TODO rm
-        else:
-            print("DECLARATION SUCCESS", start, self.synchronize_depth)
-        finally:
-            print("EXIT DECLARATION", start, self.synchronize_depth) # TODO
+        # # TODO rm
+        # else:
+        #     print("DECLARATION SUCCESS", start, self.synchronize_depth)
+        # finally:
+        #     print("EXIT DECLARATION", start, self.synchronize_depth, tmp) # TODO
         
     def variable_declaration(self) -> VariableDeclaration:
         """Called *after* we've already confirmed there was a preceding VAR token and current_token
@@ -684,21 +696,27 @@ class Parser:
         methods = []
         error = None
         while self.curr_idx <= self.max_idx and not self.match(TokenTypes.RIGHT_BRACE):
-            print('while:', self.curr_idx)
+            # print('while: idx', self.curr_idx)
             try:
-                print('try', self.curr_idx) # TODO rm
+                # print('try', self.curr_idx) # TODO rm
                 method = self.function_declaration(kind="function")
             except (ParsingError, SyntaxError) as e:
-                print("class_decl while err:", e)
+                # print("class_decl while err:", e, self.curr_idx) # TODO rm
                 error = e
             else:
                 methods.append(method)
+            # print('end while iter:', self.curr_idx) # TODO rm
+        # The second condition (match) in `while` can send us past the last index.
+        prev_token = self.previous_token()
+        # self.curr_idx = min(self.curr_idx, self.max_idx)
+        # print('>>> POST WHILE', self.curr_idx) # TODO rm
         
+        # TODO: might be raising these 2 errors out of order now.
         # Check regardless of whether we hit an error otherwise `parse` will try to re-parse this
         # "}" on the next iteration.
-        if self.previous_token().token_type != TokenTypes.RIGHT_BRACE:
+        if prev_token.token_type != TokenTypes.RIGHT_BRACE:
             raise SyntaxError("Expect '}' after class body.")
         if error:
-            print('class decl end error', self.curr_idx, error)
+            # print('class decl end error', self.curr_idx, error, self.synchronize_depth) # TODO rm
             raise error
         return Class(name, methods, parent)

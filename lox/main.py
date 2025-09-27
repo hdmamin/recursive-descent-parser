@@ -150,7 +150,7 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
         if not res["success"]:
-            print('main:', res) # TODO rm
+            # print('main:', res) # TODO rm
             raise_error(codecrafters_test, res["errors"], 65)
 
         for statement in res["parsed"]:
