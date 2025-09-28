@@ -28,7 +28,6 @@ class Environment:
             elif env.parent:
                 env = env.parent
             else:
-                # TODO: is this the right error type?
                 raise RuntimeError(
                     f"Cannot assign a value to var {name!r} because it does not exist."
                 )
