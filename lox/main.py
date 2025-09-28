@@ -14,26 +14,6 @@ logger = logging.getLogger()
 logging.basicConfig()
 
 
-# TODO: prob can delete?
-class ASTPrinter:
-
-    @classmethod
-    # TODO: looks like maybe don't need actual AST and ASTNode class? Just use expression classes?
-    def _postorder(cls, root: Optional[ASTNode]) -> list[str]:
-        if not root:
-            return []
-        return (
-            cls._postorder(getattr(root, "left", None))
-            + cls._postorder(getattr(root, "right", None))
-            + [root.val]
-        )
-
-    @classmethod
-    def pprint(cls, ast):
-        nodes = cls._postorder(ast)
-        print(nodes)
-
-
 def raise_error(codecrafters_test: bool, errors: list, exit_code: int):
     """Codecrafters tests make us surface errors in a specific way which is not ideal for
     other contexts, e.g. streamlit (discards some info). In codecrafters_test mode we print to
