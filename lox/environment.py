@@ -8,42 +8,8 @@ from typing import Any, Union, Optional
 class Environment:
 
     def __init__(self, parent: Optional["Environment"] = None):
-        # TODO: am I still using this queue? doesn't seem like it but then how did I solve the issue
-        # of later definitions clobbering earlier ones? I forget.
-        # Maps name to queue of VariableDeclaration objects. We still need to evaluate each object
-        # to get its value.
-        self.variables = defaultdict(list)
         self.state = {}
         self.parent = parent
-
-    # VariableDeclaration is defined in parser.py and importing it here would cause circular import.
-    def set(self, var: Union["VariableDeclaration", "Assign"]) -> int:
-        """Process a new variable declaration.
-        
-        Returns
-        -------
-        int
-            Numeric index that can be used to retrieve the appropriate expression later.
-            Zero-indexed like python lists.
-        """
-        self.variables[var.name].append(var)
-        return len(self.variables[var.name]) - 1
-
-    # TODO: do we still need this?
-    def get(self, name: str) -> Union["VariableDeclaration", "Assign"]:
-        """Retrieve a variable declaration statement.
-        """
-        if name not in self.variables:
-            if self.parent:
-                return self.parent.get(name)
-            raise KeyError(f"Variable {name!r} not found.")
-        # TODO: currently returning deque, need to grab single var. Need to think about when to
-        # popleft vs index in with [0].
-        # Seems like simply referencing a variable should not cause popping, we want to be able to
-        # do that many times without changing the value. But if we instead pop when evaluating a
-        # declaration, seems like we lose that value and subsequent references will not "see" it.
-        # maybe need a separate data structure storing the latest evaluated value?
-        return self.variables[name]
 
     def update_state(self, name: str, val: Any, is_declaration: bool) -> None:
         """Update the *current* state with a resolved python value (vs set/get, which work with
@@ -119,9 +85,8 @@ class Environment:
             env = env.parent
         return env
 
-    # TODO: maybe need to update to use state attr now? Not sure if variables attr still being used.
     def contains(self, name: str) -> bool:
-        return name in self.variables
+        return name in self.state
 
 
 GLOBAL_ENV = Environment()
