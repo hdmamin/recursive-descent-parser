@@ -10,9 +10,6 @@ from lox.lexer import Token, TokenTypes, ReservedTokenTypes, TokenType
 
 
 
-# TODO: rm decorator once done debugging. For now leave it so can easily comment it on/off.
-from lox.debugging import decorate_methods, verbose
-# @decorate_methods(verbose)
 class Parser:
     """
     Each precedence level in our order of operations requires its own method.
@@ -102,9 +99,6 @@ class Parser:
         self.mode = mode
         method_name = {
             "parse": "declaration",
-            # TODO testing: previously was expression, tried switching to declaration 
-            # but I think that broke our ability to handle expressions without trailing semicolons.
-            # "evaluate": "declaration",
             "evaluate": "expression",
             "run": "declaration",
         }[mode]
@@ -115,29 +109,21 @@ class Parser:
             "errors": [],
         }
         while self.curr_idx <= self.max_idx:
-            # print('\t parse loop:', self.curr_idx, self.current_token(), res) # TODO rm
             prev_idx = self.curr_idx 
 
             try:
                 res["parsed"].append(method())
-            # TODO: may need to handle these differently, syntaxerrors are raised when statement
-            # parsing fails while parsingerrors are raised when expression parsing fails.
             except (ParsingError, SyntaxError) as e:
-                # print('parse error:', self.curr_idx, e) # TODO rm
                 self.synchronize_depth = 0
                 res["success"] = False
                 res["errors"].append(e)
             
-            # TODO prev this was in except block but I guess technically it's always valid/useful.
             # Avoid getting stuck in infinite loop on parsing errors that don't hit
             # synchronize().
             if self.curr_idx == prev_idx:
                 self.curr_idx += 1
 
         self.mode = None
-        # TODO: will need to change this logic once we implement more complex statement types.
-        # TODO: or update res key name to use mode if we end up needing to keep this.
-        # res["expressions"] = [statement.expr for statement in res["statements"]]
         return res
 
     def expression(self) -> Expression:
@@ -181,19 +167,12 @@ class Parser:
 
         if self.match(ReservedTokenTypes.SUPER):
             if not self.match(TokenTypes.DOT):
-                # print("SUPER ERORR") # TODO rm
                 raise SyntaxError("Expect '.' after 'super'.")
             if not self.match(TokenTypes.IDENTIFIER):
                 raise SyntaxError("Expect superclass method name.")
 
             return Super(token, self.previous_token())
 
-        # TODO: in parse mode, func call is hitting this error at the semicolon after the func call.
-        # Think the primary call is triggered by self.call() and should be matching IDENTIFIER.
-        # Looks like we are matching identifier, see below with idx-3, but for some reason we must
-        # not be parsing the full expr? Or maybe we finished parsing that nd are trying to parse
-        # seimcolon as its own expr? UPDATE: looks like it's the latter, we do parse a call() for
-        # f() but then call primary again for some reason on just the semicolon.
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme}.")
 
     def call(self) -> Call:
@@ -326,9 +305,7 @@ class Parser:
                 return Assign(name=expr.identifier, expr=right)
             if isinstance(expr, Get):
                 return Set(expr.obj, expr.attr, right)
-            # TODO: add expr/value/etc into error msg to make more informative? Might break tests
-            # since they check for specific wording?
-            # And is parsing error the right type?
+            # Would preferably include more details in this error but the tests don't allow that.
             raise ParsingError("Invalid assignment target.")
         return expr
 
@@ -374,15 +351,8 @@ class Parser:
             return self.if_statement()
         if self.match(ReservedTokenTypes.FOR):
             return self.for_statement()
-        # TODO: presumably somewhere need to check if this is a valid place for return, i.e. are we
-        # inside a class/function. May rm this if, could be unnecessary, we may actually want
-        # expr_stmt.
         line_num = self.current_token().line
         if self.match(ReservedTokenTypes.RETURN):
-            # TODO: we're hitting an error in the expression() call. Looks like the parsing logic
-            # here is a little more complex, need to flesh it out. May also need to deal with case
-            # specifically where there is no return statement, currently that would not get caught
-            # by match(RETURN).
             expr = None if self.match(TokenTypes.SEMICOLON) else self.expression_statement()
             if isinstance(expr, ExpressionStatement):
                 expr = expr.expr
@@ -447,7 +417,7 @@ class Parser:
             raise SyntaxError(f"Expect ')' after for clauses.")
 
         body = self.statement()
-        # TODO: consider desugaring like in book -> while loop. Should be optional though.
+        # Book desugars this into a While loop, but this works too.
         return For(initializer, condition, incrementer, body)
 
     def block(self) -> list[Statement]:
@@ -461,7 +431,6 @@ class Parser:
                 # TODO: if multiple errors inside block, this may incorrectly overwrite error with
                 # the latest one whereas we want the first?
                 error = e
-                # break # TODO rm
             else:
                 statements.append(declaration)
 
@@ -473,7 +442,6 @@ class Parser:
         if not self.match(TokenTypes.RIGHT_BRACE):
             raise ParsingError("Expect '}' after block.")
         if error:
-            # print('Block raising error:', error) # TODO rm
             raise error
         return statements
 
@@ -510,13 +478,10 @@ class Parser:
             raise SyntaxError("Expect ';' after expression.")
         return PrintStatement(expr)
         
-    def synchronize(self, error_suffix: str = "Expect expression.", start: int = None): # TODO rm start
+    def synchronize(self, error_suffix: str = "Expect expression."):
         """Error handling for when we hit a parsing error."""
-        # TODO
         if self.synchronize_depth > 0:
-            # print("skip synchronize", start, self.synchronize_depth) # TODO
             return
-        # print("ENTER SYNCHRONIZE", start, self.synchronize_depth) # TODO
         self.synchronize_depth += 1
 
         token = self.current_token()
@@ -524,7 +489,6 @@ class Parser:
         # otherwise there's no way to increment curr_idx and we'd just keep hitting the same error
         # again and again.
         self.curr_idx += 1
-        # print('incremented index to', self.curr_idx) # TODO rm
         # Can't use set because these aren't hashable.
         start_types = [
             ReservedTokenTypes.CLASS,
@@ -546,19 +510,11 @@ class Parser:
             if curr.token_type in start_types:
                 break
             self.curr_idx += 1
-        # print('\t synchronize 2 (about to raise parsing err):', repr(error_suffix), token, token.line) # TODO rm
-        # print("EXIT SYNCHRONIZE", start, self.synchronize_depth, 'curr idx:', self.curr_idx) # TODO
         raise ParsingError(f"[line {token.line}] Error at {token.lexeme!r}: {error_suffix}")
 
     def declaration(self, custom_error: bool = False):
         """Kind of analogous to `expression` and `statement` methods.
         """
-        # TODO: trying to match book's expected error messages for function_declaration without
-        # breaking prev stages. Maybe can go back after confirming this works and always use custom
-        # here.
-        import time; start = hash(time.time());
-        # print("ENTER DECLARATION", start) # TODO
-        # tmp = None
         try:
             if self.match(ReservedTokenTypes.FUN):
                 custom_error = True
@@ -571,26 +527,11 @@ class Parser:
                 return self.statement()
         except (ParsingError, SyntaxError) as e:
             kwargs = {"error_suffix": str(e)} if custom_error else {}
-            # current_token = self.current_token()
-            # error_suffix = str(e) if custom_error else "Expect expression."
-            # print('declaration (after synchronize):', f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}") # TODO rm
-            # tmp = e
-            # print('pre sync', e, '\ttmp:', tmp)
-            result = self.synchronize(**kwargs, start=start) # TODO rm start
-            # print('post sync', e)
+            result = self.synchronize(**kwargs)
             # This means we return early due to being in panic mode and should re-raise the
             # original error.
             if result is None:
-                # print(">>> RE RAISING ERROR", self.curr_idx, e)
                 raise e
-            # else:
-            #     print(">>> RESULT ELSE:", result)
-            # raise type(e)(f"[line {current_token.line}] Error at {current_token.lexeme!r}: {error_suffix}")
-        # # TODO rm
-        # else:
-        #     print("DECLARATION SUCCESS", start, self.synchronize_depth)
-        # finally:
-        #     print("EXIT DECLARATION", start, self.synchronize_depth, tmp) # TODO
         
     def variable_declaration(self) -> VariableDeclaration:
         """Called *after* we've already confirmed there was a preceding VAR token and current_token
@@ -611,9 +552,6 @@ class Parser:
                     name,
                     Literal(Token("nil", name.line, token_type=ReservedTokenTypes.NIL))
                 )
-            else:
-                raise NotImplementedError("TODO: handle case where user does 'var x;' with no assigned value.")
-        # TODO: not sure if should be parsing/syntax/runtime error.
         raise ParsingError(f"Invalid variable declaration at line {name.line}")
 
     def function_declaration(self, kind: str) -> Function:
@@ -642,8 +580,7 @@ class Parser:
         name = self.current_token()
         self.curr_idx += 1
         if not self.match(TokenTypes.LEFT_PAREN):
-            # TODO syntax or parsing error?
-            raise SyntaxError(f"Expect '(' after {kind} name.")
+            raise ParsingError(f"Expect '(' after {kind} name.")
         
         params = []
         n_params = 0
@@ -668,15 +605,12 @@ class Parser:
                 self.curr_idx -= 1
                 break
             if n_params > 255:
-                # TODO or syntax error? or other?
-                raise SyntaxError("Can't have more than 255 parameters.")
+                raise ParsingError("Can't have more than 255 parameters.")
 
         if not self.match(TokenTypes.RIGHT_PAREN):
-            # TODO syntax or parsing error?
-            raise SyntaxError(f"Expect ')' after parameters.")
+            raise ParsingError(f"Expect ')' after parameters.")
         if not self.match(TokenTypes.LEFT_BRACE):
-            # TODO syntax or parsing error?
-            raise SyntaxError(f"Expect '{{' before {kind} body.")
+            raise ParsingError(f"Expect '{{' before {kind} body.")
         body = Block(self.block())
         return Function(name, params, body)
 
@@ -696,20 +630,14 @@ class Parser:
         methods = []
         error = None
         while self.curr_idx <= self.max_idx and not self.match(TokenTypes.RIGHT_BRACE):
-            # print('while: idx', self.curr_idx)
             try:
-                # print('try', self.curr_idx) # TODO rm
                 method = self.function_declaration(kind="function")
             except (ParsingError, SyntaxError) as e:
-                # print("class_decl while err:", e, self.curr_idx) # TODO rm
                 error = e
             else:
                 methods.append(method)
-            # print('end while iter:', self.curr_idx) # TODO rm
         # The second condition (match) in `while` can send us past the last index.
         prev_token = self.previous_token()
-        # self.curr_idx = min(self.curr_idx, self.max_idx)
-        # print('>>> POST WHILE', self.curr_idx) # TODO rm
         
         # TODO: might be raising these 2 errors out of order now.
         # Check regardless of whether we hit an error otherwise `parse` will try to re-parse this
@@ -717,6 +645,5 @@ class Parser:
         if prev_token.token_type != TokenTypes.RIGHT_BRACE:
             raise SyntaxError("Expect '}' after class body.")
         if error:
-            # print('class decl end error', self.curr_idx, error, self.synchronize_depth) # TODO rm
             raise error
         return Class(name, methods, parent)

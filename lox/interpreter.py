@@ -214,7 +214,6 @@ class Logical(Expression):
         return self.right.evaluate() if not left_is_truthy else left
 
     def __str__(self) -> str:
-        # TODO check if this is format book wants
         return f"({self.op.non_null_literal} {self.left} {self.right})"
 
     def resolve(self):
@@ -249,8 +248,8 @@ class Set(Expression):
         ----------
         obj : LoxInstance
             The instance the attribute should be attached to.
-            # TODO: seems like this is actually This at leas in some cases? It's obj.evaluate() that
-            should return a LoxInstance.
+            # TODO: seems like this is actually This at least in some cases? It's obj.evaluate()
+            # that should return a LoxInstance.
         """
         self.obj = obj
         self.attr = attr
@@ -374,9 +373,6 @@ class LoxCallable(Expression, metaclass=DefinesInstanceAttrs, expected=["arity"]
     Example
     foo()
     """
-    # TODO: may need to flesh this out later, at this point not really clear what purpose it serves
-    # beyond a function. Maybe will become clear once we implement user-defined funcs and/or support
-    # arity method (len(args)).
 
 
 class NativeClock(LoxCallable):
@@ -388,7 +384,6 @@ class NativeClock(LoxCallable):
         return clock()
 
     def __str__(self) -> str:
-        # TODO: idk if this is book's desired format.
         return "<NativeClock>"
 
     def __repr__(self) -> str:
@@ -403,7 +398,6 @@ class Call(Expression):
         self.args = args
 
     def __str__(self) -> str:
-        # TODO check if this is format book wants
         return f"({self.callee} {self.args})"
 
     def evaluate(self, **kwargs):
@@ -580,7 +574,6 @@ class Block(Statement):
     def __init__(self, statements: list[Statement]) -> None:
         self.statements = statements
 
-    # TODO not sure what desired format actually is
     def __str__(self) -> str:
         return f"({self.statements})"
 
@@ -591,7 +584,6 @@ class Block(Statement):
         # "env=" in this project...
         context_manager = INTERPRETER.new_env if _new_env else INTERPRETER.existing_env
         with context_manager(**kwargs) as env:
-            # print('[block] new env:', id(env), 'global env:', id(INTERPRETER.global_env), '\n', self.statements, '\n', _new_env) # TODO
             for statement in self.statements:
                 try:
                     statement.evaluate(env=env)
@@ -631,7 +623,7 @@ class Class(Statement):
         # condition but definition order is important here.
         with maybe_context_manager(INTERPRETER.new_env, enable=bool(parent_cls)) as env:
             if self.parent:
-                env.update_state("super", parent_cls, is_declaration=True) # TODO testing
+                env.update_state("super", parent_cls, is_declaration=True)
             # Reference INTERPRETER.env below because env could be None. Ok to reference env
             # when updating state above because tha's nested inside an additional check for parent.
             methods = {
@@ -684,7 +676,6 @@ class While(Statement):
         self.statement = statement
 
     def __str__(self) -> str:
-        # TODO not sure if this is book's desired format
         return f"(while {self.condition} {self.statement}"
 
     def evaluate(self, *args, **kwargs) -> None:
@@ -713,7 +704,6 @@ class For(Statement):
         self.statement = statement
 
     def __str__(self) -> str:
-        # TODO check if this matches what book expects
         return f"(for {self.initializer} {self.condition} {self.incrementer})"
 
     def evaluate(self, *args, **kwargs) -> None:
@@ -786,7 +776,6 @@ class ReturnStatement(Statement):
         raise Return(val)
 
     def __str__(self) -> str:
-        # TODO prob need to change this format, check what book wants here if it says
         return f"Return({self.expr})"
 
     def resolve(self):
@@ -822,8 +811,7 @@ class LoxFunction(LoxCallable):
         self.arity = len(self.func.params)
 
     def evaluate(self, *args, **kwargs):
-        # TODO does lox suppport both positional
-        # and named args tho? gpt says positional only, let's try that for now.
+        # Lox seemingly only supports positional args.
         with INTERPRETER.new_env(parent=self.nonlocal_env or self.func.definition_env) as env:
             py_kwargs = {param.lexeme: arg for param, arg in zip(self.func.params, args)}
             try:
@@ -919,8 +907,6 @@ class Function(Statement):
     In contrast, LoxFunction is used at runtime to execute such a function.
     """
 
-    # TODO: statements are defined in parser.py. Could see if we can move them to a separate module
-    # or leave type hint as str.
     def __init__(self, name: Token, params: list[Token], body: Block):
         self.name = name
         self.params = params

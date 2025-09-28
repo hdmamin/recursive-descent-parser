@@ -36,8 +36,6 @@ class TokenType:
     start: Optional[Union[tuple, str]] = None
     # Function that accepts a str and returns the longest valid substring
     # starting from the first character that can produce a token of the current type.
-    # TODO: in practice I think returning None should not be necessary because by the time we
-    # select a tokentype cls we should know the first char at least is correct. But need to confirm.
     # If no valid substring is found, the returned value must be None (NOT an empty str).
     # It can also raise an UnterminatedLexeme error if appropriate (e.g. source code '"abc' opens
     # but does not close a str).
@@ -52,8 +50,6 @@ class TokenType:
             if self.start is None:
                 self.start = self.lexeme[0]
             else:
-                # TODO: prob remove this after initial dev is done. Allowing it because reserved
-                # words do set a non-none value.
                 logger.warning(
                     f"`start` should often not be specified when `lexeme` is a str. "
                     f"Got start={self.start}."
@@ -423,22 +419,12 @@ class Token:
         if self.token_type == ReservedTokenTypes.NIL:
             return None
 
-        # TODO testing "this"
-        # if self.token_type == TokenTypes.IDENTIFIER:
-        if self.token_type in (TokenTypes.IDENTIFIER, ReservedTokenTypes.THIS, ReservedTokenTypes.SUPER):
+        if self.token_type in (
+            TokenTypes.IDENTIFIER, ReservedTokenTypes.THIS, ReservedTokenTypes.SUPER
+        ):
             interpreter = get_interpreter()
             try:
                 depth = interpreter.locals.get(kwargs["expr"], None)
-                # TODO rm
-                # if self.lexeme == "super":
-                #     print('[lexer]', self.line, repr(self.lexeme))
-                #     print("\tenv lookup depth:", self.lexeme, depth)
-                #     print("\tglobal env state:", id(interpreter.global_env), interpreter.global_env.state,
-                #         "\n\tcurr env state:", id(interpreter.env), interpreter.env.state,
-                #         "\n\tparent env state:", id(interpreter.env.parent), getattr(interpreter.env.parent, 'state', 'null'),
-                #         "\n\tgrandparent env state:", id(interpreter.env.parent.parent), getattr(interpreter.env.parent.parent, 'state', 'null'),
-                #         )
-                # TODO end
                 if depth is None:
                     value = interpreter.global_env.read_state(self.lexeme)
                 else:
@@ -448,7 +434,6 @@ class Token:
             
             return value
 
-        # Not sure if this will be a problem.
         raise RuntimeError(f"Token.evaluate not implemented for {self.token_type}.")
 
     def lexed(self) -> str:
@@ -523,13 +508,9 @@ def lex(source: str) -> dict:
     # splitlines at the f.read() level and pass in list[str] to this func.
     lines = deque(source.splitlines())
     while lines:
-        # TODO: currently process each line individually and view it as self contained. But if we
+        # Currently process each line individually and view it as self contained. But if we
         # have open quotes or parentheses, a semantic line can actually continue onto the next
-        # litearl line. Thinking out loud: could try to split on multiple chars upfront but we
-        # actually want to split in fewer instances, not more. Could check in Unterminated lexeme
-        # if we're in an open str/parens situation, but not sure if that will work, maybe I need
-        # to feed in the whole sequence to "from_longest_leading_substring" to begin with. Need to
-        # think more about this.
+        # literal line.
         line = lines.popleft()
         line_num += 1
         i = 0
@@ -562,7 +543,6 @@ def lex(source: str) -> dict:
                 else:
                     lexed_item = f"[line {line_num}] Error: {e.args[0]}"
                     success = False
-                    # TODO: might need to revisit this logic but at least for strings I think it's ok.
                     # We don't want to break like we did for comments because we still need to add
                     # our lexed_item to res down below.
                     i = max_idx + 1
@@ -575,8 +555,6 @@ def lex(source: str) -> dict:
             if token:
                 tokens.append(token)
         
-    # TODO: should this be appended to tokens list as well? gpt seems to think so but I don't think
-    # the book did that?
     res.append("EOF  null")
     return {
         "lexed": res,

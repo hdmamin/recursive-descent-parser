@@ -63,8 +63,6 @@ class ListWriter:
         return self.items
 
 
-# TODO: revamp to better support streamlit? All these prints and exit codes don't play nicely with
-# streamlit.
 @maybe_redirect("codecrafters_test", inverse=True)
 def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[str] = None):
     if not (command and source_code) and len(sys.argv) < 3:
@@ -98,8 +96,6 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
 
     if lexed["success"]:
         parser = Parser(lexed["tokenized"])
-        # TODO: may need to revisit this if more modes are added but for now, every remaining mode
-        # (parse, evaluate, run) requires parsing to be run next.
         parsed = parser.parse(mode="parse")
     else:
         parsed = {"success": False}
@@ -126,8 +122,6 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
     except Exception as e:
         raise_error(codecrafters_test, [e], 65)
     parser.reset_index()
-    # TODO testing (noticed parse and run use same mode, eval will prob break but will get to that)
-    # res = parser.parse(mode=command)
     res = parsed
     if command == "evaluate":
         # TODO: again, would like to consolidate and raise this only once instead of in each
@@ -135,8 +129,6 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
         if not lexed["success"]:
             raise_error(codecrafters_test, [], 65)
 
-        # if parsed["success"]:
-        # TODO: may need to change key back to declarations, depending
         for expr in res["parsed"]:
             try:
                 print(to_lox_dtype(expr.evaluate()))
@@ -150,7 +142,6 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
         # tests to pass? Really should save all test cases from previous runs so I can run the full
         # past test suite on my own.
         if not res["success"]:
-            # print('main:', res) # TODO rm
             raise_error(codecrafters_test, res["errors"], 65)
 
         for statement in res["parsed"]:
@@ -171,4 +162,3 @@ if __name__ == "__main__":
     kwargs = main() or {}
     from lox.environment import Environment
     kwargs["env"] = Environment
-    # print(kwargs['parsed'])

@@ -2,6 +2,7 @@ from collections import deque
 from contextlib import contextmanager
 from typing import Any
 
+from lox.exceptions import ResolutionError
 from lox.lexer import Token
 
 
@@ -73,9 +74,7 @@ class Resolver:
 
         scope = self.scopes[-1]
         if name.lexeme in scope:
-            # TODO prob should replace w ResolutionError? just need to test that that doesn't break
-            # anything.
-            raise RuntimeError(
+            raise ResolutionError(
                 f"[line {name.line}] Error at {name.lexeme}: Already a variable with this name in "
                 "this scope."
             )
@@ -105,9 +104,6 @@ class Resolver:
             func: "Function",
             function_type: FunctionType = FunctionType.FUNCTION
         ):
-        # TODO slightly unclear how scopes are supposed to be handled here, I *think* we want params
-        # in a new scope and then body in a nested scope (because Block always creates a new one)
-        # but not sure of that.
         with self.scope():
             with self.inside_function(function_type):
                 for param in func.params:
