@@ -1716,11 +1716,30 @@ X -`make test_all` passes (9 stages)
 -----------
 > status: all stages pass 🤯. Cleanup and basking 😊.
 -followup tasks (for after all 84 stages pass)
+	~ -go through all remaining todos (many 😬)
+		X -main.py
+		~ -parser.py
+		-interpreter.py
+		-lexer.py
+	-can we add a better error message when using single quotes? (need to make sure this doesn't break lox test suite, they're picky about error messages)
+	-polish up readmes/instructions for running a bit
+	-postmortem (whoops, think I forgot to do premortem this time)
+	
+-simple streamlit app to let user write and run lox in web? then deploy to huggingface/streamlit spaces
+	-maybe button for different modes? (currently only run; but be mindful of scope creep; but also this is fun so who cares)
+	-refactor to use editable install instead of sys.path hack
+	-maybe see if I can insert a repl that I build with prompt_toolkit or cmd?
+		>  looks like it may be hard to insert into streamlit, can make custom component but maybe not using those high level py libs. Would be fun if possible though.
+	-deploy to streamlit spaces (prob start with clicking the "deploy" button that now shows up when running locally?)
+
+9/29/25 mon
+-----------
+> status: all stages pass 🤯. Cleanup and basking 😊.
+-followup tasks (for after all 84 stages pass)
 	-go through all remaining todos (many 😬)
 		-parser.py
 		-interpreter.py
 		-lexer.py
-		-main.py
 	-can we add a better error message when using single quotes? (need to make sure this doesn't break lox test suite, they're picky about error messages)
 	-polish up readmes/instructions for running a bit
 	-postmortem (whoops, think I forgot to do premortem this time)

@@ -86,12 +86,10 @@ class Parser:
 
         Returns
         -------
-        TODO update docs
         dict
-            expressions: list[Expression]
-            statements: list[Statement]
+            parsed: list
             success: bool
-            error: Optional[Exception]
+            error: list[Exception]
 
             Note that we do NOT try to evalute the expressions yet. We may still encounter
             additional errors when we do.
@@ -212,7 +210,6 @@ class Parser:
                 break
 
         if not self.match(TokenTypes.RIGHT_PAREN):
-            # TODO: should this be syntax or parsing error? Guessing syntax?
             raise SyntaxError("Expect ')' after arguments.")
         return args
 
@@ -340,7 +337,6 @@ class Parser:
         to different statement methods whereas expression fully offloads that to the methods it
         calls.
         """
-        # TODO: print statement does not match order in docstring, maybe need to move down?
         if self.match(ReservedTokenTypes.PRINT):
             return self.print_statement()
         if self.match(TokenTypes.LEFT_BRACE):

@@ -45,6 +45,24 @@ class ListWriter:
 
 @maybe_redirect("codecrafters_test", inverse=True)
 def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[str] = None):
+    """Process a lox program.
+
+    Parameters
+    ----------
+    codecrafters_test : bool
+        Codecrafters is very particular about how they want the code to run (e.g. how to raise
+        errors) and it's not always ideal for other contexts. E.g. when calling from streamlit,
+        set to False.
+    command : str
+        Determines what we do with the lox program. Options are: 
+            tokenize
+            parse
+            evaluate
+            run
+    source_code : str or None
+        When running codecrafters tests, should be None (we will grab the lox program filename
+        from sys.argv[2]). Otherwise, pass in a str containing lox code to execute.
+    """
     if not (command and source_code) and len(sys.argv) < 3:
         raise_error(
             codecrafters_test,
@@ -95,36 +113,25 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
 
         return
 
-    # TODO maybe only resolve if parser succeeded? Need to be a little careful to raise the right
-    # error at the right point depending on what codecrafters expects.
     try:
         INTERPRETER.resolve_all(parsed["parsed"])
     except Exception as e:
         raise_error(codecrafters_test, [e], 65)
     parser.reset_index()
-    res = parsed
     if command == "evaluate":
-        # TODO: again, would like to consolidate and raise this only once instead of in each
-        # command, but codecrafters is picky about when/where errors are raised. Clean up later.
         if not lexed["success"]:
             raise_error(codecrafters_test, [], 65)
 
-        for expr in res["parsed"]:
+        for expr in parsed["parsed"]:
             try:
                 print(to_lox_dtype(expr.evaluate()))
             except RuntimeError as e:
                 raise_error(codecrafters_test, [e], 70)
     elif command == "run":
-        # TODO: not sure if this is valid, just treating any error here like a syntax error.
-        # Might need to modify parser to better distinguish between parsing and syntax errors.
-        # The ParsingError at the end of primary() was causing problems in run mode when I checked
-        # here specifically for syntaxerrors, but not sure if we rely on that for previous chapter's
-        # tests to pass? Really should save all test cases from previous runs so I can run the full
-        # past test suite on my own.
-        if not res["success"]:
-            raise_error(codecrafters_test, res["errors"], 65)
+        if not parsed["success"]:
+            raise_error(codecrafters_test, parsed["errors"], 65)
 
-        for statement in res["parsed"]:
+        for statement in parsed["parsed"]:
             try:
                 statement.evaluate()
             except RuntimeError as e:
@@ -132,13 +139,8 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
     else:
         raise_error(codecrafters_test, f"Unknown command: {command}", 1)
 
-    return res # TODO testing streamlit, think some obj in locals must be breaking streamlit
-    # TODO for easier debugging
-    # return locals()
+    return parsed
 
 
 if __name__ == "__main__":
-    # TODO: for easier debugging
-    kwargs = main() or {}
-    from lox.environment import Environment
-    kwargs["env"] = Environment
+    main()
