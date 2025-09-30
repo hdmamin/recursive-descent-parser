@@ -11,7 +11,7 @@ import tempfile
 from lox.main import main
 
 
-source = st.text_area("Lox Program")
+source = st.text_area("Lox Program", height=300)
 if source:
     try:
         # hack: turns out lexing is slightly harder if we don't have readlines() to rely on in
