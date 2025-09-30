@@ -3,7 +3,6 @@ import logging
 import sys
 from typing import Optional
 
-from lox.data_structures import ASTNode
 from lox.interpreter import to_lox_dtype, INTERPRETER
 from lox.lexer import lex
 from lox.parser import Parser
@@ -44,7 +43,7 @@ class ListWriter:
 
 
 @maybe_redirect("codecrafters_test", inverse=True)
-def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[str] = None):
+def main(*, codecrafters_test: bool = True, command=None, source_lines: Optional[list[str]] = None):
     """Process a lox program.
 
     Parameters
@@ -59,11 +58,12 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
             parse
             evaluate
             run
-    source_code : str or None
+    source_lines : list[str] or None
         When running codecrafters tests, should be None (we will grab the lox program filename
-        from sys.argv[2]). Otherwise, pass in a str containing lox code to execute.
+        from sys.argv[2]). Otherwise, pass in list[str] containing lox code to execute.
+        OR pass in a filename as a string.
     """
-    if not (command and source_code) and len(sys.argv) < 3:
+    if not (command and source_lines) and len(sys.argv) < 3:
         raise_error(
             codecrafters_test,
             ["Usage: ./your_program.sh tokenize <filename>"],
@@ -74,14 +74,15 @@ def main(*, codecrafters_test: bool = True, command=None, source_code: Optional[
     if command is None:
         raise ValueError("Command must not be None.")
 
-    if source_code is None:
-        filename = sys.argv[2]
+    # If None, we assume user is running from command line. If str, we assume this is a path.
+    if not isinstance(source_lines, list):
+        filename = source_lines or sys.argv[2]
         with open(filename) as file:
-            source_code = file.read()
+            source_lines = [line.removesuffix("\n") for line in file.readlines()]
 
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
-    lexed = lex(source_code)
+    lexed = lex(source_lines)
 
     # Print results for codecrafters.
     if command == "tokenize":

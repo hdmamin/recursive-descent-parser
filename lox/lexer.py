@@ -101,9 +101,6 @@ def _number_longest_leading_substring(text: str) -> Optional[str]:
     if not text[0].isdigit():
         return None
 
-    # TODO: confirm if needs to end with space/newline or if valid to end with any non-digit
-    # This could effect the if clause and/or the final return value (could possibly need to raise
-    # an UnterminatedLexeme error there?)
     seen_dot = False
     max_idx = len(text) - 1
     for i, char in enumerate(text):
@@ -144,8 +141,8 @@ class TokenTypes:
     @lru_cache()
     def lexemes2types(cls) -> dict:
         # Returns a mapping from each lexeme (e.g. "{") to its corresponding TokenType object.
-        # TODO: this breaks down a bit for STRING type given current implementation where lexeme
-        # is a lambda. Same with NUMBER type.
+        # couldfix: seems like this would break down a bit for STRING type given current
+        # implementation where lexeme is a lambda (same with NUMBER type).
         return {
             v.lexeme: v for k, v in vars(cls).items()
             if k.isupper() and isinstance(v, TokenType)
@@ -213,8 +210,8 @@ class TokenTypes:
     )
 
 
-# TODO: should this inhereit from TokenTypes? Seems like it but need to check if I ever have to
-# check isinstance ReservedTokenTypes.
+# Don't inherit from TokenTypes because it defines types as class attrs and we don't want all the
+# unreserved types to show up here.
 class ReservedTokenTypes:
 
     # Reserved words
@@ -222,10 +219,6 @@ class ReservedTokenTypes:
     # in order to avoid clashes with IDENTIFIER. We handle these separately in infer_token_type.
     # Note that we depart slightly from old `start` conventions and use the whole word as the
     # start char.
-    # TODO: will have to see if this works with my trie scheme. Might need to adjust length
-    # selection logic, forget if it counts number of edges/nodes or str length.
-    # TODO: think default leading_substring func *should* work but check. If not maybe can write
-    # one leading_substring func or partial and use for all of them?
     AND = TokenType(name="AND", lexeme="and", reserved=True)
     CLASS = TokenType(name="CLASS", lexeme="class", reserved=True)
     ELSE = TokenType(name="ELSE", lexeme="else", reserved=True)
@@ -256,11 +249,11 @@ class ReservedTokenTypes:
         }
 
 
-# Hilariously over-engineered but 🤷‍♂️, just having fun.
+# Hilariously over-engineered but 🤷‍♂️, that's kind of in line with my vision for this project:
+# coding for reasons other than producing useful software.
 # Each edge corresponds to a single character.
 # If a TokenType has multiple valid start characters (like NUMBER), each of those gets its own
-# outgoing edge. (TODO: guessing this logic will break down at some point though, we're already
-# pushing it.)
+# outgoing edge.
 # Sample usage: TYPES_TRIE.get("=")
 # returns a dict with "node" (TrieNode) key where `value` is a TokenType instance or None.
 # and "is_leaf" (bool). If is_leaf=True, `value` is not None and corresponds to a TokenType
@@ -347,7 +340,6 @@ class Token:
             The line number in the source code that the token belongs to. 1-indexed. This helps
             the parser report better error messages later.
         Strongly recommend specifying token_type explicitly.
-        # TODO: consider removing implicit token_type option?
         """
         self.line = line
         self.token_type = token_type or TokenTypes.lexeme2type(value)
@@ -380,7 +372,7 @@ class Token:
 
     @property
     def non_null_literal(self) -> str:
-        """TODO: still don't really get why this is necessary or if it actually is.
+        """Still don't really get why this is necessary or if it actually is.
         Book sample parser outputs displays numbers like "3.0" (literals) but operations like 
         ">" (lexemes). So adding this helper here.
         """
@@ -460,11 +452,6 @@ class Token:
     def from_longest_leading_substring(cls, text: str, line: int):
         reserved_token_type = infer_token_type(text, RESERVED_TYPES_TRIE)
         token_type = infer_token_type(text)
-        # TODO: reserved types need to be followed by a non alphanumeric char. I tried to add this
-        # logic in TokenType._default_longest_leading_substring but realized that only is used in
-        # longest_leading_substring call below I think, AFTER the token type is already inferred.
-        # So need to update infer_token_type itself OR perhaps compute both reserved and non-reserved
-        # candidates, compute substring for both, and then select the longest non-None substring.
         if not (token_type or reserved_token_type):
             raise ValueError(f"Unexpected character: {text[0]}")
 
@@ -493,7 +480,7 @@ class Token:
         return cls(longest_substring, line=line, token_type=resolved_token_type)
 
 
-def lex(source: str) -> dict:
+def lex(source_lines: list[str]) -> dict:
     """Each str contains one line of lexed source code corresponding to a single token, e.g.
     'STRING "dog" dog'
 
@@ -504,9 +491,7 @@ def lex(source: str) -> dict:
     tokens = []
     success = True
     line_num = 0
-    # TODO: might need to check if the newline is in a str once we support those? Maybe can
-    # splitlines at the f.read() level and pass in list[str] to this func.
-    lines = deque(source.splitlines())
+    lines = deque(source_lines)
     while lines:
         # Currently process each line individually and view it as self contained. But if we
         # have open quotes or parentheses, a semantic line can actually continue onto the next

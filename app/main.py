@@ -6,18 +6,20 @@ import sys
 project_path = str(Path(__file__).parent.parent)
 if project_path not in sys.path:
     sys.path.insert(0, project_path)
+import tempfile
 
 from lox.main import main
 
 
 source = st.text_area("Lox Program")
 if source:
-    print('source:', source)
-    # TODO: main is never returning (also, raelized it only prints stuff, doesn't return, per
-    # codecrafters requirments. But seems like we need to first figure out why it's not even
-    # finishing running.)
     try:
-        result = main(codecrafters_test=False, command="run", source_code=source)
+        # hack: turns out lexing is slightly harder if we don't have readlines() to rely on in
+        # lox.main.main so we write source code to a temporary file.
+        with tempfile.NamedTemporaryFile(mode="w") as file:
+            file.write(source)
+            file.seek(0)
+            result = main(codecrafters_test=False, command="run", source_lines=file.name)
         for line in result:
             st.text(line)
     except Exception as e:
