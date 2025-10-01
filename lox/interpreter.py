@@ -246,10 +246,9 @@ class Set(Expression):
         """
         Parameters
         ----------
-        obj : LoxInstance
-            The instance the attribute should be attached to.
-            # TODO: seems like this is actually This at least in some cases? It's obj.evaluate()
-            # that should return a LoxInstance.
+        obj : Expression
+            The instance the attribute should be attached to. Typically a Variable but IIRC it can
+            be This in some cases.
         """
         self.obj = obj
         self.attr = attr
@@ -278,7 +277,6 @@ class This(Expression):
         self.this = this
 
     def resolve(self):
-        # TODO: isn't INITIALIZER also a valid class type here?
         if INTERPRETER.resolver.current_class not in (ClassType.CLASS, ClassType.SUBCLASS):
             raise RuntimeError(
                 f"[line {self.this.line}] Error at 'this': Can't use 'this' outside of a class."
@@ -297,7 +295,6 @@ class Super(Expression):
         self.method = method
 
     def resolve(self):
-        # TODO: isn't INITIALIZER also a valid class type here?
         if INTERPRETER.resolver.current_class == ClassType.CLASS:
             raise ResolutionError(
                 f"[line {self.super.line}] Error at 'super': Can't use 'super' in a class "
@@ -314,9 +311,9 @@ class Super(Expression):
         # super is a LoxClass and get_method will retrieve the relevant LoxFunction.
         # We don't want to execut the method yet so we don't call evaluate on LoxFunction.
         super = self.super.evaluate(expr=self)
+        # Super depth should never be None by this point, we raise an error at resolution time if
+        # there's an attempt to reference super when there's no parent class.
         lox_function = super.get_method(self.method.lexeme)
-        # TODO: handle case where super_depth is None?
-        # We know `this` is always in env nested within `super` env.
         super_depth = INTERPRETER.locals.get(self, None)
         this = INTERPRETER.env.read_state_at("this", super_depth - 1)
         return lox_function.bind(this)
@@ -479,7 +476,6 @@ class Statement:
     """Statements 'do things' that have side effects, but do not return a value.
     This is in contrast to expressions, which compute and return a value.
 
-    TODO: maybe should move this to Parser or Interprete docstring at some point?
     Grammar:
 
     program        → declaration* EOF ;
@@ -548,7 +544,6 @@ class VariableDeclaration(Statement):
         # We will set this in evaluate. Don't use default=None because evaluate could return None.
         self.value = SENTINEL
 
-    # TODO: getting displayed like "((a = foo);)", guessing that may not be correct.
     def __str__(self) -> str:
         return f"({self.name.lexeme} = {self.expr})"
 
@@ -560,8 +555,8 @@ class VariableDeclaration(Statement):
 
     def resolve(self):
         INTERPRETER.resolver.declare(self.name)
-        # TODO is this necessary? Book does this but I type hinted expr as non-optional in init.
-        # Probably the type hint is just wrong bc I do remember declaring vars without a value works.
+        # Book claims expr resolution requires this if check, in my case I don't think that's true
+        # - even when defining `var foo;` we get a Literal(nil) expression here - but doesn't hurt.
         if self.expr:
             self.expr.resolve()
         INTERPRETER.resolver.define(self.name)
@@ -580,8 +575,8 @@ class Block(Statement):
     def evaluate(self, *args, _new_env: bool = True, **kwargs) -> None:
         # args, kwargs is needed because statement.evaluate is always passed an env arg.
         # But block always creates a new one anyway so doesn't need to use that.
-        # TODO: confirm if above is still accurate, looks like this is the only place we call
-        # "env=" in this project...
+        # couldfix: at this point this is the only place we call evaluate with "env="
+        # in this project. Could try removing this and seeing the effect.
         context_manager = INTERPRETER.new_env if _new_env else INTERPRETER.existing_env
         with context_manager(**kwargs) as env:
             for statement in self.statements:
@@ -679,8 +674,7 @@ class While(Statement):
         return f"(while {self.condition} {self.statement}"
 
     def evaluate(self, *args, **kwargs) -> None:
-        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no (and tests
-        # pass without doing this) but good to confirm.
+        # couldfix: little fuzzy on why we don't need to pass env to these evaluate calls.
         while truthy(self.condition.evaluate()):
             self.statement.evaluate()
 
@@ -709,13 +703,11 @@ class For(Statement):
     def evaluate(self, *args, **kwargs) -> None:
         if self.initializer is not None:
             self.initializer.evaluate()
-        # TODO book says condition can be null which seems weird. Could make that change here or
-        # could use its desugaring route and use while loop. I think to do that we'd basically:
+        # couldfix: book says condition can be null which seems weird. Could make that change here
+        # or use its desugaring method and use while loop. I think to do that we'd basically:
         # - create a Block with [statement, incrementer]
         # - pass (condition, block) to While constructor
         # - create another Block by passing in [initializer, while]
-        # but can check book to confirm. ALTERNATIVELY, can leave this for later and proceed to next
-        # stage, just depends on what mood you're in to do next.
         while truthy(self.condition.evaluate()):
             self.statement.evaluate()
             if self.incrementer is not None:
@@ -739,8 +731,7 @@ class IfStatement(Statement):
         self.other_value = other_value
 
     def evaluate(self, *args, **kwargs):
-        # TODO: do I need to be passing env to all these evaluate calls? Pretty sure no but good to
-        # confirm.
+        # couldfix: bit fuzzy on why we don't need to pass in env to these evaluate calls anymore.
         condition = self.condition.evaluate()
         if truthy(condition):
             return self.value.evaluate()
@@ -768,8 +759,6 @@ class ReturnStatement(Statement):
 
     def evaluate(self, *args, **kwargs):
         # Returns the python object resulting from evaluating a function.
-        # TODO: forget what args/kwargs get passed into statement.evaluate, need to confirm whether
-        # these should be passed to expr below.
         val = None
         if self.expr:
             val = self.expr.evaluate()
@@ -915,13 +904,6 @@ class Function(Statement):
 
     def evaluate(self, *args, **kwargs) -> LoxFunction:
         # Returns a LoxFunction object, NOT the result of calling the function.
-        # TODO: note that gpt claims I should be using interp.env as fallback instead of None.
-        # But seems like that would break my closure impelmentation even if I discarded Resolution
-        # stuff? Idk, tried it and it did not change my current resolution error.
-        # TODO: when testing closures, I saw saw instances where this was the global env even though
-        # the func was defined inside a different func (need to confirm but I assume this creates a
-        # new env, certainly creates a new scope). Also maybe this is unneeded entirely with
-        # resolution?
         self.definition_env = INTERPRETER.env
         func = LoxFunction(self, kwargs.get("env", None), is_init=False)
         INTERPRETER.env.update_state(self.name.lexeme, func, is_declaration=True)

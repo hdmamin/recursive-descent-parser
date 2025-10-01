@@ -306,7 +306,7 @@ class Parser:
             raise ParsingError("Invalid assignment target.")
         return expr
 
-    def logic_or(self) -> Logical:
+    def logic_or(self) -> Expression:
         """
         logic_or       → logic_and ( "or" logic_and )* ;
         """
@@ -315,7 +315,7 @@ class Parser:
             left = Logical(left, self.previous_token(), self.logic_and())
         return left
 
-    def logic_and(self) -> Logical:
+    def logic_and(self) -> Expression:
         """
         logic_and      → equality ( "and" equality )* ;
         """
