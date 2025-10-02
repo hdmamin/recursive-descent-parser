@@ -6,3 +6,7 @@ version = "0.1.0"
 packages = ["lox"]
 package-dir = {"" = "."}
 
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
