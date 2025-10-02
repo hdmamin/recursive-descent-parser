@@ -2,6 +2,8 @@ This is a python implementation of the Lox language as defined in the book Craft
 
 https://lox-recursive-descent-parser.streamlit.app/
 
+![streamlit cloud demo](data/lox-demo.gif)
+
 ## Testing with codecrafters
 
 To test locally, first activate an env where pipenv is installed:
