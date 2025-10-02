@@ -12,9 +12,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-# Despite codecrafters warnings not to edit this file, adding this line so streamlit cloud works.
-# If I ever want to submit this to codecrafters, may need to remove this line.
-lox = {editable = true, path = "./lox"}
 
 [dev-packages]
 
