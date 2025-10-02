@@ -1,5 +1,7 @@
 This is a python implementation of the Lox language as defined in the book Crafting Interpreters. My goal here was not to build something useful - Lox is a toy language - but to learn for the sake of learning and code for the sake of coding. So design decisions were often driven by fun or curiosity rather than maintainability.
 
+https://lox-recursive-descent-parser.streamlit.app/
+
 ## Testing with codecrafters
 
 To test locally, first activate an env where pipenv is installed:
