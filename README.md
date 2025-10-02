@@ -1,6 +1,8 @@
+This is a python implementation of the Lox language as defined in the book Crafting Interpreters. My goal here was not to build something useful - Lox is a toy language - but to learn for the sake of learning and code for the sake of coding. So design decisions were often driven by fun or curiosity rather than maintainability.
+
 ## Testing with codecrafters
 
-- to test locally, first activate an env where pipenv is installed:
+To test locally, first activate an env where pipenv is installed:
 
 ```
 conda activate py310
@@ -25,6 +27,12 @@ codecrafters test --previous
 ### Local Testing
 
 Codecrafters published all test cases in https://github.com/codecrafters-io/interpreter-tester so we can also run tests without a subscription. I pulled this repo and copied files into `tests`, pulling the Makefile into my project root and modifying it slightly. I can now run test cases like `make test_scanning_w_jlox`.
+
+### Potential Improvements
+
+I flagged some non-critical issues (things that don't cause the tests to fail but that would ideally get some followup attention if I was going to use this for anything other than learning purposes). Use this command to view them:
+
+```rg couldfix lox```
 
 ## Codecrafters Instructions
 

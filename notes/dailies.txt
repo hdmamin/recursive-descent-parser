@@ -1775,13 +1775,14 @@ X -`make test_all` passes (9 stages)
 -----------
 > status: knocked out interpreter todos yesterday. One file to go.
 -followup tasks (for after all 84 stages pass)
-	-go through all remaining todos: parser.py
+	X -go through all remaining todos: parser.py
+        > tried to change some of the error raising order in block etc but this broke tests, I guess current way really is what the tests want /shrug.
 	-can we add a better error message when using single quotes? (need to make sure this doesn't break lox test suite, they're picky about error messages)
-	-polish up readmes/instructions for running a bit
--final `make test_all` run to make sure everything still works after todo fixes
+	X -polish up readmes/instructions for running a bit
+X -final `make test_all` run to make sure everything still works after todo fixes
 	
 -streamlit app
-	-refactor to use editable install instead of sys.path hack
+	X -refactor to use editable install instead of sys.path hack
 	-deploy to streamlit spaces (prob start with clicking the "deploy" button that now shows up when running locally?)
 
 -postmortem (whoops, think I forgot to do premortem this time)

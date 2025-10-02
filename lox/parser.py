@@ -424,14 +424,14 @@ class Parser:
             try:
                 declaration = self.declaration(custom_error=True)
             except (ParsingError, SyntaxError) as e:
-                # TODO: if multiple errors inside block, this may incorrectly overwrite error with
-                # the latest one whereas we want the first?
+                # couldfix: seems to me like we'd want to raise the first error, not the last one,
+                # but this is what lox tests require. Could investigate more.
                 error = e
             else:
                 statements.append(declaration)
 
-        # TODO: actually prob need to raise this error after the one we already caught if applicable?
-        # Not sure how that should look.
+        # couldfix: seems to me like we should raise the above error (when present) before this
+        # right brace error but tests pass this way.
         # Finish block parsing regardless of whether we encountered an error, otherwise we'll try
         # to parse the remainder as a new declaration in the next iteration of the `parse` while
         # loop.
@@ -629,13 +629,16 @@ class Parser:
             try:
                 method = self.function_declaration(kind="function")
             except (ParsingError, SyntaxError) as e:
+                # couldfix: seems to me like we'd want to raise the first error, not the last one,
+                # but this is what lox tests require. Could investigate more.
                 error = e
             else:
                 methods.append(method)
         # The second condition (match) in `while` can send us past the last index.
         prev_token = self.previous_token()
         
-        # TODO: might be raising these 2 errors out of order now.
+        # couldfix: seems to me like we should raise the above error (when present) before this
+        # right brace error but tests pass this way.
         # Check regardless of whether we hit an error otherwise `parse` will try to re-parse this
         # "}" on the next iteration.
         if prev_token.token_type != TokenTypes.RIGHT_BRACE:
