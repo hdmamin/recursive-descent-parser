@@ -11,12 +11,11 @@ set -e # Exit early if any commands fail
 
 # HDM modifications to get offline testing working
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
+export PYTHONPATH="$SCRIPT_DIR/src:$PYTHONPATH"
 
 # Copied from .codecrafters/run.sh
-#
 # - Edit this to change how your program runs locally
 # - Edit .codecrafters/run.sh to change how your program runs remotely
 exec pipenv run python3 -m lox.main "$@"
-# TODO reenable original version at some point, want to run in interactive mode for now
+# Or use this to run in interactive mode.
 # exec pipenv run ipython3 -i -m lox.main "$@"
