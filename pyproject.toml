@@ -7,5 +7,5 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["lox"]
-package-dir = {"" = "."}
+package-dir = {"lox" = "lox"}
 
