@@ -12,13 +12,25 @@ To test locally, first activate an env where pipenv is installed:
 conda activate py310
 ```
 
-Then run this command, where the last arg is a path containing some snippet of lox code you want to parse:
+Run this command to parse and run the sample test case at `./tests/test_case.lox`:
 
 ```
-./your_program.sh parse /tmp/tmp.txt 
+make run
 ```
 
-to run the next codecrafters test suite, I initially used `codecrafters test` and eventually `codecrafters submit` (the latter checks off the stage on the website when passed). In practice, I started running `codecrafters submit 2>&1 | tee logs/{section_name}-{section_step_number}.txt` to also stash test logs for later in case I wanted to try to convert these to tests. (I later found a better way to do this, however.)
+To run the whole codecrafters test suite run:
+
+```
+make test_all
+```
+
+See Makefile `test_all` command to see how to run individual substages.
+
+***
+
+Old notes on running tests for codecrafters site (no longer the intended path but could try to revert if I ever wanted to submit to the site again)
+
+I initially used `codecrafters test` and eventually `codecrafters submit` (the latter checks off the stage on the website when passed) when working through their site. In practice, I started running `codecrafters submit 2>&1 | tee logs/{section_name}-{section_step_number}.txt` to also stash test logs for later in case I wanted to try to convert these to tests. (I later found a better way to do this, however.)
 
 To test if a refactor broke functionality from previous rounds, run:
 ```
