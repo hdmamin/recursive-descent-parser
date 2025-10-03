@@ -1795,4 +1795,5 @@ X -streamlit app
 > status: finished todos, fixed streamlit import hack, streamlit cloud deployment and all the ensuing headaches. Just postmortem left.
 X -add link/minimal context on streamlit page
     > added syntax cheatsheet, default value, link to book.
--postmortem (whoops, think I forgot to do premortem this time)
+X -postmortem (whoops, think I forgot to do premortem this time)
+    > fin
